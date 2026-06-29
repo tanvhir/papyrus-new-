@@ -1,4 +1,4 @@
-name: Build and Deploy to InfinityFree
+name: Build and Combine PHP + React App for InfinityFree
 
 on:
   push:
@@ -22,15 +22,34 @@ jobs:
     - name: Install dependencies
       run: npm install
 
-    - name: Build production files
+    - name: Build production frontend
       run: npm run build
 
-    - name: Upload dist files via FTP
+    - name: Prepare combined production folder
+      run: |
+        # Create a temporary deploy folder
+        mkdir deploy_dir
+
+        # 1. Copy the compiled React frontend assets
+        cp -r dist/assets deploy_dir/
+        cp dist/index.html deploy_dir/
+
+        # 2. Copy the native PHP backend folders and configuration files
+        if [ -d "api" ]; then cp -r api deploy_dir/; fi
+        if [ -d "install" ]; then cp -r install deploy_dir/; fi
+        if [ -d "storage" ]; then cp -r storage deploy_dir/; fi
+        if [ -f ".htaccess" ]; then cp .htaccess deploy_dir/; fi
+        
+        # Create empty uploads directory if needed by backend
+        mkdir -p deploy_dir/uploads
+
+    - name: Clean server htdocs and upload combined app via FTP
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
         server: ftpupload.net
         username: if0_42005877
         password: ${{ secrets.FTP_PASSWORD }}
         port: 21
-        local-dir: ./dist/
+        local-dir: ./deploy_dir/
         server-dir: /htdocs/
+        delete: true # This wipes old broken build files (like server.cjs) automatically
