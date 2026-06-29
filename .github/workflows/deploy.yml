@@ -1,0 +1,36 @@
+name: Build and Deploy to InfinityFree
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Get source code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js environment
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Build production files
+      run: npm run build
+
+    - name: Upload dist files via FTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ftpupload.net
+        username: if0_42005877
+        password: ${{ secrets.FTP_PASSWORD }}
+        port: 21
+        local-dir: ./dist/
+        server-dir: /htdocs/
