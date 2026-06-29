@@ -733,16 +733,8 @@ export default function App() {
   const BUILTIN_MODELS = [
     'gemini-2.5-flash',
     'gemini-3.5-flash',
-    'gemini-1.5-pro',
-    'gemini-1.5-flash',
-    'gemma-4-31b',
     'gemini-3.1-flash-lite',
-    'deep-research-pro',
-    'gemini-2-flash',
-    'gemini-3-flash',
-    'gemini-3.1-pro',
-    'gemma-4-26b',
-    'antigravity'
+    'gemma-4-31b'
   ];
 
   const [isCustomModelActive, setIsCustomModelActive] = useState(() => {
@@ -2553,22 +2545,22 @@ export default function App() {
 
       {/* AI & Model Settings Dialog */}
       <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-        <DialogContent className="max-w-2xl bg-[#FCFBF7] dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-2xl p-0 flex flex-col overflow-hidden">
+        <DialogContent className="max-w-3xl bg-[#FCFBF7] dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-2xl p-0 flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="p-6 border-b border-stone-150 dark:border-stone-800 bg-white dark:bg-stone-950 flex-none">
+          <div className="p-8 border-b border-stone-150 dark:border-stone-800 bg-white dark:bg-stone-950 flex-none">
             <DialogHeader>
-              <DialogTitle className="font-serif text-xl tracking-tight text-stone-900 dark:text-stone-100 flex items-center gap-2.5">
+              <DialogTitle className="font-sans text-xl font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2.5">
                 <Settings className="w-5 h-5 text-stone-600 dark:text-stone-400" />
-                AI & Model Settings
+                Settings
               </DialogTitle>
             </DialogHeader>
-            <p className="text-xs text-stone-500 dark:text-stone-400 mt-1.5 leading-normal">
-              Manage your model overrides, local browser keys, text formatting thresholds, and active layout generators.
+            <p className="text-xs text-stone-500 dark:text-stone-400 mt-1.5 leading-normal font-sans">
+              Configure your study workspace and AI preferences.
             </p>
           </div>
 
           {/* Body */}
-          <div className="p-6 space-y-6 overflow-y-auto max-h-[65vh] font-sans text-sm">
+          <div className="p-8 space-y-6 overflow-y-auto font-sans text-sm">
             {/* API Key */}
             <div className="space-y-2">
               <div className="flex justify-between items-baseline">
@@ -2607,19 +2599,11 @@ export default function App() {
                 }}
                 className="w-full h-10 px-3 border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-500 font-sans cursor-pointer transition-all"
               >
-                <option value="gemini-2.5-flash">Gemini 2.5 Flash (Balanced - Default & Fast)</option>
-                <option value="gemini-3.5-flash">Gemini 3.5 Flash (Performance - Extreme Speed)</option>
-                <option value="gemini-1.5-pro">Gemini 1.5 Pro (Analytical - Highly Logical & Multi-lingual)</option>
-                <option value="gemini-1.5-flash">Gemini 1.5 Flash (Legacy - Backward Compatible)</option>
-                <option value="gemma-4-31b">Gemma 4 31B (Open Reasoning - Exceptional Academic Structure)</option>
-                <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite (Ultra Low Latency)</option>
-                <option value="deep-research-pro">Deep Research Pro Preview (Exhaustive & Agentic Synthesis)</option>
-                <option value="gemini-2-flash">Gemini 2 Flash (V2 Next-Gen Flash)</option>
-                <option value="gemini-3-flash">Gemini 3 Flash (V3 Next-Gen Preview)</option>
-                <option value="gemini-3.1-pro">Gemini 3.1 Pro (Heavyweight Logic & Code Analysis)</option>
-                <option value="gemma-4-26b">Gemma 4 26B (Lightweight & Structured Output)</option>
-                <option value="antigravity">Antigravity Agent (Multi-step Layout Specialist)</option>
-                <option value="custom">-- Custom Override Model ID --</option>
+                <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
+                <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite</option>
+                <option value="gemma-4-31b">Gemma 4 31B</option>
+                <option value="custom">-- Custom Model ID --</option>
               </select>
 
               {isCustomModelActive && (
@@ -2644,20 +2628,34 @@ export default function App() {
             {/* Highlighting Style */}
             <div className="space-y-2">
               <label className="block text-xs uppercase tracking-wider font-bold opacity-75 text-stone-800 dark:text-stone-200">
-                AI Text Highlighting Style
+                AI Highlighting Style
               </label>
-              <select
-                value={highlightStyle}
-                onChange={(e) => handleUpdateHighlightStyle(e.target.value as 'balanced' | 'generous' | 'none')}
-                className="w-full h-10 px-3 border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-500 font-sans cursor-pointer transition-all"
-              >
-                <option value="balanced">Balanced Highlighting (Highlight only 3-5 critical definitions per page)</option>
-                <option value="generous">Generous Highlighting (No restrictions - Highlight all key concepts & formulas)</option>
-                <option value="none">Disabled (No auto-highlighting, keep text formats intact)</option>
-              </select>
-              <p className="text-[10px] text-stone-400 leading-normal">
-                Determines how strictly the AI selects keywords for color tagging. If you prefer high visual density, change this to <strong>Generous</strong>.
-              </p>
+              <div className="grid grid-cols-3 gap-2">
+                <Button
+                  variant={highlightStyle === 'balanced' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleUpdateHighlightStyle('balanced')}
+                  className="h-9 text-xs font-medium"
+                >
+                  Balanced
+                </Button>
+                <Button
+                  variant={highlightStyle === 'generous' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleUpdateHighlightStyle('generous')}
+                  className="h-9 text-xs font-medium"
+                >
+                  Generous
+                </Button>
+                <Button
+                  variant={highlightStyle === 'none' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleUpdateHighlightStyle('none')}
+                  className="h-9 text-xs font-medium"
+                >
+                  None
+                </Button>
+              </div>
             </div>
 
             {/* Feature & Canvas Toggles Section */}
@@ -2772,23 +2770,23 @@ export default function App() {
 
       {/* Help & Cheat Sheet Dialog */}
       <Dialog open={isHelpOpen} onOpenChange={setIsHelpOpen}>
-        <DialogContent className="max-w-4xl h-[85vh] bg-[#FCFBF7] dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-2xl p-0 flex flex-col overflow-hidden">
+        <DialogContent className="max-w-5xl h-[90vh] bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-2xl p-0 flex flex-col overflow-hidden font-sans">
           {/* Header */}
-          <div className="p-6 border-b border-stone-150 dark:border-stone-800 bg-white dark:bg-stone-950 flex-none">
+          <div className="p-8 border-b border-stone-150 dark:border-stone-800 bg-white dark:bg-stone-950 flex-none">
             <DialogHeader>
-              <DialogTitle className="font-serif text-2xl tracking-tight text-stone-900 dark:text-stone-100 flex items-center gap-2.5">
+              <DialogTitle className="text-2xl font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2.5 font-sans">
                 <HelpCircle className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-                Help & AI Cheat Sheet
+                Papyrus User Guide
               </DialogTitle>
             </DialogHeader>
             <p className="text-xs text-stone-500 dark:text-stone-400 mt-1.5 leading-normal">
-              Learn how to leverage our structured AI formatter to construct gorgeous mnemonics, multi-column grids, and linked margin notes.
+              Learn to use Papyrus for effective study note organization and AI-powered formatting.
             </p>
           </div>
 
           {/* Scroll Area Container */}
-          <ScrollArea className="flex-1 p-6 bg-stone-50/40 dark:bg-stone-900/40">
-            <div className="space-y-8 pb-10">
+          <ScrollArea className="flex-1 p-8 bg-stone-50/40 dark:bg-stone-900/40">
+            <div className="space-y-8 pb-10 font-sans text-sm">
               
               {/* Feature 1: Mnemonic Conversion (Bangla Mnemonic Example) */}
               <div className="space-y-3.5">
@@ -3029,10 +3027,10 @@ export default function App() {
                   className="text-2xl font-serif tracking-tighter opacity-80 uppercase bg-transparent border-none p-0 m-0 focus:outline-none focus:opacity-100 transition-opacity w-full max-w-[300px] placeholder:text-stone-300 dark:placeholder:text-stone-700"
                 />
               </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              {/* Settings / Configuration */}
+</div>
+              
+              <div className="flex items-center gap-2">
+                {/* Flashcard Button */}
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -3040,50 +3038,32 @@ export default function App() {
                       <Button 
                         variant="ghost" 
                         size="icon"
-                        className={cn("w-8 h-8 rounded-full", isHandwriting ? "bg-stone-200 dark:bg-stone-800 opacity-100" : "opacity-60")}
-                        onClick={() => setIsHandwriting(!isHandwriting)}
+                        className={cn(
+                          "w-8 h-8 rounded-full relative transition-all duration-300",
+                          flashcards.filter(c => c.sourceNoteId === activeNoteId).length > 0 
+                            ? "bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 opacity-100 hover:scale-110" 
+                            : "opacity-60"
+                        )}
+                        onClick={() => handleStartStudy('note', activeNoteId)}
                       >
-                        <PenTool className="w-4 h-4" />
+                        <Brain className="w-4 h-4" />
+                        {flashcards.filter(c => c.sourceNoteId === activeNoteId).length > 0 && (
+                          <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 rounded-full bg-amber-500 text-white text-[8px] font-mono font-bold flex items-center justify-center shadow-sm animate-bounce-slow">
+                            {flashcards.filter(c => c.sourceNoteId === activeNoteId).length}
+                          </span>
+                        )}
                       </Button>
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent>Toggle Handwriting (Hand font is Bangla)</TooltipContent>
+                  <TooltipContent>
+                    {flashcards.filter(c => c.sourceNoteId === activeNoteId).length > 0 
+                      ? `Study Chapter Cards (${flashcards.filter(c => c.sourceNoteId === activeNoteId).length})` 
+                      : "No flashcards linked to this chapter"}
+                  </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-    
-              <Popover>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span>
-                        <PopoverTrigger render={
-                          <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full opacity-60">
-                            <Palette className="w-4 h-4" />
-                          </Button>
-                        } />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>Change Theme</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <PopoverContent align="end" className="w-auto p-2">
-                  <div className="flex items-center gap-2">
-                    {THEMES.map(t => (
-                      <Button
-                        key={t.id}
-                        variant="ghost"
-                        size="icon"
-                        className={cn(
-                          "w-6 h-6 rounded-full border transition-all shadow-sm",
-                          theme.id === t.id ? "border-stone-500 scale-110" : "border-stone-200 dark:border-stone-800 opacity-50"
-                        )}
-                        style={{ backgroundColor: t.paperColor }}
-                        onClick={() => setTheme(t)}
-                      />
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
+
+              <div className="w-px h-4 bg-stone-200 dark:bg-stone-800 mx-1" />
 
               <Popover>
                 <TooltipProvider>
@@ -3091,25 +3071,81 @@ export default function App() {
                     <TooltipTrigger asChild>
                       <span>
                         <PopoverTrigger render={
-                          <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full opacity-60">
+                          <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full">
                             <FileText className="w-4 h-4" />
                           </Button>
                         } />
                       </span>
                     </TooltipTrigger>
-                    <TooltipContent>Page Setup & Print</TooltipContent>
+                    <TooltipContent>Page Setup</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                <PopoverContent align="end" className="w-80 p-4 border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-xl rounded-xl">
-                  <div className="space-y-4">
+<PopoverContent align="end" className="w-80 p-4 border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-xl rounded-xl">
+                  <div className="space-y-4 font-sans">
                     <div>
-                      <h4 className="font-serif text-sm font-bold tracking-tight text-stone-900 dark:text-stone-100 flex items-center gap-1.5 leading-none">
+                      <h4 className="text-sm font-bold text-stone-900 dark:text-stone-100 flex items-center gap-1.5 leading-none">
                         <FileText className="w-4 h-4 text-stone-700 dark:text-stone-300" />
                         Page Setup
                       </h4>
-                      <p className="text-[10px] text-stone-500 dark:text-stone-400 font-sans mt-1">
-                        Configure page formats and margins for printing.
+                      <p className="text-[10px] text-stone-500 dark:text-stone-400 mt-1">
+                        Configure page format, theme, and font scale.
                       </p>
+                    </div>
+
+                    <Separator className="bg-stone-100 dark:bg-stone-850" />
+
+                    {/* Handwriting Toggle */}
+                    <div className="flex items-center justify-between py-2">
+                      <div className="space-y-0.5 pr-2">
+                        <div className="text-xs font-semibold text-stone-800 dark:text-stone-200">Handwriting Font</div>
+                        <div className="text-[10px] text-stone-400 leading-tight">Bangla-style cursive</div>
+                      </div>
+                      <button
+                        onClick={() => setIsHandwriting(!isHandwriting)}
+                        className={cn(
+                          "relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-stone-500",
+                          !isHandwriting ? "bg-emerald-600" : "bg-stone-300 dark:bg-stone-700"
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ease-in-out",
+                            !isHandwriting ? "translate-x-5" : "translate-x-0"
+                          )}
+                        />
+                      </button>
+                    </div>
+
+                    {/* Theme Selector */}
+                    <div className="space-y-2">
+                      <Label className="text-[9px] uppercase tracking-wider font-bold opacity-60 block">Theme</Label>
+                      <div className="flex items-center gap-2">
+                        {THEMES.map(t => (
+                          <Button
+                            key={t.id}
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                              "w-6 h-6 rounded-full border transition-all shadow-sm",
+                              theme.id === t.id ? "border-stone-500 scale-110" : "border-stone-200 dark:border-stone-800 opacity-50"
+                            )}
+                            style={{ backgroundColor: t.paperColor }}
+                            onClick={() => setTheme(t)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Font Size */}
+                    <div className="space-y-2">
+                      <Label className="text-[9px] uppercase tracking-wider font-bold opacity-60 block">Font Size</Label>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-mono">{fontSize}px</span>
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] font-bold" onClick={() => setFontSize(Math.max(10, fontSize - 1))}>Smaller</Button>
+                          <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] font-bold" onClick={() => setFontSize(Math.min(72, fontSize + 1))}>Larger</Button>
+                        </div>
+                      </div>
                     </div>
 
                     <Separator className="bg-stone-100 dark:bg-stone-850" />
@@ -3240,103 +3276,11 @@ export default function App() {
                       )}
                     </div>
                   </div>
-                </PopoverContent>
+</PopoverContent>
               </Popover>
-    
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        className={cn(
-                          "w-8 h-8 rounded-full relative transition-all duration-300",
-                          flashcards.filter(c => c.sourceNoteId === activeNoteId).length > 0 
-                            ? "bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 opacity-100 hover:scale-110" 
-                            : "opacity-60"
-                        )}
-                        onClick={() => handleStartStudy('note', activeNoteId)}
-                      >
-                        <Brain className="w-4 h-4" />
-                        {flashcards.filter(c => c.sourceNoteId === activeNoteId).length > 0 && (
-                          <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 rounded-full bg-amber-500 text-[#FFFCF5] text-[8px] font-mono font-bold flex items-center justify-center shadow-sm animate-bounce-slow">
-                            {flashcards.filter(c => c.sourceNoteId === activeNoteId).length}
-                          </span>
-                        )}
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {flashcards.filter(c => c.sourceNoteId === activeNoteId).length > 0 
-                      ? `Study Chapter Cards (${flashcards.filter(c => c.sourceNoteId === activeNoteId).length})` 
-                      : "No flashcards linked to this chapter"}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
+              
               <div className="w-px h-4 bg-stone-200 dark:bg-stone-800 mx-1" />
-
-              <Popover>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span>
-                        <PopoverTrigger render={
-                          <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full opacity-60 flex items-center justify-center font-mono text-[10px] font-bold">
-                            {fontSize}
-                          </Button>
-                        } />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>Font Size</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <PopoverContent align="end" className="w-48 p-3">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase tracking-widest font-bold opacity-50">Size</span>
-                      <span className="text-xs font-mono font-bold">{fontSize}px</span>
-                    </div>
-                    <div className="grid grid-cols-4 gap-1">
-                      {[12, 14, 16, 18, 20, 24, 28, 32].map(size => (
-                        <Button
-                          key={size}
-                          variant={fontSize === size ? "default" : "ghost"}
-                          size="sm"
-                          className="h-8 px-0 text-[10px] font-mono"
-                          onClick={() => setFontSize(size)}
-                        >
-                          {size}
-                        </Button>
-                      ))}
-                    </div>
-                    <div className="pt-2 border-t border-stone-100 dark:border-stone-800">
-                      <div className="flex items-center gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="flex-1 h-7 text-[10px] uppercase font-bold"
-                          onClick={() => setFontSize(Math.max(10, fontSize - 1))}
-                        >
-                          Smaller
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="flex-1 h-7 text-[10px] uppercase font-bold"
-                          onClick={() => setFontSize(Math.min(72, fontSize + 1))}
-                        >
-                          Larger
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-    
-              <div className="w-px h-4 bg-stone-200 dark:bg-stone-800 mx-1" />
-
+              
               {/* Help & Cheat Sheet Button */}
               <TooltipProvider>
                 <Tooltip>
@@ -3352,7 +3296,7 @@ export default function App() {
                       </Button>
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent>Help & AI Cheat Sheet</TooltipContent>
+                  <TooltipContent>User Guide</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
 
@@ -3371,7 +3315,7 @@ export default function App() {
                       </Button>
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent>AI & Model Settings</TooltipContent>
+                  <TooltipContent>Settings</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
 
