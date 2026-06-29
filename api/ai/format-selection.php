@@ -59,6 +59,11 @@ $instruction = $input['instruction'] ?? '';
 $centerY = floatval($input['centerY'] ?? 300);
 $highlightStyle = $input['highlightStyle'] ?? 'balanced';
 
+$disableAIFlashcards = ($input['disableAIFlashcards'] ?? false) === true;
+$disableAIArrows = ($input['disableAIArrows'] ?? false) === true;
+$disableAIStickies = ($input['disableAIStickies'] ?? false) === true;
+$disableAIDividers = ($input['disableAIDividers'] ?? false) === true;
+
 $highlightInstruction = '';
 if ($highlightStyle === 'generous') {
     $highlightInstruction = "- Use highlights generously with `<mark data-color=\"#ffff00\" style=\"background-color: rgb(255, 255, 0); color: inherit;\">text</mark>` to highlight key terms, critical definitions, formulas, and important concepts to make the document extremely scan-friendly and visual. (Highlight colors allowed: Yellow: #ffff00, Blue: #bfdbfe, Deep green: #15803d, Pink: #f9a8d4, Orange: #fed7aa)";
@@ -66,6 +71,20 @@ if ($highlightStyle === 'generous') {
     $highlightInstruction = "- Do NOT use any highlights (`<mark>`) at all. Keep everything un-highlighted.";
 } else {
     $highlightInstruction = "- Use highlights sparingly with `<mark data-color=\"#ffff00\" style=\"background-color: rgb(255, 255, 0); color: inherit;\">text</mark>` ONLY for critical definitions, formulas, or key terms (maximum of 3 to 5 highlights per page). (Highlight colors allowed: Yellow: #ffff00, Blue: #bfdbfe, Deep green: #15803d, Pink: #f9a8d4, Orange: #fed7aa)";
+}
+
+$strictDisableInstructions = '';
+if ($disableAIArrows) {
+    $strictDisableInstructions .= "\n- DO NOT generate any connection or callout arrows in the \"arrows\" array. Keep the \"arrows\" array completely empty ([]) in your response.";
+}
+if ($disableAIStickies) {
+    $strictDisableInstructions .= "\n- DO NOT generate any margin sticky notes in the \"stickies\" array. Keep the \"stickies\" array completely empty ([]) in your response.";
+}
+if ($disableAIDividers) {
+    $strictDisableInstructions .= "\n- DO NOT generate any canvas dividers in the \"dividers\" array. Keep the \"dividers\" array completely empty ([]) in your response.";
+}
+if ($disableAIFlashcards) {
+    $strictDisableInstructions .= "\n- DO NOT generate any flashcard-style inline question or answer suggestions.";
 }
 
 if (empty($selectionText) && empty($selectionHTML)) {
@@ -93,7 +112,7 @@ Your response MUST be a single structured JSON object with the following fields:
    - If requested or suitable, use multi-column elements:
      `<div data-type=\"columns\"><div data-type=\"column\"><h3>Left Column</h3><p>...</p></div><div data-type=\"column\"><h3>Right Column</h3><p>...</p></div></div>`
    - CRITICAL VISUAL MNEMONIC / DOWNWARD ARROW RESTRUCTURING PATTERN:
-     If the user wants a vertical mnemonic layout (like a letter/prefix/symbol on top, an arrow pointing down, and its meaning or full word directly below, side-by-side across multiple columns as in "E -> Ellipse, A -> Area, T -> Time"):
+     If the user wants a vertical mnemonic layout (like a letter/prefix/symbol on top, an arrow pointing down, and its meaning or full word directly below, side-by-side across multiple columns as in \"E -> Ellipse, A -> Area, T -> Time\"):
      You MUST generate a responsive multi-column element `<div data-type=\"columns\">`.
      Inside, each column (`<div data-type=\"column\">`) must have:
        1) A beautifully formatted top item (usually a single letter, prefix, or word, e.g., `<p style=\"text-align: center; font-size: 1.25rem; font-weight: bold; margin-bottom: 2px;\">E</p>`).
@@ -109,6 +128,8 @@ Your response MUST be a single structured JSON object with the following fields:
    - Format: { \"id\": \"string\", \"start\": { \"x\": number, \"y\": number }, \"end\": { \"x\": number, \"y\": number }, \"mid\": { \"x\": number, \"y\": number }, \"color\": \"string\" }
    - Alignment: Arrow should start around x: 600, y: centerY. It should end at the sticky note's position (e.g. x: 840, y: centerY). The 'mid' coordinate must have a slight curved bend (e.g., mid.x = (start.x + end.x) / 2, mid.y = (start.y + end.y) / 2 - 30).
 4. \"dividers\": An array of background dividers if relevant (usually empty `[]` unless explicitly requested).
+
+$strictDisableInstructions
 
 Keep the content highly polished, academic, and extremely accurate to the user's instruction. Do not wrap the JSON output in markdown backticks.";
 

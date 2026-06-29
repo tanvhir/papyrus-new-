@@ -61,6 +61,11 @@ $dividers = $input['dividers'] ?? [];
 $pageLayout = $input['pageLayout'] ?? 'a4-portrait';
 $highlightStyle = $input['highlightStyle'] ?? 'balanced';
 
+$disableAIFlashcards = ($input['disableAIFlashcards'] ?? false) === true;
+$disableAIArrows = ($input['disableAIArrows'] ?? false) === true;
+$disableAIStickies = ($input['disableAIStickies'] ?? false) === true;
+$disableAIDividers = ($input['disableAIDividers'] ?? false) === true;
+
 $highlightInstruction = '';
 if ($highlightStyle === 'generous') {
     $highlightInstruction = "2. GENEROUS HIGHLIGHTING:
@@ -71,6 +76,20 @@ if ($highlightStyle === 'generous') {
 } else {
     $highlightInstruction = "2. NO RANDOM HIGHLIGHTS:
    - Do not highlight random individual words. Only use highlights (<mark>) for critical definitions, formulas, or key terms (maximum of 3 to 5 highlights per page). Use deep green (#15803d) or other approved highlight colors cleanly.";
+}
+
+$strictDisableInstructions = '';
+if ($disableAIArrows) {
+    $strictDisableInstructions .= "\n- DO NOT generate any connection or callout arrows in the \"arrows\" array. Keep the \"arrows\" array completely empty ([]) in your response.";
+}
+if ($disableAIStickies) {
+    $strictDisableInstructions .= "\n- DO NOT generate any margin sticky notes in the \"stickies\" array. Keep the \"stickies\" array completely empty ([]) in your response.";
+}
+if ($disableAIDividers) {
+    $strictDisableInstructions .= "\n- DO NOT generate any canvas dividers in the \"dividers\" array. Keep the \"dividers\" array completely empty ([]) in your response.";
+}
+if ($disableAIFlashcards) {
+    $strictDisableInstructions .= "\n- DO NOT generate any flashcard-style inline question or answer suggestions.";
 }
 
 // Clean content HTML
@@ -109,6 +128,8 @@ You must return a structured JSON object with the following fields:
 3. \"stickies\": An array of sticky notes for key Callouts, Reminders, definitions, or Quick Flashcards (following the placement algorithm).
 4. \"arrows\": An array of curved connection or callout arrows pointing from main concepts in the text block to relevant stickies (following the arrow algorithm).
 5. \"dividers\": An array of decorative background canvas dividers (keep empty unless requested).
+
+$strictDisableInstructions
 
 Rough note to format:
 Title: $title
