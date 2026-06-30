@@ -2598,7 +2598,12 @@ export default function App() {
             exit={{ y: -100, opacity: 0 }}
             className="w-full max-w-4xl flex justify-between items-center mb-12 shrink-0"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
+              {/* Logo */}
+              <div className="flex items-center gap-2 pr-4 border-r border-stone-200 dark:border-stone-800">
+                <img src="/papyruslogo.svg" alt="Papyrus Logo" className="w-9 h-11" />
+              </div>
+              
               <div className="flex flex-col relative group">
                 <input
                   type="text"

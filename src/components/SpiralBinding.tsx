@@ -13,16 +13,16 @@ export const SpiralBinding: React.FC<SpiralBindingProps> = ({ height, className 
   // Configuration via CSS variables
   const config = {
     holeSpacing: 26, // pixels between hole centers
-    holeDiameter: 10, // pixels - larger for visibility
-    wireThickness: 3.5, // pixels - thicker for visibility
+    holeDiameter: 8, // pixels
+    wireThickness: 2.5, // pixels
     bindingWidth: 36, // pixels
     loopWidth: 28, // pixels
     loopHeight: 10, // pixels
     wireColor: {
-      light: '#a0a0a0',
-      mid: '#505050',
-      dark: '#202020',
-      shadow: '#101010'
+      light: '#d0d0d0',
+      mid: '#909090',
+      dark: '#606060',
+      shadow: '#404040'
     }
   };
 
@@ -151,14 +151,14 @@ export const SpiralBinding: React.FC<SpiralBindingProps> = ({ height, className 
                 r={config.holeDiameter / 2 + 2}
                 fill={`url(#holeShadow-${uniqueId.current})`}
               />
-              {/* Hole - bright red for debugging */}
+              {/* Hole - dark to simulate hole */}
               <circle
                 cx={hole.props.cx}
                 cy={hole.props.cy}
                 r={config.holeDiameter / 2}
-                fill="#ff0000"
-                stroke="#ff0000"
-                strokeWidth="2"
+                fill="#e8e4dc"
+                stroke="rgba(0,0,0,0.15)"
+                strokeWidth="0.75"
               />
             </g>
           ))}
@@ -168,7 +168,7 @@ export const SpiralBinding: React.FC<SpiralBindingProps> = ({ height, className 
         <path
           d={generateSpiralPath()}
           fill="none"
- stroke="#0000ff"
+          stroke={`url(#wireGradient-${uniqueId.current})`}
           strokeWidth={config.wireThickness}
           strokeLinecap="round"
           strokeLinejoin="round"
