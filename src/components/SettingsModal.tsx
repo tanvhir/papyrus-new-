@@ -13,6 +13,7 @@ import {
   FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { THEMES } from '@/src/types';
 
 type SettingsTab = 'general' | 'ai' | 'editor' | 'appearance' | 'page' | 'keyboard' | 'about';
 
@@ -310,6 +311,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <div>
                       <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-1">Appearance</h3>
                       <p className="text-sm text-stone-500 dark:text-stone-400">Customize your editor look</p>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-3">Theme</h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        {THEMES.map((t) => (
+                          <button
+                            key={t.id}
+                            onClick={() => onThemeChange(t)}
+                            className={cn(
+                              "p-3 rounded-lg border-2 text-sm font-medium transition-all",
+                              theme.id === t.id
+                                ? "border-stone-900 dark:border-stone-100 bg-stone-50 dark:bg-stone-900/30"
+                                : "border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700 bg-white dark:bg-stone-950"
+                            )}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span>{t.name}</span>
+                              {theme.id === t.id && (
+                                <Check className="w-4 h-4 text-stone-900 dark:text-stone-100" />
+                              )}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
                     <div>

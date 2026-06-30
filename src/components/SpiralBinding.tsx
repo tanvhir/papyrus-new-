@@ -13,23 +13,25 @@ export const SpiralBinding: React.FC<SpiralBindingProps> = ({ height, className 
   // Configuration via CSS variables
   const config = {
     holeSpacing: 26, // pixels between hole centers
-    holeDiameter: 8, // pixels
-    wireThickness: 2.5, // pixels
+    holeDiameter: 9, // pixels
+    wireThickness: 3, // pixels
     bindingWidth: 36, // pixels
     loopWidth: 28, // pixels
     loopHeight: 10, // pixels
     wireColor: {
-      light: '#d0d0d0',
-      mid: '#909090',
-      dark: '#606060',
-      shadow: '#404040'
+      light: '#c0c0c0',
+      mid: '#808080',
+      dark: '#505050',
+      shadow: '#303030'
     }
   };
 
   useEffect(() => {
+    console.log('[SpiralBinding] height:', height, 'loopCount:', loopCount);
     if (svgRef.current && height > 0) {
       const availableHeight = height - 40; // 20px padding top and bottom
       const calculatedLoops = Math.floor(availableHeight / config.holeSpacing);
+      console.log('[SpiralBinding] calculatedLoops:', calculatedLoops);
       setLoopCount(Math.max(calculatedLoops, 1));
     }
   }, [height, config.holeSpacing]);
@@ -96,12 +98,17 @@ export const SpiralBinding: React.FC<SpiralBindingProps> = ({ height, className 
     return holes;
   };
 
-  if (loopCount === 0) return null;
+  if (loopCount === 0) {
+    console.log('[SpiralBinding] Returning null because loopCount is 0');
+    return null;
+  }
+
+  console.log('[SpiralBinding] Rendering with loopCount:', loopCount, 'height:', height);
 
   return (
-    <div 
+    <div
       className={`absolute left-0 top-0 bottom-0 pointer-events-none z-50 ${className}`}
-      style={{ width: `${config.bindingWidth}px` }}
+      style={{ width: `${config.bindingWidth}px`, backgroundColor: 'rgba(255,0,0,0.1)' }}
     >
       <svg
         ref={svgRef}
@@ -156,9 +163,9 @@ export const SpiralBinding: React.FC<SpiralBindingProps> = ({ height, className 
                 cx={hole.props.cx}
                 cy={hole.props.cy}
                 r={config.holeDiameter / 2}
-                fill="#e8e4dc"
-                stroke="rgba(0,0,0,0.15)"
-                strokeWidth="0.75"
+                fill="#d4d0c8"
+                stroke="rgba(0,0,0,0.3)"
+                strokeWidth="1"
               />
             </g>
           ))}
