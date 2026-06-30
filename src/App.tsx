@@ -2568,6 +2568,20 @@ export default function App() {
         onUpdateDisableAIDividers={handleUpdateDisableAIDividers}
         onSetCustomModelActive={setIsCustomModelActive}
         onSetCustomModelInput={setCustomModelInput}
+        pageLayout={pageLayout}
+        pageMargin={pageMargin}
+        pageLayoutMode={pageLayoutMode}
+        notebookStyle={notebookStyle}
+        theme={theme}
+        fontSize={fontSize}
+        isHandwriting={isHandwriting}
+        onPageLayoutChange={setPageLayout}
+        onPageMarginChange={setPageMargin}
+        onPageLayoutModeChange={setPageLayoutMode}
+        onNotebookStyleChange={setNotebookStyle}
+        onThemeChange={setTheme}
+        onFontSizeChange={setFontSize}
+        onHandwritingToggle={setIsHandwriting}
       />
 
       {/* Help Center */}
@@ -2640,209 +2654,6 @@ export default function App() {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-
-              {/* Page Setup Button */}
-              <Popover>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span>
-                        <PopoverTrigger render={
-                          <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full opacity-60">
-                            <FileText className="w-4 h-4" />
-                          </Button>
-                        } />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>Page Setup</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <PopoverContent align="end" className="w-80 p-3 border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-xl rounded-xl">
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 pb-2 border-b border-stone-100 dark:border-stone-800">
-                      <FileText className="w-4 h-4 text-stone-700 dark:text-stone-300" />
-                      <h4 className="font-serif text-sm font-bold tracking-tight text-stone-900 dark:text-stone-100">Page Setup</h4>
-                    </div>
-
-                    {/* Appearance Section */}
-                    <div className="space-y-2">
-                      <Label className="text-[8px] uppercase tracking-wider font-bold opacity-60 block">Appearance</Label>
-                      <div className="space-y-2">
-                        <div className="grid grid-cols-2 gap-2">
-                          <Button
-                            variant={notebookStyle === 'classic' ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setNotebookStyle('classic')}
-                            className="h-7 text-[9px] font-semibold"
-                          >
-                            Classic Paper
-                          </Button>
-                          <Button
-                            variant={notebookStyle === 'spiral' ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setNotebookStyle('spiral')}
-                            className="h-7 text-[9px] font-semibold"
-                          >
-                            Spiral Notebook
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-1">
-                          <span className="text-[9px] text-stone-500 dark:text-stone-400">Theme</span>
-                          <div className="flex gap-1">
-                            {THEMES.map(t => (
-                              <Button
-                                key={t.id}
-                                variant="ghost"
-                                size="icon"
-                                className={cn(
-                                  "w-6 h-6 rounded-full border transition-all",
-                                  theme.id === t.id ? "border-stone-500 scale-110" : "border-stone-200 dark:border-stone-800 opacity-50"
-                                )}
-                                style={{ backgroundColor: t.paperColor }}
-                                onClick={() => setTheme(t)}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        <div className="space-y-1">
-                          <span className="text-[9px] text-stone-500 dark:text-stone-400">Font: {fontSize}px</span>
-                          <div className="flex gap-1">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="h-6 px-2 text-[9px]"
-                              onClick={() => setFontSize(Math.max(10, fontSize - 1))}
-                            >
-                              −
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="h-6 px-2 text-[9px]"
-                              onClick={() => setFontSize(Math.min(72, fontSize + 1))}
-                            >
-                              +
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                      <Button
-                        variant={isHandwriting ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setIsHandwriting(!isHandwriting)}
-                        className="w-full h-7 text-[9px] flex items-center justify-center gap-1.5"
-                      >
-                        <PenTool className="w-3 h-3" />
-                        {isHandwriting ? "Handwriting On" : "Handwriting Off"}
-                      </Button>
-                    </div>
-
-                    <Separator className="bg-stone-100 dark:bg-stone-850" />
-
-                    {/* Page Layout Section */}
-                    <div className="space-y-2">
-                      <Label className="text-[8px] uppercase tracking-wider font-bold opacity-60 block">Page Layout</Label>
-                      <div className="grid grid-cols-3 gap-1">
-                        <Button
-                          variant={pageLayout === 'pageless' ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setPageLayout('pageless')}
-                          className="h-7 text-[9px] font-semibold"
-                        >
-                          Pageless
-                        </Button>
-                        <Button
-                          variant={pageLayout === 'a4-portrait' ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setPageLayout('a4-portrait')}
-                          className="h-7 text-[9px] font-semibold"
-                        >
-                          Portrait
-                        </Button>
-                        <Button
-                          variant={pageLayout === 'a4-landscape' ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setPageLayout('a4-landscape')}
-                          className="h-7 text-[9px] font-semibold"
-                        >
-                          Landscape
-                        </Button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-1">
-                        <Button
-                          variant={pageMargin === 'normal' ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setPageMargin('normal')}
-                          className="h-6 text-[8px] font-semibold"
-                          disabled={pageLayout === 'pageless'}
-                        >
-                          Standard
-                        </Button>
-                        <Button
-                          variant={pageMargin === 'narrow' ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setPageMargin('narrow')}
-                          className="h-6 text-[8px] font-semibold"
-                          disabled={pageLayout === 'pageless'}
-                        >
-                          Narrow
-                        </Button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-1">
-                        <Button
-                          variant={pageLayoutMode === 'single' ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setPageLayoutMode('single')}
-                          className="h-6 text-[8px] font-semibold"
-                          disabled={pageLayout === 'pageless'}
-                        >
-                          Vertical
-                        </Button>
-                        <Button
-                          variant={pageLayoutMode === 'book' ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setPageLayoutMode('book')}
-                          className="h-6 text-[8px] font-semibold"
-                          disabled={pageLayout === 'pageless'}
-                        >
-                          Book
-                        </Button>
-                      </div>
-                    </div>
-
-                    <Separator className="bg-stone-100 dark:bg-stone-850" />
-
-                    {/* Export Section */}
-                    <div className="space-y-2">
-                      <Button
-                        onClick={exportPageToPDF}
-                        disabled={isExportingPDF}
-                        className="w-full bg-stone-900 text-white hover:bg-stone-800 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200 text-[10px] font-semibold h-8 flex items-center justify-center gap-2 disabled:opacity-75"
-                      >
-                        {isExportingPDF ? (
-                          <span>Generating...</span>
-                        ) : (
-                          <>
-                            <Download className="w-3 h-3" />
-                            <span>Save as PDF</span>
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        onClick={() => window.print()}
-                        variant="outline"
-                        className="w-full text-[10px] font-semibold h-7 flex items-center justify-center gap-2 border-stone-200 dark:border-stone-800 text-stone-700 dark:text-stone-300"
-                        disabled={isExportingPDF}
-                      >
-                        <Printer className="w-3 h-3 opacity-70" />
-                        <span>Print</span>
-                      </Button>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
 
               {/* Help Button */}
               <TooltipProvider>
@@ -3045,176 +2856,63 @@ export default function App() {
             transition={{ duration: 0.3 }}
             className={cn(
               "relative transition-all duration-400 ease-smooth print-paper-content z-10",
-              isHandwriting ? "font-handwriting" : "font-serif"
+              isHandwriting ? "font-handwriting" : "font-serif",
+              notebookStyle === 'spiral' && "notebook-spiral"
             )}
-            style={{ 
+            style={{
               backgroundColor: 'transparent',
               width: `${canvasWidth}px`,
               minHeight: '100%',
               paddingBottom: '80px',
             }}
           >
-            {/* Spiral Binding */}
+            {/* Spiral Binding - CSS-based realistic spiral */}
             {notebookStyle === 'spiral' && (
-              <div className="absolute left-0 top-0 bottom-0 w-20 z-20 pointer-events-none">
-                <svg className="w-full h-full" viewBox="0 0 80 1000" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="wireGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#5A4A3A"/>
-                      <stop offset="30%" stopColor="#8B7355"/>
-                      <stop offset="50%" stopColor="#C4A882"/>
-                      <stop offset="70%" stopColor="#8B7355"/>
-                      <stop offset="100%" stopColor="#5A4A3A"/>
-                    </linearGradient>
-                    <linearGradient id="wireHighlight" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.4"/>
-                      <stop offset="50%" stopColor="#FFFFFF" stopOpacity="0.1"/>
-                      <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.3"/>
-                    </linearGradient>
-                    <filter id="wireShadow" x="-50%" y="-50%" width="200%" height="200%">
-                      <feDropShadow dx="1" dy="2" stdDeviation="1.5" floodColor="#000" floodOpacity="0.4"/>
-                    </filter>
-                  </defs>
-                  {/* Spiral wire coils */}
-                  {[...Array(28)].map((_, i) => {
-                    const y = 40 + i * 34;
-                    const isEven = i % 2 === 0;
-                    return (
-                      <g key={i} filter="url(#wireShadow)">
-                        {/* Main wire loop */}
-                        <ellipse 
-                          cx="20" 
-                          cy={y} 
-                          rx="14" 
-                          ry="7" 
-                          fill="url(#wireGradient)" 
-                          stroke="#4A3A2A" 
-                          strokeWidth="1.5"
-                        />
-                        {/* Inner wire detail */}
-                        <ellipse 
-                          cx="20" 
-                          cy={y} 
-                          rx="10" 
-                          ry="5" 
-                          fill="none" 
-                          stroke="#6B5B4A" 
-                          strokeWidth="1"
-                        />
-                        {/* Wire highlight */}
-                        <ellipse 
-                          cx="20" 
-                          cy={y} 
-                          rx="12" 
-                          ry="6" 
-                          fill="url(#wireHighlight)" 
-                          opacity="0.5"
-                        />
-                        {/* Wire center hole */}
-                        <ellipse 
-                          cx="20" 
-                          cy={y} 
-                          rx="5" 
-                          ry="2.5" 
-                          fill="#3A2A1A" 
-                          opacity="0.6"
-                        />
-                        {/* Connecting wire segment */}
-                        {i < 27 && (
-                          <path 
-                            d={`M ${isEven ? 34 : 6} ${y + 7} Q ${isEven ? 45 : -5} ${y + 17} ${isEven ? 34 : 6} ${y + 27}`}
-                            fill="none" 
-                            stroke="url(#wireGradient)" 
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                          />
-                        )}
-                      </g>
-                    );
-                  })}
-                </svg>
+              <div className="spiral-binding">
+                {Array.from({ length: 25 }).map((_, i) => (
+                  <div key={i} className="spiral-loop" />
+                ))}
               </div>
             )}
 
-            {/* Paper with punch holes and lines */}
-            <div className={cn(
-              "relative transition-all duration-500 ease-in-out",
-              notebookStyle === 'spiral' ? "ml-20" : ""
-            )}>
-              {/* Punch holes */}
-              {notebookStyle === 'spiral' && (
-                <div className="absolute left-0 top-0 bottom-0 w-10 pointer-events-none">
-                  {[...Array(28)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="absolute w-5 h-6 rounded-full bg-stone-200/60 dark:bg-stone-700/60"
-                      style={{ 
-                        left: '8px',
-                        top: `${37 + i * 34}px`,
-                        boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.1)'
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
+            {/* Paper shadow for spiral */}
+            {notebookStyle === 'spiral' && (
+              <div className="absolute inset-0 pointer-events-none" style={{
+                boxShadow: 'inset 0 0 40px rgba(0,0,0,0.06), 0 6px 25px rgba(0,0,0,0.1)'
+              }} />
+            )}
 
-              {/* Notebook lines and margin */}
-              {notebookStyle === 'spiral' && (
-                <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                  {/* Horizontal lines */}
-                  <div className="absolute inset-0">
-                    {[...Array(100)].map((_, i) => (
-                      <div
-                        key={i}
-                        className="absolute left-0 right-0 border-b border-blue-300/30 dark:border-blue-700/25"
-                        style={{ top: `${34 + i * 34}px` }}
-                      />
-                    ))}
-                  </div>
-                  {/* Red margin line */}
-                  <div className="absolute left-14 top-0 bottom-0 w-px bg-red-400/35 dark:bg-red-600/35" />
-                </div>
-              )}
-
-              {/* Paper shadow for spiral */}
-              {notebookStyle === 'spiral' && (
-                <div className="absolute inset-0 pointer-events-none" style={{
-                  boxShadow: 'inset 0 0 40px rgba(0,0,0,0.06), 0 6px 25px rgba(0,0,0,0.1)'
-                }} />
-              )}
-
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3 }}
-                className={cn(
-                  "relative z-10",
-                  notebookStyle === 'spiral' ? "ml-10" : ""
-                )}
-              >
-                <Editor
-                  content={content}
-                  onChange={setContent}
-                  onInit={setEditor}
-                  activeHighlighterColor={activeHighlighterColor}
-                  fontSize={fontSize}
-                  onFormat={handleFormat}
-                  isDrawingArrowMode={isDrawingArrowMode}
-                  onToggleDrawingArrowMode={() => setIsDrawingArrowMode(!isDrawingArrowMode)}
-                  pageLayout={pageLayout}
-              pageMargin={pageMargin}
-              theme={theme}
-              texture={texture}
-              onCreateFlashcard={handleCreateFlashcard}
-              onAISelectionFormat={handleAISelectionFormat}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
               className={cn(
-                "min-h-[700px]", 
-                isHandwriting ? "[&_.ProseMirror]:font-handwriting [&_.ProseMirror_p]:font-handwriting [&_.ProseMirror_h1]:font-handwriting [&_.ProseMirror_h2]:font-handwriting [&_.ProseMirror_h3]:font-handwriting" : "[&_.ProseMirror]:font-bangla [&_.ProseMirror_p]:font-bangla [&_.ProseMirror_h1]:font-bangla [&_.ProseMirror_h2]:font-bangla [&_.ProseMirror_h3]:font-bangla",
-                "[&_.ProseMirror]:whitespace-pre-wrap"
+                "relative z-10",
+                notebookStyle === 'spiral' ? "ml-10" : ""
               )}
-                />
-              </motion.div>
-            </div>
+            >
+              <Editor
+                content={content}
+                onChange={setContent}
+                onInit={setEditor}
+                activeHighlighterColor={activeHighlighterColor}
+                fontSize={fontSize}
+                onFormat={handleFormat}
+                isDrawingArrowMode={isDrawingArrowMode}
+                onToggleDrawingArrowMode={() => setIsDrawingArrowMode(!isDrawingArrowMode)}
+                pageLayout={pageLayout}
+                pageMargin={pageMargin}
+                theme={theme}
+                texture={texture}
+                onCreateFlashcard={handleCreateFlashcard}
+                onAISelectionFormat={handleAISelectionFormat}
+                className={cn(
+                  "min-h-[700px]",
+                  isHandwriting ? "[&_.ProseMirror]:font-handwriting [&_.ProseMirror_p]:font-handwriting [&_.ProseMirror_h1]:font-handwriting [&_.ProseMirror_h2]:font-handwriting [&_.ProseMirror_h3]:font-handwriting" : "[&_.ProseMirror]:font-bangla [&_.ProseMirror_p]:font-bangla [&_.ProseMirror_h1]:font-bangla [&_.ProseMirror_h2]:font-bangla [&_.ProseMirror_h3]:font-bangla",
+                  "[&_.ProseMirror]:whitespace-pre-wrap"
+                )}
+              />
+            </motion.div>
           </motion.div>
         </main>
       </div>

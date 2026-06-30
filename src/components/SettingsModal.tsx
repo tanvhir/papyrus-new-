@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { 
+import {
   Settings as SettingsIcon,
   Sparkles,
   Palette,
@@ -9,14 +9,12 @@ import {
   Keyboard,
   Info,
   ChevronRight,
-  Moon,
-  Sun,
-  Monitor,
-  Check
+  Check,
+  FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type SettingsTab = 'general' | 'ai' | 'editor' | 'appearance' | 'keyboard' | 'about';
+type SettingsTab = 'general' | 'ai' | 'editor' | 'appearance' | 'page' | 'keyboard' | 'about';
 
 interface SettingsModalProps {
   open: boolean;
@@ -39,6 +37,21 @@ interface SettingsModalProps {
   onUpdateDisableAIDividers: (disabled: boolean) => void;
   onSetCustomModelActive: (active: boolean) => void;
   onSetCustomModelInput: (input: string) => void;
+  // Page setup props
+  pageLayout: 'pageless' | 'a4-portrait' | 'a4-landscape';
+  pageMargin: 'normal' | 'narrow' | 'none';
+  pageLayoutMode: 'single' | 'book';
+  notebookStyle: 'classic' | 'spiral';
+  theme: any;
+  fontSize: number;
+  isHandwriting: boolean;
+  onPageLayoutChange: (layout: 'pageless' | 'a4-portrait' | 'a4-landscape') => void;
+  onPageMarginChange: (margin: 'normal' | 'narrow' | 'none') => void;
+  onPageLayoutModeChange: (mode: 'single' | 'book') => void;
+  onNotebookStyleChange: (style: 'classic' | 'spiral') => void;
+  onThemeChange: (theme: any) => void;
+  onFontSizeChange: (size: number) => void;
+  onHandwritingToggle: (enabled: boolean) => void;
 }
 
 const TABS = [
@@ -46,6 +59,7 @@ const TABS = [
   { id: 'ai' as SettingsTab, label: 'AI', icon: Sparkles },
   { id: 'editor' as SettingsTab, label: 'Editor', icon: Type },
   { id: 'appearance' as SettingsTab, label: 'Appearance', icon: Palette },
+  { id: 'page' as SettingsTab, label: 'Page', icon: FileText },
   { id: 'keyboard' as SettingsTab, label: 'Keyboard', icon: Keyboard },
   { id: 'about' as SettingsTab, label: 'About', icon: Info },
 ];
@@ -66,16 +80,11 @@ const ACCENT_COLORS = [
   { name: 'Amber', value: '#f59e0b' },
 ];
 
-const THEMES = [
-  { id: 'light', name: 'Light', icon: Sun },
-  { id: 'dark', name: 'Dark', icon: Moon },
-  { id: 'system', name: 'System', icon: Monitor },
-];
 
 const HIGHLIGHT_STYLES = [
-  { id: 'minimal', name: 'Minimal' },
   { id: 'balanced', name: 'Balanced' },
-  { id: 'rich', name: 'Rich' },
+  { id: 'generous', name: 'Generous' },
+  { id: 'none', name: 'None' },
 ];
 
 const Toggle = ({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) => (
@@ -133,19 +142,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onUpdateDisableAIDividers,
   onSetCustomModelActive,
   onSetCustomModelInput,
+  pageLayout,
+  pageMargin,
+  pageLayoutMode,
+  notebookStyle,
+  theme,
+  fontSize,
+  isHandwriting,
+  onPageLayoutChange,
+  onPageMarginChange,
+  onPageLayoutModeChange,
+  onNotebookStyleChange,
+  onThemeChange,
+  onFontSizeChange,
+  onHandwritingToggle,
 }) => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');
   const [accentColor, setAccentColor] = useState('#1c1917');
-  const [theme, setTheme] = useState('system');
   const [editorWidth, setEditorWidth] = useState(850);
-  const [fontSize, setFontSize] = useState(18);
   const [paperTexture, setPaperTexture] = useState(true);
   const [autoSave, setAutoSave] = useState(true);
   const [typewriterMode, setTypewriterMode] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[1200px] h-[650px] max-h-[90vh] p-0 bg-[#FCFBF7] dark:bg-[#0A0A0A] border border-stone-200/50 dark:border-stone-800/50 rounded-2xl shadow-2xl overflow-hidden">
+      <DialogContent className="w-full max-w-[900px] h-[650px] max-h-[90vh] p-0 bg-[#FCFBF7] dark:bg-[#0A0A0A] border border-stone-200/50 dark:border-stone-800/50 rounded-2xl shadow-2xl overflow-hidden">
         <div className="flex h-full">
           {/* Left Sidebar */}
           <div className="w-56 border-r border-stone-200/50 dark:border-stone-800/50 bg-white/50 dark:bg-stone-950/50 backdrop-blur-sm">
@@ -292,30 +313,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
 
                     <div>
-                      <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-3">Theme</h3>
-                      <div className="grid grid-cols-3 gap-3">
-                        {THEMES.map((t) => {
-                          const Icon = t.icon;
-                          return (
-                            <button
-                              key={t.id}
-                              onClick={() => setTheme(t.id)}
-                              className={cn(
-                                "p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all duration-200",
-                                theme === t.id
-                                  ? "border-stone-900 dark:border-stone-100 bg-stone-50 dark:bg-stone-900/30"
-                                  : "border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700 bg-white dark:bg-stone-950"
-                              )}
-                            >
-                              <Icon className="w-5 h-5 text-stone-700 dark:text-stone-300" />
-                              <span className="text-sm font-medium text-stone-900 dark:text-stone-100">{t.name}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <div>
                       <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-3">Accent Color</h3>
                       <div className="flex gap-2">
                         {ACCENT_COLORS.map((color) => (
@@ -356,6 +353,170 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   </div>
                 )}
 
+                {activeTab === 'page' && (
+                  <div className="space-y-8">
+                    <div>
+                      <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-1">Page Setup</h3>
+                      <p className="text-sm text-stone-500 dark:text-stone-400">Configure page layout and appearance</p>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-3">Page Layout</h3>
+                      <div className="grid grid-cols-3 gap-2">
+                        <button
+                          onClick={() => onPageLayoutChange('pageless')}
+                          className={cn(
+                            "p-3 rounded-lg border-2 text-sm font-medium transition-all",
+                            pageLayout === 'pageless'
+                              ? "border-stone-900 dark:border-stone-100 bg-stone-50 dark:bg-stone-900/30"
+                              : "border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700 bg-white dark:bg-stone-950"
+                          )}
+                        >
+                          Pageless
+                        </button>
+                        <button
+                          onClick={() => onPageLayoutChange('a4-portrait')}
+                          className={cn(
+                            "p-3 rounded-lg border-2 text-sm font-medium transition-all",
+                            pageLayout === 'a4-portrait'
+                              ? "border-stone-900 dark:border-stone-100 bg-stone-50 dark:bg-stone-900/30"
+                              : "border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700 bg-white dark:bg-stone-950"
+                          )}
+                        >
+                          Portrait
+                        </button>
+                        <button
+                          onClick={() => onPageLayoutChange('a4-landscape')}
+                          className={cn(
+                            "p-3 rounded-lg border-2 text-sm font-medium transition-all",
+                            pageLayout === 'a4-landscape'
+                              ? "border-stone-900 dark:border-stone-100 bg-stone-50 dark:bg-stone-900/30"
+                              : "border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700 bg-white dark:bg-stone-950"
+                          )}
+                        >
+                          Landscape
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-3">Page Margin</h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => onPageMarginChange('normal')}
+                          disabled={pageLayout === 'pageless'}
+                          className={cn(
+                            "p-3 rounded-lg border-2 text-sm font-medium transition-all",
+                            pageMargin === 'normal'
+                              ? "border-stone-900 dark:border-stone-100 bg-stone-50 dark:bg-stone-900/30"
+                              : "border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700 bg-white dark:bg-stone-950",
+                            pageLayout === 'pageless' && "opacity-50 cursor-not-allowed"
+                          )}
+                        >
+                          Standard
+                        </button>
+                        <button
+                          onClick={() => onPageMarginChange('narrow')}
+                          disabled={pageLayout === 'pageless'}
+                          className={cn(
+                            "p-3 rounded-lg border-2 text-sm font-medium transition-all",
+                            pageMargin === 'narrow'
+                              ? "border-stone-900 dark:border-stone-100 bg-stone-50 dark:bg-stone-900/30"
+                              : "border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700 bg-white dark:bg-stone-950",
+                            pageLayout === 'pageless' && "opacity-50 cursor-not-allowed"
+                          )}
+                        >
+                          Narrow
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-3">Layout Mode</h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => onPageLayoutModeChange('single')}
+                          disabled={pageLayout === 'pageless'}
+                          className={cn(
+                            "p-3 rounded-lg border-2 text-sm font-medium transition-all",
+                            pageLayoutMode === 'single'
+                              ? "border-stone-900 dark:border-stone-100 bg-stone-50 dark:bg-stone-900/30"
+                              : "border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700 bg-white dark:bg-stone-950",
+                            pageLayout === 'pageless' && "opacity-50 cursor-not-allowed"
+                          )}
+                        >
+                          Vertical
+                        </button>
+                        <button
+                          onClick={() => onPageLayoutModeChange('book')}
+                          disabled={pageLayout === 'pageless'}
+                          className={cn(
+                            "p-3 rounded-lg border-2 text-sm font-medium transition-all",
+                            pageLayoutMode === 'book'
+                              ? "border-stone-900 dark:border-stone-100 bg-stone-50 dark:bg-stone-900/30"
+                              : "border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700 bg-white dark:bg-stone-950",
+                            pageLayout === 'pageless' && "opacity-50 cursor-not-allowed"
+                          )}
+                        >
+                          Book
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-3">Notebook Style</h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => onNotebookStyleChange('classic')}
+                          className={cn(
+                            "p-3 rounded-lg border-2 text-sm font-medium transition-all",
+                            notebookStyle === 'classic'
+                              ? "border-stone-900 dark:border-stone-100 bg-stone-50 dark:bg-stone-900/30"
+                              : "border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700 bg-white dark:bg-stone-950"
+                          )}
+                        >
+                          Classic Paper
+                        </button>
+                        <button
+                          onClick={() => onNotebookStyleChange('spiral')}
+                          className={cn(
+                            "p-3 rounded-lg border-2 text-sm font-medium transition-all",
+                            notebookStyle === 'spiral'
+                              ? "border-stone-900 dark:border-stone-100 bg-stone-50 dark:bg-stone-900/30"
+                              : "border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700 bg-white dark:bg-stone-950"
+                          )}
+                        >
+                          Spiral Notebook
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-3">Font Size</h3>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => onFontSizeChange(Math.max(10, fontSize - 1))}
+                          className="px-3 py-2 rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 hover:bg-stone-50 dark:hover:bg-stone-900/50 text-sm"
+                        >
+                          −
+                        </button>
+                        <span className="text-sm text-stone-600 dark:text-stone-400 w-12 text-center">{fontSize}px</span>
+                        <button
+                          onClick={() => onFontSizeChange(Math.min(72, fontSize + 1))}
+                          className="px-3 py-2 rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 hover:bg-stone-50 dark:hover:bg-stone-900/50 text-sm"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800">
+                      <span className="text-sm text-stone-700 dark:text-stone-300">Handwriting Mode</span>
+                      <Toggle enabled={isHandwriting} onToggle={() => onHandwritingToggle(!isHandwriting)} />
+                    </div>
+                  </div>
+                )}
+
                 {activeTab === 'editor' && (
                   <div className="space-y-8">
                     <div>
@@ -376,7 +537,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100">Font Size</h3>
                         <span className="text-sm text-stone-500 dark:text-stone-400">{fontSize}px</span>
                       </div>
-                      <Slider value={fontSize} onChange={setFontSize} min={12} max={24} />
+                      <Slider value={fontSize} onChange={onFontSizeChange} min={12} max={24} />
                     </div>
 
                     <div className="space-y-3">

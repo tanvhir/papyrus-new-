@@ -39,7 +39,7 @@ const SECTIONS = [
   { id: 'about' as HelpSection, label: 'About Papyrus', icon: Info },
 ];
 
-const Callout = ({ type = 'info', children }: { type?: 'info' | 'warning' | 'success'; children: React.ReactNode }) => {
+const Callout = ({ type = 'info', className, children }: { type?: 'info' | 'warning' | 'success'; className?: string; children: React.ReactNode }) => {
   const styles = {
     info: 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200',
     warning: 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200',
@@ -55,7 +55,7 @@ const Callout = ({ type = 'info', children }: { type?: 'info' | 'warning' | 'suc
   const Icon = icons[type];
   
   return (
-    <div className={cn('p-4 rounded-lg border flex gap-3', styles[type])}>
+    <div className={cn('p-4 rounded-lg border flex gap-3', styles[type], className)}>
       <Icon className="w-5 h-5 flex-shrink-0 mt-0.5" />
       <div className="text-sm leading-relaxed">{children}</div>
     </div>
@@ -87,14 +87,16 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({ open, onOpenChange }) =>
   const scrollToSection = (sectionId: HelpSection) => {
     setActiveSection(sectionId);
     const element = document.getElementById(`section-${sectionId}`);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const contentContainer = document.querySelector('[data-content-area]');
+    if (element && contentContainer) {
+      const elementTop = element.offsetTop;
+      contentContainer.scrollTo({ top: elementTop, behavior: 'smooth' });
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[1300px] h-[85vh] max-h-[90vh] p-0 bg-[#FCFBF7] dark:bg-[#0A0A0A] border border-stone-200/50 dark:border-stone-800/50 rounded-2xl shadow-2xl overflow-hidden">
+      <DialogContent className="w-full max-w-[1000px] h-[85vh] max-h-[90vh] p-0 bg-[#FCFBF7] dark:bg-[#0A0A0A] border border-stone-200/50 dark:border-stone-800/50 rounded-2xl shadow-2xl overflow-hidden">
         <div className="flex h-full">
           {/* Left Sidebar Navigation */}
           <div className="w-64 border-r border-stone-200/50 dark:border-stone-800/50 bg-white/50 dark:bg-stone-950/50 backdrop-blur-sm flex flex-col">
@@ -131,7 +133,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({ open, onOpenChange }) =>
           </div>
 
           {/* Right Content Area */}
-          <div className="flex-1 overflow-y-auto bg-stone-50/40 dark:bg-stone-900/40">
+          <div className="flex-1 overflow-y-auto bg-stone-50/40 dark:bg-stone-900/40" data-content-area>
             <div className="max-w-3xl mx-auto p-8 space-y-12">
               
               {/* Welcome Section */}

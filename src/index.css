@@ -25,17 +25,181 @@
 }
 
 .paper-grid {
-  background-image: 
+  background-image:
     linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
   background-size: 2rem 2rem;
 }
 
 .paper-linen {
-  background: 
+  background:
     linear-gradient(rgba(0,0,0,0.02) 2px, transparent 2px),
     linear-gradient(90deg, rgba(0,0,0,0.02) 2px, transparent 2px);
   background-size: 4px 4px;
+}
+
+/* Spiral Notebook Styles */
+.notebook-spiral .page-container-node {
+  position: relative;
+  padding-left: calc(var(--page-margin-x, 64px) + 48px) !important;
+  background-color: #FFFCF5;
+  background-image:
+    /* Premium paper texture */
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"),
+    /* Horizontal notebook lines */
+    repeating-linear-gradient(
+      transparent,
+      transparent 31px,
+      rgba(135, 206, 235, 0.3) 31px,
+      rgba(135, 206, 235, 0.3) 32px
+    );
+  background-size: 100% 32px, 100% 32px;
+  box-shadow:
+    0 1px 3px rgba(0,0,0,0.12),
+    0 4px 12px rgba(0,0,0,0.08),
+    0 8px 24px rgba(0,0,0,0.06),
+    inset 0 0 0 1px rgba(0,0,0,0.02);
+}
+
+/* Red margin line for spiral notebook */
+.notebook-spiral .page-container-node::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: calc(var(--page-margin-x, 64px) + 48px);
+  width: 2px;
+  height: 100%;
+  background-color: #ef4444;
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 10;
+  transition: opacity 0.3s var(--ease-smooth);
+}
+
+/* Spiral binding container */
+.notebook-spiral .page-container-node::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 48px;
+  background: linear-gradient(
+    to right,
+    rgba(0,0,0,0.08) 0%,
+    rgba(0,0,0,0.02) 100%
+  );
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Spiral wire loops - generated dynamically in component */
+.spiral-binding {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  padding: 24px 0;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.spiral-loop {
+  position: relative;
+  width: 32px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Punch hole */
+.spiral-loop::before {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #FFFCF5;
+  box-shadow:
+    inset 0 2px 4px rgba(0,0,0,0.3),
+    inset 0 -1px 2px rgba(255,255,255,0.8),
+    0 1px 2px rgba(0,0,0,0.1);
+  border: 1px solid rgba(0,0,0,0.1);
+  z-index: 10;
+}
+
+/* Spiral wire */
+.spiral-loop::after {
+  content: "";
+  position: absolute;
+  left: -10px;
+  width: 28px;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(
+    to bottom,
+    #a8a8a8 0%,
+    #d4d4d4 20%,
+    #ffffff 50%,
+    #d4d4d4 80%,
+    #a8a8a8 100%
+  );
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.3),
+    inset 0 1px 1px rgba(255,255,255,0.8);
+  z-index: 15;
+  transform: rotate(-5deg);
+}
+
+/* Dark mode spiral notebook */
+.dark .notebook-spiral .page-container-node {
+  background-color: #1a1a1a;
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.06'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(
+      transparent,
+      transparent 31px,
+      rgba(100, 150, 200, 0.2) 31px,
+      rgba(100, 150, 200, 0.2) 32px
+    );
+}
+
+.dark .notebook-spiral .page-container-node::before {
+  background-color: #f87171;
+  opacity: 0.3;
+}
+
+.dark .notebook-spiral .page-container-node::after {
+  background: linear-gradient(
+    to right,
+    rgba(0,0,0,0.4) 0%,
+    rgba(0,0,0,0.1) 100%
+  );
+}
+
+.dark .spiral-loop::before {
+  background: #1a1a1a;
+  box-shadow:
+    inset 0 2px 4px rgba(0,0,0,0.5),
+    inset 0 -1px 2px rgba(255,255,255,0.1),
+    0 1px 2px rgba(0,0,0,0.3);
+  border-color: rgba(255,255,255,0.1);
+}
+
+.dark .spiral-loop::after {
+  background: linear-gradient(
+    to bottom,
+    #4a4a4a 0%,
+    #6a6a6a 20%,
+    #8a8a8a 50%,
+    #6a6a6a 80%,
+    #4a4a4a 100%
+  );
 }
 
 /* Custom Utilities */
