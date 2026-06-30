@@ -203,7 +203,7 @@ const normalizeContent = (html: string) => {
   return `<div data-type="page">${preserved}</div>`;
 };
 
-const Editor: React.FC<EditorProps> = ({
+function Editor({
   content,
   onChange,
   className,
@@ -223,7 +223,7 @@ const Editor: React.FC<EditorProps> = ({
   onCreateFlashcard,
   isSimpleMode = false,
   onAISelectionFormat
-}) => {
+}: EditorProps) {
   const [activeSubMenu, setActiveSubMenu] = React.useState<SubMenu>('main');
   const [editingMath, setEditingMath] = React.useState<{ pos: number; latex: string } | null>(null);
   const [mathInputVal, setMathInputVal] = React.useState('');
@@ -279,16 +279,6 @@ const Editor: React.FC<EditorProps> = ({
       }
     }
   };
-
-  React.useEffect(() => {
-    if (editable && editor) {
-      const editorElement = editor.view.dom;
-      editorElement.addEventListener('paste', handlePaste);
-      return () => {
-        editorElement.removeEventListener('paste', handlePaste);
-      };
-    }
-  }, [editable, editor, onImagePaste]);
 
   const extensions = React.useMemo(() => {
     const baseExtensions = [
@@ -516,6 +506,16 @@ const Editor: React.FC<EditorProps> = ({
       }
     }
   });
+
+  React.useEffect(() => {
+    if (editable && editor) {
+      const editorElement = editor.view.dom;
+      editorElement.addEventListener('paste', handlePaste);
+      return () => {
+        editorElement.removeEventListener('paste', handlePaste);
+      };
+    }
+  }, [editable, editor, onImagePaste]);
 
   const handleSaveMath = React.useCallback(() => {
     if (editingMath && editor) {
