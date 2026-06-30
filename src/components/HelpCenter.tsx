@@ -97,14 +97,14 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({ open, onOpenChange }) =>
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-[1000px] h-[85vh] max-h-[90vh] p-0 bg-[#FCFBF7] dark:bg-[#0A0A0A] border border-stone-200/50 dark:border-stone-800/50 rounded-2xl shadow-2xl overflow-hidden">
-        <div className="flex h-full">
+        <div className="flex h-full min-h-0">
           {/* Left Sidebar Navigation */}
-          <div className="w-64 border-r border-stone-200/50 dark:border-stone-800/50 bg-white/50 dark:bg-stone-950/50 backdrop-blur-sm flex flex-col">
+          <div className="w-64 border-r border-stone-200/50 dark:border-stone-800/50 bg-white/50 dark:bg-stone-950/50 backdrop-blur-sm flex flex-col flex-shrink-0">
             <div className="p-6 border-b border-stone-200/50 dark:border-stone-800/50">
               <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">Help Center</h2>
               <p className="text-sm text-stone-500 dark:text-stone-400 mt-1">Learn how to use Papyrus</p>
             </div>
-            <nav className="flex-1 overflow-y-auto p-4">
+            <nav className="flex-1 overflow-y-auto p-4 min-h-0">
               <ul className="space-y-1">
                 {SECTIONS.map((section) => {
                   const Icon = section.icon;
@@ -133,7 +133,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({ open, onOpenChange }) =>
           </div>
 
           {/* Right Content Area */}
-          <div className="flex-1 overflow-y-auto bg-stone-50/40 dark:bg-stone-900/40" data-content-area>
+          <div className="flex-1 overflow-y-auto bg-stone-50/40 dark:bg-stone-900/40 min-h-0" data-content-area>
             <div className="max-w-3xl mx-auto p-8 space-y-12">
               
               {/* Welcome Section */}

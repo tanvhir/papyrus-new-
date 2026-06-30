@@ -55,6 +55,7 @@ import { Button } from '@/components/ui/button';
 import html2canvas from 'html2canvas-pro';
 import { jsPDF } from 'jspdf';
 import { CommandPalette } from '@/src/components/CommandPalette';
+import { SpiralBinding } from '@/src/components/SpiralBinding';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -2866,30 +2867,16 @@ export default function App() {
               paddingBottom: '80px',
             }}
           >
-            {/* Spiral Binding - CSS-based realistic spiral */}
+            {/* Premium Spiral Binding - SVG-based continuous metal wire */}
             {notebookStyle === 'spiral' && (
-              <div className="spiral-binding">
-                {Array.from({ length: 25 }).map((_, i) => (
-                  <div key={i} className="spiral-loop" />
-                ))}
-              </div>
-            )}
-
-            {/* Paper shadow for spiral */}
-            {notebookStyle === 'spiral' && (
-              <div className="absolute inset-0 pointer-events-none" style={{
-                boxShadow: 'inset 0 0 40px rgba(0,0,0,0.06), 0 6px 25px rgba(0,0,0,0.1)'
-              }} />
+              <SpiralBinding height={mainHeight} />
             )}
 
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3 }}
-              className={cn(
-                "relative z-10",
-                notebookStyle === 'spiral' ? "ml-10" : ""
-              )}
+              className="relative z-10"
             >
               <Editor
                 content={content}

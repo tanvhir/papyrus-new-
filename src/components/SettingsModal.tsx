@@ -167,9 +167,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-[900px] h-[650px] max-h-[90vh] p-0 bg-[#FCFBF7] dark:bg-[#0A0A0A] border border-stone-200/50 dark:border-stone-800/50 rounded-2xl shadow-2xl overflow-hidden">
-        <div className="flex h-full">
+        <div className="flex h-full min-h-0">
           {/* Left Sidebar */}
-          <div className="w-56 border-r border-stone-200/50 dark:border-stone-800/50 bg-white/50 dark:bg-stone-950/50 backdrop-blur-sm">
+          <div className="w-56 border-r border-stone-200/50 dark:border-stone-800/50 bg-white/50 dark:bg-stone-950/50 backdrop-blur-sm flex-shrink-0">
             <div className="p-4">
               <h2 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-4">Settings</h2>
               <nav className="space-y-0.5">
@@ -199,7 +199,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
           {/* Right Content */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto min-h-0">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}
