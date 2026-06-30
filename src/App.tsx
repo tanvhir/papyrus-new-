@@ -5,6 +5,8 @@ import { StationeryBar } from '@/src/components/StationeryBar';
 import { FlashcardImport } from '@/src/components/FlashcardImport';
 import { StudySession } from '@/src/components/StudySession';
 import { FlashcardCreator } from '@/src/components/FlashcardCreator';
+import { SettingsModal } from '@/src/components/SettingsModal';
+import { HelpCenter } from '@/src/components/HelpCenter';
 import { useAuth } from '@/src/context/AuthContext';
 import { LoginScreen } from '@/src/components/LoginScreen';
 import { InstallerOverlay } from '@/src/components/InstallerOverlay';
@@ -731,18 +733,10 @@ export default function App() {
   };
 
   const BUILTIN_MODELS = [
-    'gemini-2.5-flash',
-    'gemini-3.5-flash',
-    'gemini-1.5-pro',
-    'gemini-1.5-flash',
     'gemma-4-31b',
+    'gemini-2.5-flash',
     'gemini-3.1-flash-lite',
-    'deep-research-pro',
-    'gemini-2-flash',
-    'gemini-3-flash',
-    'gemini-3.1-pro',
-    'gemma-4-26b',
-    'antigravity'
+    'gemini-3.5-flash',
   ];
 
   const [isCustomModelActive, setIsCustomModelActive] = useState(() => {
@@ -2551,451 +2545,32 @@ export default function App() {
         </DialogContent>
       </Dialog>
 
-      {/* AI & Model Settings Dialog */}
-      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-        <DialogContent className="max-w-2xl bg-[#FCFBF7] dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-2xl p-0 flex flex-col overflow-hidden">
-          {/* Header */}
-          <div className="p-6 border-b border-stone-150 dark:border-stone-800 bg-white dark:bg-stone-950 flex-none">
-            <DialogHeader>
-              <DialogTitle className="font-serif text-xl tracking-tight text-stone-900 dark:text-stone-100 flex items-center gap-2.5">
-                <Settings className="w-5 h-5 text-stone-600 dark:text-stone-400" />
-                AI & Model Settings
-              </DialogTitle>
-            </DialogHeader>
-            <p className="text-xs text-stone-500 dark:text-stone-400 mt-1.5 leading-normal">
-              Manage your model overrides, local browser keys, text formatting thresholds, and active layout generators.
-            </p>
-          </div>
+      {/* Settings Modal */}
+      <SettingsModal
+        open={isSettingsOpen}
+        onOpenChange={setIsSettingsOpen}
+        customApiKey={customApiKey}
+        customModel={customModel}
+        isCustomModelActive={isCustomModelActive}
+        customModelInput={customModelInput}
+        highlightStyle={highlightStyle}
+        disableAIFlashcards={disableAIFlashcards}
+        disableAIArrows={disableAIArrows}
+        disableAIStickies={disableAIStickies}
+        disableAIDividers={disableAIDividers}
+        onUpdateCustomApiKey={handleUpdateCustomApiKey}
+        onUpdateCustomModel={handleUpdateCustomModel}
+        onUpdateHighlightStyle={handleUpdateHighlightStyle}
+        onUpdateDisableAIFlashcards={handleUpdateDisableAIFlashcards}
+        onUpdateDisableAIArrows={handleUpdateDisableAIArrows}
+        onUpdateDisableAIStickies={handleUpdateDisableAIStickies}
+        onUpdateDisableAIDividers={handleUpdateDisableAIDividers}
+        onSetCustomModelActive={setIsCustomModelActive}
+        onSetCustomModelInput={setCustomModelInput}
+      />
 
-          {/* Body */}
-          <div className="p-6 space-y-6 overflow-y-auto max-h-[65vh] font-sans text-sm">
-            {/* API Key */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-baseline">
-                <label className="text-xs uppercase tracking-wider font-bold opacity-75 text-stone-800 dark:text-stone-200">
-                  Gemini API Key
-                </label>
-                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Local Storage Sync</span>
-              </div>
-              <input
-                type="password"
-                placeholder="Using default server API key..."
-                value={customApiKey}
-                onChange={(e) => handleUpdateCustomApiKey(e.target.value)}
-                className="w-full h-10 px-3 border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-500 font-mono transition-all"
-              />
-              <p className="text-[10px] text-stone-400 leading-normal">
-                Leave blank to use the default backend-provided key. Enter your custom key to bypass default backend limits when hosting or deploying.
-              </p>
-            </div>
-
-            {/* Model Selection */}
-            <div className="space-y-2">
-              <label className="block text-xs uppercase tracking-wider font-bold opacity-75 text-stone-800 dark:text-stone-200">
-                Core AI Model Select
-              </label>
-              <select
-                value={isCustomModelActive ? 'custom' : customModel}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === 'custom') {
-                    setIsCustomModelActive(true);
-                  } else {
-                    setIsCustomModelActive(false);
-                    handleUpdateCustomModel(val);
-                  }
-                }}
-                className="w-full h-10 px-3 border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-500 font-sans cursor-pointer transition-all"
-              >
-                <option value="gemini-2.5-flash">Gemini 2.5 Flash (Balanced - Default & Fast)</option>
-                <option value="gemini-3.5-flash">Gemini 3.5 Flash (Performance - Extreme Speed)</option>
-                <option value="gemini-1.5-pro">Gemini 1.5 Pro (Analytical - Highly Logical & Multi-lingual)</option>
-                <option value="gemini-1.5-flash">Gemini 1.5 Flash (Legacy - Backward Compatible)</option>
-                <option value="gemma-4-31b">Gemma 4 31B (Open Reasoning - Exceptional Academic Structure)</option>
-                <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite (Ultra Low Latency)</option>
-                <option value="deep-research-pro">Deep Research Pro Preview (Exhaustive & Agentic Synthesis)</option>
-                <option value="gemini-2-flash">Gemini 2 Flash (V2 Next-Gen Flash)</option>
-                <option value="gemini-3-flash">Gemini 3 Flash (V3 Next-Gen Preview)</option>
-                <option value="gemini-3.1-pro">Gemini 3.1 Pro (Heavyweight Logic & Code Analysis)</option>
-                <option value="gemma-4-26b">Gemma 4 26B (Lightweight & Structured Output)</option>
-                <option value="antigravity">Antigravity Agent (Multi-step Layout Specialist)</option>
-                <option value="custom">-- Custom Override Model ID --</option>
-              </select>
-
-              {isCustomModelActive && (
-                <div className="mt-2 space-y-1.5 p-3 bg-stone-100/50 dark:bg-stone-950/30 border border-stone-200/50 dark:border-stone-800/80 rounded-xl">
-                  <input
-                    type="text"
-                    placeholder="e.g. gemini-2.0-pro-exp-02-05"
-                    value={customModelInput}
-                    onChange={(e) => {
-                      setCustomModelInput(e.target.value);
-                      handleUpdateCustomModel(e.target.value);
-                    }}
-                    className="w-full h-9 px-3 border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-500 font-mono"
-                  />
-                  <p className="text-[10px] text-stone-400">
-                    Type any valid model slug. For example, <code className="bg-stone-150 dark:bg-stone-850 px-1 py-0.5 rounded text-stone-600 dark:text-stone-300 font-mono">gemini-2.0-pro-exp-02-05</code>.
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Highlighting Style */}
-            <div className="space-y-2">
-              <label className="block text-xs uppercase tracking-wider font-bold opacity-75 text-stone-800 dark:text-stone-200">
-                AI Text Highlighting Style
-              </label>
-              <select
-                value={highlightStyle}
-                onChange={(e) => handleUpdateHighlightStyle(e.target.value as 'balanced' | 'generous' | 'none')}
-                className="w-full h-10 px-3 border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-500 font-sans cursor-pointer transition-all"
-              >
-                <option value="balanced">Balanced Highlighting (Highlight only 3-5 critical definitions per page)</option>
-                <option value="generous">Generous Highlighting (No restrictions - Highlight all key concepts & formulas)</option>
-                <option value="none">Disabled (No auto-highlighting, keep text formats intact)</option>
-              </select>
-              <p className="text-[10px] text-stone-400 leading-normal">
-                Determines how strictly the AI selects keywords for color tagging. If you prefer high visual density, change this to <strong>Generous</strong>.
-              </p>
-            </div>
-
-            {/* Feature & Canvas Toggles Section */}
-            <div className="space-y-3 pt-2">
-              <label className="block text-xs uppercase tracking-wider font-bold opacity-75 text-stone-800 dark:text-stone-200 border-b border-stone-150 dark:border-stone-800 pb-1.5">
-                Active Features & Canvas Generators
-              </label>
-              <p className="text-[11px] text-stone-400 leading-tight">
-                Enable or disable specific visual elements created by the AI. When disabled, the AI will bypass these formats and generate clean body text instead.
-              </p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
-                {/* Toggle 1: Flashcards */}
-                <div className="p-3 bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl flex items-center justify-between shadow-sm">
-                  <div className="space-y-0.5 pr-2">
-                    <div className="text-xs font-semibold text-stone-800 dark:text-stone-200">AI Flashcard Suggestions</div>
-                    <div className="text-[10px] text-stone-400 leading-tight">Suggest inline flashcards</div>
-                  </div>
-                  <button
-                    onClick={() => handleUpdateDisableAIFlashcards(!disableAIFlashcards)}
-                    className={cn(
-                      "relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-stone-500",
-                      !disableAIFlashcards ? "bg-emerald-600" : "bg-stone-300 dark:bg-stone-700"
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ease-in-out",
-                        !disableAIFlashcards ? "translate-x-5" : "translate-x-0"
-                      )}
-                    />
-                  </button>
-                </div>
-
-                {/* Toggle 2: Canvas Arrows */}
-                <div className="p-3 bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl flex items-center justify-between shadow-sm">
-                  <div className="space-y-0.5 pr-2">
-                    <div className="text-xs font-semibold text-stone-800 dark:text-stone-200">Canvas Connection Arrows</div>
-                    <div className="text-[10px] text-stone-400 leading-tight">Draw connection links on sides</div>
-                  </div>
-                  <button
-                    onClick={() => handleUpdateDisableAIArrows(!disableAIArrows)}
-                    className={cn(
-                      "relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-stone-500",
-                      !disableAIArrows ? "bg-emerald-600" : "bg-stone-300 dark:bg-stone-700"
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ease-in-out",
-                        !disableAIArrows ? "translate-x-5" : "translate-x-0"
-                      )}
-                    />
-                  </button>
-                </div>
-
-                {/* Toggle 3: Margin Stickies */}
-                <div className="p-3 bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl flex items-center justify-between shadow-sm">
-                  <div className="space-y-0.5 pr-2">
-                    <div className="text-xs font-semibold text-stone-800 dark:text-stone-200">Margin Sticky Callouts</div>
-                    <div className="text-[10px] text-stone-400 leading-tight">Extract key facts to floating notes</div>
-                  </div>
-                  <button
-                    onClick={() => handleUpdateDisableAIStickies(!disableAIStickies)}
-                    className={cn(
-                      "relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-stone-500",
-                      !disableAIStickies ? "bg-emerald-600" : "bg-stone-300 dark:bg-stone-700"
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ease-in-out",
-                        !disableAIStickies ? "translate-x-5" : "translate-x-0"
-                      )}
-                    />
-                  </button>
-                </div>
-
-                {/* Toggle 4: Section Dividers */}
-                <div className="p-3 bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl flex items-center justify-between shadow-sm">
-                  <div className="space-y-0.5 pr-2">
-                    <div className="text-xs font-semibold text-stone-800 dark:text-stone-200">Decorative Section Dividers</div>
-                    <div className="text-[10px] text-stone-400 leading-tight">Zigzag, wavy, and themed bars</div>
-                  </div>
-                  <button
-                    onClick={() => handleUpdateDisableAIDividers(!disableAIDividers)}
-                    className={cn(
-                      "relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-stone-500",
-                      !disableAIDividers ? "bg-emerald-600" : "bg-stone-300 dark:bg-stone-700"
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ease-in-out",
-                        !disableAIDividers ? "translate-x-5" : "translate-x-0"
-                      )}
-                    />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="p-4 border-t border-stone-150 dark:border-stone-800 bg-white dark:bg-stone-950 flex justify-end flex-none">
-            <Button onClick={() => setIsSettingsOpen(false)} className="bg-stone-800 text-white hover:bg-stone-900 px-8 rounded-lg text-xs font-semibold">
-              Save Settings
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Help & Cheat Sheet Dialog */}
-      <Dialog open={isHelpOpen} onOpenChange={setIsHelpOpen}>
-        <DialogContent className="max-w-4xl h-[85vh] bg-[#FCFBF7] dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-2xl p-0 flex flex-col overflow-hidden">
-          {/* Header */}
-          <div className="p-6 border-b border-stone-150 dark:border-stone-800 bg-white dark:bg-stone-950 flex-none">
-            <DialogHeader>
-              <DialogTitle className="font-serif text-2xl tracking-tight text-stone-900 dark:text-stone-100 flex items-center gap-2.5">
-                <HelpCircle className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-                Help & AI Cheat Sheet
-              </DialogTitle>
-            </DialogHeader>
-            <p className="text-xs text-stone-500 dark:text-stone-400 mt-1.5 leading-normal">
-              Learn how to leverage our structured AI formatter to construct gorgeous mnemonics, multi-column grids, and linked margin notes.
-            </p>
-          </div>
-
-          {/* Scroll Area Container */}
-          <ScrollArea className="flex-1 p-6 bg-stone-50/40 dark:bg-stone-900/40">
-            <div className="space-y-8 pb-10">
-              
-              {/* Feature 1: Mnemonic Conversion (Bangla Mnemonic Example) */}
-              <div className="space-y-3.5">
-                <h3 className="font-serif text-lg font-bold text-stone-900 dark:text-stone-100 border-b border-stone-200 dark:border-stone-800 pb-2 flex items-center gap-2.5">
-                  <span className="flex items-center justify-center w-5.5 h-5.5 rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 font-mono text-xs font-semibold">1</span>
-                  Mnemonic Processes (Vertical Downward Arrows)
-                </h3>
-                <p className="text-xs text-stone-600 dark:text-stone-300 leading-relaxed">
-                  Transform complex Bangla or English mnemonics into beautiful, highly readable vertical columns. The AI automatically parses letters, sets them at the top, inserts curves, and centers meanings below.
-                </p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
-                  <div className="bg-white dark:bg-stone-950 p-5 border border-stone-150 dark:border-stone-800 rounded-xl space-y-3 shadow-sm">
-                    <div className="text-[10px] uppercase font-bold tracking-wider opacity-45 text-stone-600 dark:text-stone-400">Raw Input Text Selection:</div>
-                    <div className="p-3 bg-stone-50 dark:bg-stone-900 border border-stone-100 dark:border-stone-850 rounded-lg text-xs leading-relaxed italic text-stone-800 dark:text-stone-200">
-                      স্লাইড নেমোনিক (অঙ্গ মনে রাখার): "সুমনের Epic ভাষণে সবাই ক্ষেপল" (সু-শুক্রাশয়, এপি-এপিডিডাইমিস, ভাস-ভাস ডিফারেন্স, সে-সেমিনাল ভেসিকল, ক্ষেপ-ক্ষেপণ নালি)
-                    </div>
-                    <div className="text-[10px] uppercase font-bold tracking-wider opacity-45 text-stone-600 dark:text-stone-400 pt-1">Recommended Instruction:</div>
-                    <div className="p-2.5 bg-emerald-50/55 dark:bg-emerald-950/25 border border-emerald-100/70 dark:border-emerald-900 text-emerald-850 dark:text-emerald-400 font-mono text-[11px] rounded-lg">
-                      Format this mnemonic using vertical arrows. Prefix on top, down arrow, and meaning below centered in side-by-side columns.
-                    </div>
-                  </div>
-
-                  <div className="bg-white dark:bg-stone-950 p-5 border border-stone-150 dark:border-stone-800 rounded-xl space-y-3.5 flex flex-col justify-center shadow-sm">
-                    <div className="text-[10px] uppercase font-bold tracking-wider opacity-45 text-stone-600 dark:text-stone-400">Visual Styled Output Preview:</div>
-                    <div className="grid grid-cols-5 gap-2 text-center pt-2">
-                      {[
-                        { pre: 'সু', mean: 'শুক্রাশয়' },
-                        { pre: 'এপি', mean: 'এপিডিডাইমিস' },
-                        { pre: 'ভাস', mean: 'ভাস ডিফারেন্স' },
-                        { pre: 'সে', mean: 'সেমিনাল ভেসিকল' },
-                        { pre: 'ক্ষেপ', mean: 'ক্ষেপণ নালি' }
-                      ].map((item, idx) => (
-                        <div key={idx} className="flex flex-col items-center">
-                          <p className="font-bold text-stone-900 dark:text-stone-100 text-sm tracking-tight">{item.pre}</p>
-                          <svg viewBox="0 0 24 32" className="w-5 h-7 my-1 text-emerald-600 dark:text-emerald-400" overflow="visible">
-                            <path d="M12,2 Q14,14 12,26" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-                            <path d="M8,21 L12,26 L16,21" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                          <p className="text-[9px] text-stone-500 dark:text-stone-400 leading-tight break-words font-sans">{item.mean}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Feature 2: Side-by-Side Comparison Columns */}
-              <div className="space-y-3.5">
-                <h3 className="font-serif text-lg font-bold text-stone-900 dark:text-stone-100 border-b border-stone-200 dark:border-stone-800 pb-2 flex items-center gap-2.5">
-                  <span className="flex items-center justify-center w-5.5 h-5.5 rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 font-mono text-xs font-semibold">2</span>
-                  Side-by-Side Comparison Columns
-                </h3>
-                <p className="text-xs text-stone-600 dark:text-stone-300 leading-relaxed">
-                  Eliminate visual clutter. Organize direct comparison points or related classifications into crisp dual-column grids with bold labels and contextual styling.
-                </p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
-                  <div className="bg-white dark:bg-stone-950 p-5 border border-stone-150 dark:border-stone-800 rounded-xl space-y-3 shadow-sm">
-                    <div className="text-[10px] uppercase font-bold tracking-wider opacity-45 text-stone-600 dark:text-stone-400">Raw Input Text Selection:</div>
-                    <div className="p-3 bg-stone-50 dark:bg-stone-900 border border-stone-100 dark:border-stone-850 rounded-lg text-xs leading-relaxed italic text-stone-800 dark:text-stone-200">
-                      Mitochondria has double membrane, plastid has triple/double and contains chlorophyll. Mitochondria is the powerhouse of the cell, plastid is the food factory.
-                    </div>
-                    <div className="text-[10px] uppercase font-bold tracking-wider opacity-45 text-stone-600 dark:text-stone-400 pt-1">Recommended Instruction:</div>
-                    <div className="p-2.5 bg-emerald-50/55 dark:bg-emerald-950/25 border border-emerald-100/70 dark:border-emerald-900 text-emerald-850 dark:text-emerald-400 font-mono text-[11px] rounded-lg">
-                      Convert this comparison into a beautiful side-by-side horizontal contrast column grid.
-                    </div>
-                  </div>
-
-                  <div className="bg-white dark:bg-stone-950 p-5 border border-stone-150 dark:border-stone-800 rounded-xl space-y-3 flex flex-col justify-center shadow-sm">
-                    <div className="text-[10px] uppercase font-bold tracking-wider opacity-45 text-stone-600 dark:text-stone-400">Visual Styled Output Preview:</div>
-                    <div className="grid grid-cols-2 gap-4 border-t border-b border-stone-100 dark:border-stone-800 py-3.5 text-xs">
-                      <div>
-                        <h4 className="font-bold text-stone-900 dark:text-stone-100 border-b border-stone-200 dark:border-stone-800 pb-1 uppercase tracking-wider text-[10px]">Mitochondria</h4>
-                        <ul className="list-disc list-inside mt-2 space-y-1.5 text-[10.5px] text-stone-600 dark:text-stone-400">
-                          <li>Double membrane structure</li>
-                          <li>Known as the <mark className="bg-yellow-100 dark:bg-yellow-950/50 text-inherit font-semibold px-0.5">powerhouse of cell</mark></li>
-                        </ul>
-                      </div>
-                      <div className="border-l border-stone-150 dark:border-stone-800 pl-4">
-                        <h4 className="font-bold text-stone-900 dark:text-stone-100 border-b border-stone-200 dark:border-stone-800 pb-1 uppercase tracking-wider text-[10px]">Plastid</h4>
-                        <ul className="list-disc list-inside mt-2 space-y-1.5 text-[10.5px] text-stone-600 dark:text-stone-400">
-                          <li>Triple/double membrane</li>
-                          <li>Contains chloroplasts & acts as <mark className="bg-emerald-100 dark:bg-emerald-950/50 text-inherit font-semibold px-0.5">food factory</mark></li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Feature 3: Margin Callout Stickies with Curved Arrows */}
-              <div className="space-y-3.5">
-                <h3 className="font-serif text-lg font-bold text-stone-900 dark:text-stone-100 border-b border-stone-200 dark:border-stone-800 pb-2 flex items-center gap-2.5">
-                  <span className="flex items-center justify-center w-5.5 h-5.5 rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 font-mono text-xs font-semibold">3</span>
-                  Sticky Margin Callouts & Connection Arrows
-                </h3>
-                <p className="text-xs text-stone-600 dark:text-stone-300 leading-relaxed">
-                  Keep your main notes narrative clean while keeping formulas or definitions instantly clickable. Pull secondary callouts into floating canvas margin stickies.
-                </p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
-                  <div className="bg-white dark:bg-stone-950 p-5 border border-stone-150 dark:border-stone-800 rounded-xl space-y-3.5 shadow-sm">
-                    <div className="text-[10px] uppercase font-bold tracking-wider opacity-45 text-stone-600 dark:text-stone-400">Recommended Instruction:</div>
-                    <div className="p-2.5 bg-emerald-50/55 dark:bg-emerald-950/25 border border-emerald-100/70 dark:border-emerald-900 text-emerald-850 dark:text-emerald-400 font-mono text-[11px] rounded-lg">
-                      Format this warning as a pink callout sticky note on the right margin with a curved arrow pointing to it.
-                    </div>
-                    <div className="text-[10px] uppercase font-bold tracking-wider opacity-45 text-stone-600 dark:text-stone-400 pt-1">Canvas Editor Tips:</div>
-                    <ul className="list-disc list-inside text-[11px] text-stone-500 dark:text-stone-400 space-y-1.5 leading-relaxed">
-                      <li>Use the orange handles on the curved canvas arrows to customize their bend path!</li>
-                      <li>Double-click any arrow line to modify its color or delete it entirely.</li>
-                      <li>Hover over sticky notes to resize, delete, or create linked notes.</li>
-                    </ul>
-                  </div>
-
-                  <div className="bg-white dark:bg-stone-950 border border-stone-150 dark:border-stone-800 rounded-xl p-5 flex flex-col justify-center items-center relative overflow-hidden min-h-[160px] shadow-sm">
-                    <div className="p-2.5 bg-stone-50 dark:bg-stone-900 border border-stone-150 dark:border-stone-800 rounded shadow-sm text-[11px] max-w-[140px] text-center font-bold text-stone-800 dark:text-stone-200">
-                      Main concept in text block
-                    </div>
-                    
-                    {/* SVG arrow mockup */}
-                    <svg className="w-24 h-12 text-pink-500 my-1.5" viewBox="0 0 100 40" overflow="visible">
-                      <path d="M10,10 Q50,35 90,15" fill="none" stroke="currentColor" strokeWidth="2.5" strokeDasharray="3" />
-                      <polygon points="90,15 82,12 86,18" fill="currentColor" />
-                    </svg>
-
-                    <div className="p-2.5 bg-pink-50 dark:bg-pink-950/40 border border-pink-100 dark:border-pink-900 rounded shadow-sm text-[10px] max-w-[150px] font-sans text-stone-800 dark:text-stone-200">
-                      <strong>Reminder:</strong> Keep temperature below 45°C.
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Formatting Prompts Cheat Sheet */}
-              <div className="space-y-3.5">
-                <h3 className="font-serif text-lg font-bold text-stone-900 dark:text-stone-100 border-b border-stone-200 dark:border-stone-800 pb-2">
-                  AI Selection Prompt Cheat Sheet (Select Text & Format)
-                </h3>
-                <p className="text-xs text-stone-600 dark:text-stone-300">
-                  Select any section of text inside your notes, then click the <strong className="text-emerald-700 dark:text-emerald-400 font-semibold">AI format selection button</strong> (the sparkles wand) on the popup bubble menu. Copy or click any prompt below:
-                </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-                  {[
-                    {
-                      category: 'Scientific Formulas',
-                      prompt: 'Format this equation beautifully using LaTeX. Render the derivations in bold.',
-                      icon: 'fx'
-                    },
-                    {
-                      category: 'Bangla Grammar & Conjugation',
-                      prompt: 'Format this Bangla sentence conjugation into a clean side-by-side column grid.',
-                      icon: 'ক'
-                    },
-                    {
-                      category: 'Academic Highlights',
-                      prompt: 'Highlight only key definitions in deep green and bold the technical terms.',
-                      icon: 'H'
-                    },
-                    {
-                      category: 'Aesthetic Dividers',
-                      prompt: 'Insert a zigzag decorative forest-green separator line below this text block.',
-                      icon: '---'
-                    },
-                    {
-                      category: 'Quick Definitions',
-                      prompt: 'Create a yellow definition callout sticky note on the right with an arrow linking it.',
-                      icon: '📌'
-                    },
-                    {
-                      category: 'Comparison Lists',
-                      prompt: 'Form a horizontal contrast matrix columns for this comparison.',
-                      icon: '⇄'
-                    }
-                  ].map((p, idx) => (
-                    <div 
-                      key={idx} 
-                      onClick={() => {
-                        navigator.clipboard.writeText(p.prompt);
-                      }}
-                      className="bg-white dark:bg-stone-950 p-4 border border-stone-150 dark:border-stone-800 rounded-xl flex items-start gap-3.5 transition-all cursor-pointer hover:border-stone-300 dark:hover:border-stone-700 hover:shadow-sm group"
-                    >
-                      <div className="w-8.5 h-8.5 rounded-lg bg-stone-50 dark:bg-stone-900 flex items-center justify-center font-bold text-stone-600 dark:text-stone-400 font-mono text-xs flex-none mt-0.5 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-950 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                        {p.icon}
-                      </div>
-                      <div className="space-y-1">
-                        <div className="text-[9px] font-bold uppercase tracking-wider opacity-50 text-stone-500 dark:text-stone-400">{p.category}</div>
-                        <div className="text-[11.5px] text-stone-700 dark:text-stone-300 font-mono select-all leading-relaxed italic group-hover:text-stone-950 dark:group-hover:text-stone-50 transition-colors" title="Click to copy">
-                          "{p.prompt}"
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-            </div>
-          </ScrollArea>
-          
-          {/* Footer */}
-          <div className="p-4 border-t border-stone-150 dark:border-stone-800 bg-white dark:bg-stone-950 flex justify-end flex-none">
-            <Button onClick={() => setIsHelpOpen(false)} className="bg-emerald-600 hover:bg-emerald-700 text-white font-sans px-8 rounded-lg text-xs font-semibold">
-              Close Cheat Sheet
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Help Center */}
+      <HelpCenter open={isHelpOpen} onOpenChange={setIsHelpOpen} />
 
       {/* Header */}
       <AnimatePresence>

@@ -1,0 +1,441 @@
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { 
+  Settings as SettingsIcon,
+  Sparkles,
+  Palette,
+  Type,
+  Keyboard,
+  Info,
+  ChevronRight,
+  Moon,
+  Sun,
+  Monitor,
+  Check
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+type SettingsTab = 'general' | 'ai' | 'editor' | 'appearance' | 'keyboard' | 'about';
+
+interface SettingsModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  customApiKey: string;
+  customModel: string;
+  isCustomModelActive: boolean;
+  customModelInput: string;
+  highlightStyle: 'balanced' | 'generous' | 'none';
+  disableAIFlashcards: boolean;
+  disableAIArrows: boolean;
+  disableAIStickies: boolean;
+  disableAIDividers: boolean;
+  onUpdateCustomApiKey: (key: string) => void;
+  onUpdateCustomModel: (model: string) => void;
+  onUpdateHighlightStyle: (style: 'balanced' | 'generous' | 'none') => void;
+  onUpdateDisableAIFlashcards: (disabled: boolean) => void;
+  onUpdateDisableAIArrows: (disabled: boolean) => void;
+  onUpdateDisableAIStickies: (disabled: boolean) => void;
+  onUpdateDisableAIDividers: (disabled: boolean) => void;
+  onSetCustomModelActive: (active: boolean) => void;
+  onSetCustomModelInput: (input: string) => void;
+}
+
+const TABS = [
+  { id: 'general' as SettingsTab, label: 'General', icon: SettingsIcon },
+  { id: 'ai' as SettingsTab, label: 'AI', icon: Sparkles },
+  { id: 'editor' as SettingsTab, label: 'Editor', icon: Type },
+  { id: 'appearance' as SettingsTab, label: 'Appearance', icon: Palette },
+  { id: 'keyboard' as SettingsTab, label: 'Keyboard', icon: Keyboard },
+  { id: 'about' as SettingsTab, label: 'About', icon: Info },
+];
+
+const MODELS = [
+  { id: 'gemma-4-31b', name: 'Gemma 4 31B' },
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash' },
+  { id: 'gemini-3.1-flash-lite', name: 'Gemini 3.1 Flash Lite' },
+  { id: 'gemini-3.5-flash', name: 'Gemini 3.5 Flash' },
+];
+
+const ACCENT_COLORS = [
+  { name: 'Stone', value: '#1c1917' },
+  { name: 'Blue', value: '#3b82f6' },
+  { name: 'Emerald', value: '#10b981' },
+  { name: 'Violet', value: '#8b5cf6' },
+  { name: 'Rose', value: '#f43f5e' },
+  { name: 'Amber', value: '#f59e0b' },
+];
+
+const THEMES = [
+  { id: 'light', name: 'Light', icon: Sun },
+  { id: 'dark', name: 'Dark', icon: Moon },
+  { id: 'system', name: 'System', icon: Monitor },
+];
+
+const HIGHLIGHT_STYLES = [
+  { id: 'minimal', name: 'Minimal' },
+  { id: 'balanced', name: 'Balanced' },
+  { id: 'rich', name: 'Rich' },
+];
+
+const Toggle = ({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) => (
+  <button
+    onClick={onToggle}
+    className={cn(
+      "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-stone-400 focus:ring-offset-2",
+      enabled ? "bg-stone-900 dark:bg-stone-100" : "bg-stone-200 dark:bg-stone-700"
+    )}
+  >
+    <span
+      className={cn(
+        "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ease-in-out",
+        enabled ? "translate-x-5" : "translate-x-0"
+      )}
+    />
+  </button>
+);
+
+const Slider = ({ value, onChange, min, max }: { value: number; onChange: (v: number) => void; min: number; max: number }) => (
+  <div className="relative">
+    <input
+      type="range"
+      min={min}
+      max={max}
+      value={value}
+      onChange={(e) => onChange(Number(e.target.value))}
+      className="w-full h-1.5 bg-stone-200 dark:bg-stone-700 rounded-lg appearance-none cursor-pointer accent-stone-900 dark:accent-stone-100"
+    />
+    <div 
+      className="absolute top-1/2 -translate-y-1/2 h-1.5 bg-stone-900 dark:bg-stone-100 rounded-lg pointer-events-none transition-all"
+      style={{ width: `${((value - min) / (max - min)) * 100}%` }}
+    />
+  </div>
+);
+
+export const SettingsModal: React.FC<SettingsModalProps> = ({
+  open,
+  onOpenChange,
+  customApiKey,
+  customModel,
+  isCustomModelActive,
+  customModelInput,
+  highlightStyle,
+  disableAIFlashcards,
+  disableAIArrows,
+  disableAIStickies,
+  disableAIDividers,
+  onUpdateCustomApiKey,
+  onUpdateCustomModel,
+  onUpdateHighlightStyle,
+  onUpdateDisableAIFlashcards,
+  onUpdateDisableAIArrows,
+  onUpdateDisableAIStickies,
+  onUpdateDisableAIDividers,
+  onSetCustomModelActive,
+  onSetCustomModelInput,
+}) => {
+  const [activeTab, setActiveTab] = useState<SettingsTab>('general');
+  const [accentColor, setAccentColor] = useState('#1c1917');
+  const [theme, setTheme] = useState('system');
+  const [editorWidth, setEditorWidth] = useState(850);
+  const [fontSize, setFontSize] = useState(18);
+  const [paperTexture, setPaperTexture] = useState(true);
+  const [autoSave, setAutoSave] = useState(true);
+  const [typewriterMode, setTypewriterMode] = useState(false);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-[980px] h-[650px] p-0 bg-[#FCFBF7] dark:bg-[#0A0A0A] border border-stone-200/50 dark:border-stone-800/50 rounded-2xl shadow-2xl overflow-hidden">
+        <div className="flex h-full">
+          {/* Left Sidebar */}
+          <div className="w-56 border-r border-stone-200/50 dark:border-stone-800/50 bg-white/50 dark:bg-stone-950/50 backdrop-blur-sm">
+            <div className="p-4">
+              <h2 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-4">Settings</h2>
+              <nav className="space-y-0.5">
+                {TABS.map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                        activeTab === tab.id
+                          ? "bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100"
+                          : "text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-900/50 hover:text-stone-700 dark:hover:text-stone-300"
+                      )}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {tab.label}
+                      {activeTab === tab.id && (
+                        <ChevronRight className="w-4 h-4 ml-auto opacity-50" />
+                      )}
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+          </div>
+
+          {/* Right Content */}
+          <div className="flex-1 overflow-y-auto">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.15 }}
+                className="p-8"
+              >
+                {activeTab === 'ai' && (
+                  <div className="space-y-8">
+                    <div>
+                      <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-1">AI Model</h3>
+                      <p className="text-sm text-stone-500 dark:text-stone-400">Select your preferred AI model</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      {MODELS.map((model) => (
+                        <button
+                          key={model.id}
+                          onClick={() => {
+                            onSetCustomModelActive(false);
+                            onUpdateCustomModel(model.id);
+                          }}
+                          className={cn(
+                            "w-full p-4 rounded-xl border-2 text-left transition-all duration-200",
+                            customModel === model.id && !isCustomModelActive
+                              ? "border-stone-900 dark:border-stone-100 bg-stone-50 dark:bg-stone-900/30"
+                              : "border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700 bg-white dark:bg-stone-950"
+                          )}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-stone-900 dark:text-stone-100">{model.name}</span>
+                            {customModel === model.id && !isCustomModelActive && (
+                              <Check className="w-5 h-5 text-stone-900 dark:text-stone-100" />
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="pt-4 border-t border-stone-200 dark:border-stone-800">
+                      <button
+                        onClick={() => onSetCustomModelActive(true)}
+                        className={cn(
+                          "w-full p-4 rounded-xl border-2 text-left transition-all duration-200",
+                          isCustomModelActive
+                            ? "border-stone-900 dark:border-stone-100 bg-stone-50 dark:bg-stone-900/30"
+                            : "border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700 bg-white dark:bg-stone-950"
+                        )}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-stone-900 dark:text-stone-100">Custom Model</span>
+                          {isCustomModelActive && <Check className="w-5 h-5 text-stone-900 dark:text-stone-100" />}
+                        </div>
+                      </button>
+                      {isCustomModelActive && (
+                        <input
+                          type="text"
+                          placeholder="Enter custom model ID"
+                          value={customModelInput}
+                          onChange={(e) => {
+                            onSetCustomModelInput(e.target.value);
+                            onUpdateCustomModel(e.target.value);
+                          }}
+                          className="mt-3 w-full px-4 py-3 rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 text-sm focus:outline-none focus:ring-2 focus:ring-stone-400"
+                        />
+                      )}
+                    </div>
+
+                    <div className="pt-4 border-t border-stone-200 dark:border-stone-800">
+                      <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-3">API Key</h3>
+                      <input
+                        type="password"
+                        placeholder="Using default server key..."
+                        value={customApiKey}
+                        onChange={(e) => onUpdateCustomApiKey(e.target.value)}
+                        className="w-full px-4 py-3 rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 text-sm focus:outline-none focus:ring-2 focus:ring-stone-400"
+                      />
+                    </div>
+
+                    <div className="pt-4 border-t border-stone-200 dark:border-stone-800">
+                      <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-3">AI Features</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800">
+                          <span className="text-sm text-stone-700 dark:text-stone-300">Flashcard Suggestions</span>
+                          <Toggle enabled={!disableAIFlashcards} onToggle={() => onUpdateDisableAIFlashcards(!disableAIFlashcards)} />
+                        </div>
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800">
+                          <span className="text-sm text-stone-700 dark:text-stone-300">Canvas Arrows</span>
+                          <Toggle enabled={!disableAIArrows} onToggle={() => onUpdateDisableAIArrows(!disableAIArrows)} />
+                        </div>
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800">
+                          <span className="text-sm text-stone-700 dark:text-stone-300">Margin Stickies</span>
+                          <Toggle enabled={!disableAIStickies} onToggle={() => onUpdateDisableAIStickies(!disableAIStickies)} />
+                        </div>
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800">
+                          <span className="text-sm text-stone-700 dark:text-stone-300">Section Dividers</span>
+                          <Toggle enabled={!disableAIDividers} onToggle={() => onUpdateDisableAIDividers(!disableAIDividers)} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'appearance' && (
+                  <div className="space-y-8">
+                    <div>
+                      <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-1">Appearance</h3>
+                      <p className="text-sm text-stone-500 dark:text-stone-400">Customize your editor look</p>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-3">Theme</h3>
+                      <div className="grid grid-cols-3 gap-3">
+                        {THEMES.map((t) => {
+                          const Icon = t.icon;
+                          return (
+                            <button
+                              key={t.id}
+                              onClick={() => setTheme(t.id)}
+                              className={cn(
+                                "p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all duration-200",
+                                theme === t.id
+                                  ? "border-stone-900 dark:border-stone-100 bg-stone-50 dark:bg-stone-900/30"
+                                  : "border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700 bg-white dark:bg-stone-950"
+                              )}
+                            >
+                              <Icon className="w-5 h-5 text-stone-700 dark:text-stone-300" />
+                              <span className="text-sm font-medium text-stone-900 dark:text-stone-100">{t.name}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-3">Accent Color</h3>
+                      <div className="flex gap-2">
+                        {ACCENT_COLORS.map((color) => (
+                          <button
+                            key={color.value}
+                            onClick={() => setAccentColor(color.value)}
+                            className={cn(
+                              "w-10 h-10 rounded-full border-2 transition-all duration-200",
+                              accentColor === color.value
+                                ? "border-stone-900 dark:border-stone-100 scale-110"
+                                : "border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700"
+                            )}
+                            style={{ backgroundColor: color.value }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-3">Highlight Style</h3>
+                      <div className="inline-flex bg-stone-100 dark:bg-stone-900 rounded-lg p-1">
+                        {HIGHLIGHT_STYLES.map((style) => (
+                          <button
+                            key={style.id}
+                            onClick={() => onUpdateHighlightStyle(style.id as any)}
+                            className={cn(
+                              "px-4 py-2 rounded-md text-sm font-medium transition-all duration-200",
+                              highlightStyle === style.id
+                                ? "bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 shadow-sm"
+                                : "text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300"
+                            )}
+                          >
+                            {style.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'editor' && (
+                  <div className="space-y-8">
+                    <div>
+                      <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-1">Editor</h3>
+                      <p className="text-sm text-stone-500 dark:text-stone-400">Configure editor behavior</p>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100">Editor Width</h3>
+                        <span className="text-sm text-stone-500 dark:text-stone-400">{editorWidth}px</span>
+                      </div>
+                      <Slider value={editorWidth} onChange={setEditorWidth} min={600} max={1200} />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100">Font Size</h3>
+                        <span className="text-sm text-stone-500 dark:text-stone-400">{fontSize}px</span>
+                      </div>
+                      <Slider value={fontSize} onChange={setFontSize} min={12} max={24} />
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800">
+                        <span className="text-sm text-stone-700 dark:text-stone-300">Paper Texture</span>
+                        <Toggle enabled={paperTexture} onToggle={() => setPaperTexture(!paperTexture)} />
+                      </div>
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800">
+                        <span className="text-sm text-stone-700 dark:text-stone-300">Auto Save</span>
+                        <Toggle enabled={autoSave} onToggle={() => setAutoSave(!autoSave)} />
+                      </div>
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800">
+                        <span className="text-sm text-stone-700 dark:text-stone-300">Typewriter Mode</span>
+                        <Toggle enabled={typewriterMode} onToggle={() => setTypewriterMode(!typewriterMode)} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'general' && (
+                  <div className="space-y-8">
+                    <div>
+                      <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-1">General</h3>
+                      <p className="text-sm text-stone-500 dark:text-stone-400">Basic application settings</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-stone-50 dark:bg-stone-900/30 border border-stone-200 dark:border-stone-800">
+                      <p className="text-sm text-stone-600 dark:text-stone-400">General settings coming soon</p>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'keyboard' && (
+                  <div className="space-y-8">
+                    <div>
+                      <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-1">Keyboard Shortcuts</h3>
+                      <p className="text-sm text-stone-500 dark:text-stone-400">Customize your shortcuts</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-stone-50 dark:bg-stone-900/30 border border-stone-200 dark:border-stone-800">
+                      <p className="text-sm text-stone-600 dark:text-stone-400">Keyboard shortcuts coming soon</p>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'about' && (
+                  <div className="space-y-8">
+                    <div>
+                      <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-1">About</h3>
+                      <p className="text-sm text-stone-500 dark:text-stone-400">Application information</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-stone-50 dark:bg-stone-900/30 border border-stone-200 dark:border-stone-800">
+                      <p className="text-sm text-stone-600 dark:text-stone-400">Papyrus v1.0</p>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
