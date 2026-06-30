@@ -5,6 +5,8 @@ import { DividerRender } from '@/src/components/DividerRender';
 import { DividerData } from '@/src/types';
 import { X } from 'lucide-react';
 
+const cn = (...classes: any[]) => classes.filter(Boolean).join(' ');
+
 export interface DecorativeDividerAttributes {
   type: 'solid' | 'zigzag' | 'wave' | 'dashed' | 'dotted';
   orientation: 'horizontal' | 'vertical';
@@ -50,8 +52,6 @@ const DividerComponent = ({ node, deleteNode, editor }: any) => {
     </NodeViewWrapper>
   );
 };
-
-const cn = (...classes: any[]) => classes.filter(Boolean).join(' ');
 
 export const DecorativeDivider = Node.create({
   name: 'decorativeDivider',
