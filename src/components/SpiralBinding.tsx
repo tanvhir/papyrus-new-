@@ -3,9 +3,11 @@ import React, { useRef } from 'react';
 interface SpiralBindingProps {
   height: number;
   className?: string;
+  pageHeight?: number;
+  pageGap?: number;
 }
 
-export const SpiralBinding: React.FC<SpiralBindingProps> = ({ height, className = '' }) => {
+export const SpiralBinding: React.FC<SpiralBindingProps> = ({ height, className = '', pageHeight = 0, pageGap = 0 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const uniqueId = useRef(`spiral-${Math.random().toString(36).substr(2, 9)}`);
 
@@ -25,43 +27,58 @@ export const SpiralBinding: React.FC<SpiralBindingProps> = ({ height, className 
     }
   };
 
-  // Calculate loopCount directly from height - no state needed
-  const availableHeight = height - 40;
-  const calculatedLoops = Math.floor(availableHeight / config.holeSpacing);
-  const loopCount = height > 0 ? Math.max(1, calculatedLoops) : 0;
+  // Calculate number of pages
+  const numPages = pageHeight > 0 ? Math.ceil(height / (pageHeight + pageGap)) : 1;
 
-  console.log('[SpiralBinding] height:', height, 'availableHeight:', availableHeight, 'calculatedLoops:', calculatedLoops, 'final loopCount:', loopCount);
+  console.log('[SpiralBinding] height:', height, 'pageHeight:', pageHeight, 'pageGap:', pageGap, 'numPages:', numPages);
 
-  const generateSpiralPath = () => {
+  const generatePageSegments = () => {
+    const segments = [];
+
+    for (let page = 0; page < numPages; page++) {
+      const pageTop = page * (pageHeight + pageGap);
+      const pageBottom = pageTop + pageHeight;
+      const pageHeightActual = Math.min(pageHeight, height - pageTop);
+
+      if (pageHeightActual <= 0) continue;
+
+      const availableHeight = pageHeightActual - 40;
+      const calculatedLoops = Math.floor(availableHeight / config.holeSpacing);
+      const loopCount = Math.max(1, calculatedLoops);
+
+      segments.push({
+        page,
+        top: pageTop,
+        height: pageHeightActual,
+        loopCount
+      });
+    }
+
+    return segments;
+  };
+
+  const pageSegments = generatePageSegments();
+
+  if (pageSegments.length === 0) return null;
+
+  const generateSpiralPath = (loopCount: number, startY: number) => {
     if (loopCount === 0) return '';
 
     let path = '';
     const startX = config.bindingWidth / 2;
-    const startY = 20 + config.holeSpacing / 2;
 
     for (let i = 0; i < loopCount; i++) {
       const y = startY + i * config.holeSpacing;
 
       if (i === 0) {
-        // Start the wire from the top
         path += `M ${startX} ${y - config.holeSpacing/2}`;
       }
 
-      // Wire goes through the hole from back to front
       path += ` L ${startX - 2} ${y}`;
-
-      // Front loop - smooth elliptical curve around the hole
-      // Left side of loop
       path += ` C ${startX - config.loopWidth} ${y - 3}, ${startX - config.loopWidth} ${y + 3}, ${startX - 2} ${y + 2}`;
-
-      // Wire goes back through the hole
       path += ` L ${startX + 2} ${y + 2}`;
-
-      // Back loop (behind paper) - smaller curve
-      // Right side of loop
       path += ` C ${startX + config.loopWidth * 0.6} ${y + 2}, ${startX + config.loopWidth * 0.6} ${y - 2}, ${startX + 2} ${y}`;
 
-      // Continue to next hole
       if (i < loopCount - 1) {
         path += ` L ${startX} ${y + config.holeSpacing/2}`;
       }
@@ -70,12 +87,11 @@ export const SpiralBinding: React.FC<SpiralBindingProps> = ({ height, className 
     return path;
   };
 
-  const generateHoles = () => {
+  const generateHoles = (loopCount: number, startY: number) => {
     if (loopCount === 0) return [];
 
     const holes = [];
     const startX = config.bindingWidth / 2;
-    const startY = 20 + config.holeSpacing / 2;
 
     for (let i = 0; i < loopCount; i++) {
       const y = startY + i * config.holeSpacing;
@@ -94,96 +110,88 @@ export const SpiralBinding: React.FC<SpiralBindingProps> = ({ height, className 
     return holes;
   };
 
-  if (loopCount === 0) return null;
-
   return (
-    <div
-      className={`absolute left-0 top-0 bottom-0 pointer-events-none z-50 ${className}`}
-      style={{ width: `${config.bindingWidth}px` }}
-    >
-      <svg
-        ref={svgRef}
-        width={config.bindingWidth}
-        height={height}
-        viewBox={`0 0 ${config.bindingWidth} ${height}`}
-        preserveAspectRatio="none"
-        style={{ display: 'block' }}
-      >
-        <defs>
-          {/* Metallic gradient for the wire */}
-          <linearGradient id={`wireGradient-${uniqueId.current}`} x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor={config.wireColor.light} />
-            <stop offset="30%" stopColor={config.wireColor.mid} />
-            <stop offset="50%" stopColor={config.wireColor.light} stopOpacity="0.9" />
-            <stop offset="70%" stopColor={config.wireColor.mid} />
-            <stop offset="100%" stopColor={config.wireColor.dark} />
-          </linearGradient>
+    <div className={`absolute left-0 top-0 bottom-0 pointer-events-none z-50 ${className}`} style={{ width: `${config.bindingWidth}px` }}>
+      {pageSegments.map((segment) => {
+        const startY = 20 + config.holeSpacing / 2;
+        const holes = generateHoles(segment.loopCount, startY);
+        const spiralPath = generateSpiralPath(segment.loopCount, startY);
 
-          {/* Shadow gradient for depth */}
-          <linearGradient id={`shadowGradient-${uniqueId.current}`} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor={config.wireColor.shadow} stopOpacity="0.4" />
-            <stop offset="100%" stopColor={config.wireColor.shadow} stopOpacity="0" />
-          </linearGradient>
-
-          {/* Inner shadow for punched holes */}
-          <radialGradient id={`holeShadow-${uniqueId.current}`} cx="50%" cy="50%" r="50%">
-            <stop offset="60%" stopColor="#000000" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#000000" stopOpacity="0.5" />
-          </radialGradient>
-
-          {/* Drop shadow for the entire spiral */}
-          <filter id={`spiralShadow-${uniqueId.current}`} x="-50%" y="-50%" width="200%" height="200%">
-            <feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="#000000" floodOpacity="0.25" />
-          </filter>
-
-        </defs>
-
-        {/* Punched holes (rendered first, behind wire) */}
-        <g id="holes">
-          {generateHoles().map((hole, index) => (
-            <g key={index}>
-              {/* Hole shadow */}
-              <circle
-                cx={hole.props.cx}
-                cy={hole.props.cy}
-                r={config.holeDiameter / 2 + 2}
-                fill={`url(#holeShadow-${uniqueId.current})`}
+        return (
+          <div
+            key={segment.page}
+            className="absolute left-0"
+            style={{
+              top: `${segment.top}px`,
+              height: `${segment.height}px`,
+              width: `${config.bindingWidth}px`
+            }}
+          >
+            <svg
+              width={config.bindingWidth}
+              height={segment.height}
+              viewBox={`0 0 ${config.bindingWidth} ${segment.height}`}
+              preserveAspectRatio="none"
+              style={{ display: 'block' }}
+            >
+              <defs>
+                <linearGradient id={`wireGradient-${uniqueId.current}-${segment.page}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor={config.wireColor.light} />
+                  <stop offset="30%" stopColor={config.wireColor.mid} />
+                  <stop offset="50%" stopColor={config.wireColor.light} stopOpacity="0.9" />
+                  <stop offset="70%" stopColor={config.wireColor.mid} />
+                  <stop offset="100%" stopColor={config.wireColor.dark} />
+                </linearGradient>
+                <radialGradient id={`holeShadow-${uniqueId.current}-${segment.page}`} cx="50%" cy="50%" r="50%">
+                  <stop offset="60%" stopColor="#000000" stopOpacity="0.2" />
+                  <stop offset="100%" stopColor="#000000" stopOpacity="0.5" />
+                </radialGradient>
+                <filter id={`spiralShadow-${uniqueId.current}-${segment.page}`} x="-50%" y="-50%" width="200%" height="200%">
+                  <feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="#000000" floodOpacity="0.25" />
+                </filter>
+              </defs>
+              <g id="holes">
+                {holes.map((hole, index) => (
+                  <g key={index}>
+                    <circle
+                      cx={hole.props.cx}
+                      cy={hole.props.cy}
+                      r={config.holeDiameter / 2 + 2}
+                      fill={`url(#holeShadow-${uniqueId.current}-${segment.page})`}
+                    />
+                    <circle
+                      cx={hole.props.cx}
+                      cy={hole.props.cy}
+                      r={config.holeDiameter / 2}
+                      fill="#d4d0c8"
+                      stroke="rgba(0,0,0,0.3)"
+                      strokeWidth="1"
+                    />
+                  </g>
+                ))}
+              </g>
+              <path
+                d={spiralPath}
+                fill="none"
+                stroke={`url(#wireGradient-${uniqueId.current}-${segment.page})`}
+                strokeWidth={config.wireThickness}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                filter={`url(#spiralShadow-${uniqueId.current}-${segment.page})`}
               />
-              {/* Hole - dark to simulate hole */}
-              <circle
-                cx={hole.props.cx}
-                cy={hole.props.cy}
-                r={config.holeDiameter / 2}
-                fill="#d4d0c8"
-                stroke="rgba(0,0,0,0.3)"
-                strokeWidth="1"
+              <path
+                d={spiralPath}
+                fill="none"
+                stroke="rgba(255,255,255,0.4)"
+                strokeWidth={config.wireThickness * 0.3}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                transform="translate(0, -0.5)"
               />
-            </g>
-          ))}
-        </g>
-
-        {/* Main spiral wire */}
-        <path
-          d={generateSpiralPath()}
-          fill="none"
-          stroke={`url(#wireGradient-${uniqueId.current})`}
-          strokeWidth={config.wireThickness}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          filter={`url(#spiralShadow-${uniqueId.current})`}
-        />
-
-        {/* Subtle highlight on top of wire */}
-        <path
-          d={generateSpiralPath()}
-          fill="none"
-          stroke="rgba(255,255,255,0.4)"
-          strokeWidth={config.wireThickness * 0.3}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          transform="translate(0, -0.5)"
-        />
-      </svg>
+            </svg>
+          </div>
+        );
+      })}
     </div>
   );
 };

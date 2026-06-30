@@ -193,12 +193,20 @@ export function StudySession({
   const cardFontClass = isHandwriting ? 'font-handwriting' : 'font-serif';
 
   return (
-    <div 
-      className="fixed inset-0 z-[600] overflow-y-auto bg-[#0F0E0D]/75 backdrop-blur-[10px] p-4 flex justify-center items-start sm:items-center animate-fade-in"
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+      className="fixed inset-0 z-[600] overflow-y-auto bg-[#0F0E0D]/75 backdrop-blur-[10px] p-4 flex justify-center items-start sm:items-center"
       onClick={handleBackdropClick}
     >
-      <div 
-        className="relative w-full max-w-[580px] sm:max-w-[620px] my-auto flex flex-col items-center gap-4 sm:gap-5 z-10 py-6" 
+      <motion.div
+        initial={{ scale: 0.95, y: 20, opacity: 0 }}
+        animate={{ scale: 1, y: 0, opacity: 1 }}
+        exit={{ scale: 0.95, y: 20, opacity: 0 }}
+        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+        className="relative w-full max-w-[580px] sm:max-w-[620px] my-auto flex flex-col items-center gap-4 sm:gap-5 z-10 py-6"
         onClick={(e) => e.stopPropagation()}
       >
         
@@ -745,8 +753,9 @@ export function StudySession({
           </div>
         )}
 
-      </div>
-      
+      </motion.div>
+      </motion.div>
+
       {/* Backface utility overrides & premium minimal scrollbar implementation */}
       <style dangerouslySetInnerHTML={{ __html: `
         .backface-hidden {
@@ -772,6 +781,6 @@ export function StudySession({
         }
       `}} />
 
-    </div>
+    </motion.div>
   );
 }

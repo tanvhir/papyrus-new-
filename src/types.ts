@@ -73,6 +73,15 @@ export interface DividerData {
   position: Point;
 }
 
+export interface ImageData {
+  id: string;
+  src: string;
+  position: Point;
+  width: number;
+  height: number;
+  isPinned?: boolean;
+}
+
 export type FlashcardType = 'basic' | 'cloze' | 'definition' | 'formula' | 'multi-point' | 'image' | 'true-false';
 
 export interface Flashcard {
@@ -110,6 +119,7 @@ export interface Note {
   stickies: { id: string, text: string, color: string, position?: Point, fontSize?: number, isPinned?: boolean }[];
   arrows: ArrowData[];
   dividers: DividerData[];
+  images: ImageData[];
   texture: PaperTexture;
   themeId: string;
   isHandwriting: boolean;

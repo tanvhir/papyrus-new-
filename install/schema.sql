@@ -44,6 +44,7 @@ CREATE TABLE `notes` (
   `stickies` LONGTEXT, -- JSON string
   `arrows` LONGTEXT, -- JSON string
   `dividers` LONGTEXT, -- JSON string
+  `images` LONGTEXT, -- JSON string (array of image data with position, size, pinning)
   `texture` VARCHAR(50) DEFAULT 'plain',
   `theme_id` VARCHAR(50) DEFAULT 'classic',
   `is_handwriting` TINYINT(1) DEFAULT 0,

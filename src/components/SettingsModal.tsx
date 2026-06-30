@@ -29,6 +29,10 @@ interface SettingsModalProps {
   disableAIArrows: boolean;
   disableAIStickies: boolean;
   disableAIDividers: boolean;
+  disableAIImages: boolean;
+  disableAIColumns: boolean;
+  allowNoteEnhancement: boolean;
+  enableCleaning: boolean;
   onUpdateCustomApiKey: (key: string) => void;
   onUpdateCustomModel: (model: string) => void;
   onUpdateHighlightStyle: (style: 'balanced' | 'generous' | 'none') => void;
@@ -36,6 +40,10 @@ interface SettingsModalProps {
   onUpdateDisableAIArrows: (disabled: boolean) => void;
   onUpdateDisableAIStickies: (disabled: boolean) => void;
   onUpdateDisableAIDividers: (disabled: boolean) => void;
+  onUpdateDisableAIImages: (disabled: boolean) => void;
+  onUpdateDisableAIColumns: (disabled: boolean) => void;
+  onUpdateAllowNoteEnhancement: (allowed: boolean) => void;
+  onUpdateEnableCleaning: (enabled: boolean) => void;
   onSetCustomModelActive: (active: boolean) => void;
   onSetCustomModelInput: (input: string) => void;
   // Page setup props
@@ -92,13 +100,13 @@ const Toggle = ({ enabled, onToggle }: { enabled: boolean; onToggle: () => void 
   <button
     onClick={onToggle}
     className={cn(
-      "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-stone-400 focus:ring-offset-2",
-      enabled ? "bg-stone-900 dark:bg-stone-100" : "bg-stone-200 dark:bg-stone-700"
+      "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-stone-400 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-stone-900",
+      enabled ? "bg-emerald-500" : "bg-stone-200 dark:bg-stone-700"
     )}
   >
     <span
       className={cn(
-        "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ease-in-out",
+        "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition-all duration-300 ease-in-out",
         enabled ? "translate-x-5" : "translate-x-0"
       )}
     />
@@ -134,6 +142,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   disableAIArrows,
   disableAIStickies,
   disableAIDividers,
+  disableAIImages,
+  disableAIColumns,
+  allowNoteEnhancement,
+  enableCleaning,
   onUpdateCustomApiKey,
   onUpdateCustomModel,
   onUpdateHighlightStyle,
@@ -141,6 +153,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onUpdateDisableAIArrows,
   onUpdateDisableAIStickies,
   onUpdateDisableAIDividers,
+  onUpdateDisableAIImages,
+  onUpdateDisableAIColumns,
+  onUpdateAllowNoteEnhancement,
+  onUpdateEnableCleaning,
   onSetCustomModelActive,
   onSetCustomModelInput,
   pageLayout,
@@ -168,6 +184,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-[900px] h-[650px] max-h-[90vh] p-0 bg-[#FCFBF7] dark:bg-[#0A0A0A] border border-stone-200/50 dark:border-stone-800/50 rounded-2xl shadow-2xl overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          className="flex h-full min-h-0"
+        >
         <div className="flex h-full min-h-0">
           {/* Left Sidebar */}
           <div className="w-56 border-r border-stone-200/50 dark:border-stone-800/50 bg-white/50 dark:bg-stone-950/50 backdrop-blur-sm flex-shrink-0">
@@ -266,7 +289,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             onSetCustomModelInput(e.target.value);
                             onUpdateCustomModel(e.target.value);
                           }}
-                          className="mt-3 w-full px-4 py-3 rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 text-sm focus:outline-none focus:ring-2 focus:ring-stone-400"
+                          className="mt-3 w-full px-4 py-3 rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 shadow-sm"
                         />
                       )}
                     </div>
@@ -278,28 +301,76 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         placeholder="Using default server key..."
                         value={customApiKey}
                         onChange={(e) => onUpdateCustomApiKey(e.target.value)}
-                        className="w-full px-4 py-3 rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 text-sm focus:outline-none focus:ring-2 focus:ring-stone-400"
+                        className="w-full px-4 py-3 rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 shadow-sm"
                       />
                     </div>
 
                     <div className="pt-4 border-t border-stone-200 dark:border-stone-800">
-                      <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-3">AI Features</h3>
+                      <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-3">AI Formatting Permissions</h3>
                       <div className="space-y-3">
-                        <div className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800">
-                          <span className="text-sm text-stone-700 dark:text-stone-300">Flashcard Suggestions</span>
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 shadow-sm hover:shadow-md transition-shadow duration-200">
+                          <span className="text-sm text-stone-700 dark:text-stone-300">Flashcards</span>
                           <Toggle enabled={!disableAIFlashcards} onToggle={() => onUpdateDisableAIFlashcards(!disableAIFlashcards)} />
                         </div>
-                        <div className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800">
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 shadow-sm hover:shadow-md transition-shadow duration-200">
                           <span className="text-sm text-stone-700 dark:text-stone-300">Canvas Arrows</span>
                           <Toggle enabled={!disableAIArrows} onToggle={() => onUpdateDisableAIArrows(!disableAIArrows)} />
                         </div>
-                        <div className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800">
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 shadow-sm hover:shadow-md transition-shadow duration-200">
                           <span className="text-sm text-stone-700 dark:text-stone-300">Margin Stickies</span>
                           <Toggle enabled={!disableAIStickies} onToggle={() => onUpdateDisableAIStickies(!disableAIStickies)} />
                         </div>
-                        <div className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800">
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 shadow-sm hover:shadow-md transition-shadow duration-200">
+                          <span className="text-sm text-stone-700 dark:text-stone-300">Images</span>
+                          <Toggle enabled={!disableAIImages} onToggle={() => onUpdateDisableAIImages(!disableAIImages)} />
+                        </div>
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 shadow-sm hover:shadow-md transition-shadow duration-200">
+                          <span className="text-sm text-stone-700 dark:text-stone-300">Split Sections (Columns)</span>
+                          <Toggle enabled={!disableAIColumns} onToggle={() => onUpdateDisableAIColumns(!disableAIColumns)} />
+                        </div>
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 shadow-sm hover:shadow-md transition-shadow duration-200">
                           <span className="text-sm text-stone-700 dark:text-stone-300">Section Dividers</span>
                           <Toggle enabled={!disableAIDividers} onToggle={() => onUpdateDisableAIDividers(!disableAIDividers)} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-stone-200 dark:border-stone-800">
+                      <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-3">Highlight Style</h3>
+                      <div className="inline-flex bg-stone-100 dark:bg-stone-900 rounded-lg p-1">
+                        {HIGHLIGHT_STYLES.map((style) => (
+                          <button
+                            key={style.id}
+                            onClick={() => onUpdateHighlightStyle(style.id as any)}
+                            className={cn(
+                              "px-4 py-2 rounded-md text-sm font-medium transition-all",
+                              highlightStyle === style.id
+                                ? "bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 shadow-sm"
+                                : "text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
+                            )}
+                          >
+                            {style.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-stone-200 dark:border-stone-800">
+                      <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-3">AI Behavior</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 shadow-sm hover:shadow-md transition-shadow duration-200">
+                          <div>
+                            <span className="text-sm text-stone-700 dark:text-stone-300 block">Note Enhancement</span>
+                            <span className="text-xs text-stone-500 dark:text-stone-400">Allow AI to modify text content</span>
+                          </div>
+                          <Toggle enabled={allowNoteEnhancement} onToggle={() => onUpdateAllowNoteEnhancement(!allowNoteEnhancement)} />
+                        </div>
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 shadow-sm hover:shadow-md transition-shadow duration-200">
+                          <div>
+                            <span className="text-sm text-stone-700 dark:text-stone-300 block">Clean Random Text</span>
+                            <span className="text-xs text-stone-500 dark:text-stone-400">Remove (21) (2) type artifacts</span>
+                          </div>
+                          <Toggle enabled={enableCleaning} onToggle={() => onUpdateEnableCleaning(!enableCleaning)} />
                         </div>
                       </div>
                     </div>
@@ -353,26 +424,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             )}
                             style={{ backgroundColor: color.value }}
                           />
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-3">Highlight Style</h3>
-                      <div className="inline-flex bg-stone-100 dark:bg-stone-900 rounded-lg p-1">
-                        {HIGHLIGHT_STYLES.map((style) => (
-                          <button
-                            key={style.id}
-                            onClick={() => onUpdateHighlightStyle(style.id as any)}
-                            className={cn(
-                              "px-4 py-2 rounded-md text-sm font-medium transition-all duration-200",
-                              highlightStyle === style.id
-                                ? "bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 shadow-sm"
-                                : "text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300"
-                            )}
-                          >
-                            {style.name}
-                          </button>
                         ))}
                       </div>
                     </div>
@@ -622,6 +673,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </AnimatePresence>
           </div>
         </div>
+        </motion.div>
       </DialogContent>
     </Dialog>
   );

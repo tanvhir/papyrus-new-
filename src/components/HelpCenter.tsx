@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { 
   BookOpen, 
@@ -97,6 +98,13 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({ open, onOpenChange }) =>
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-[1000px] h-[85vh] max-h-[90vh] p-0 bg-[#FCFBF7] dark:bg-[#0A0A0A] border border-stone-200/50 dark:border-stone-800/50 rounded-2xl shadow-2xl overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          className="flex h-full min-h-0"
+        >
         <div className="flex h-full min-h-0">
           {/* Left Sidebar Navigation */}
           <div className="w-64 border-r border-stone-200/50 dark:border-stone-800/50 bg-white/50 dark:bg-stone-950/50 backdrop-blur-sm flex flex-col flex-shrink-0">
@@ -390,6 +398,39 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({ open, onOpenChange }) =>
                     </p>
                   </div>
                 </div>
+
+                <div className="mt-8">
+                  <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Premade AI Prompts</h3>
+                  <p className="text-sm text-stone-600 dark:text-stone-400 mb-4">Click any prompt to copy it, then use it with the AI selection formatter.</p>
+                  <div className="space-y-3">
+                    {[
+                      { prompt: 'Format as a clean table with headers', category: 'Tables', color: 'blue' },
+                      { prompt: 'Highlight key terms and definitions', category: 'Highlighting', color: 'yellow' },
+                      { prompt: 'Create a mnemonic layout with arrows', category: 'Mnemonics', color: 'purple' },
+                      { prompt: 'Format as a bulleted list with sub-points', category: 'Lists', color: 'emerald' },
+                      { prompt: 'Add section dividers between topics', category: 'Structure', color: 'orange' },
+                      { prompt: 'Create flashcard-style Q&A pairs', category: 'Flashcards', color: 'pink' },
+                      { prompt: 'Format as comparison columns', category: 'Columns', color: 'cyan' },
+                      { prompt: 'Add sticky notes for important points', category: 'Annotations', color: 'amber' },
+                    ].map((item, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          navigator.clipboard.writeText(item.prompt);
+                        }}
+                        className="w-full text-left p-3 bg-white dark:bg-stone-950 rounded-lg border border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700 transition-colors group"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <span className="text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wide">{item.category}</span>
+                            <p className="text-sm text-stone-700 dark:text-stone-300 mt-1">{item.prompt}</p>
+                          </div>
+                          <ArrowRight className="w-4 h-4 text-stone-400 group-hover:text-stone-600 dark:group-hover:text-stone-300 transition-colors" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </section>
 
               {/* Keyboard Shortcuts Section */}
@@ -522,6 +563,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({ open, onOpenChange }) =>
             </div>
           </div>
         </div>
+        </motion.div>
       </DialogContent>
     </Dialog>
   );

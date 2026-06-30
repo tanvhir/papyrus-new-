@@ -78,12 +78,14 @@ export function FlashcardCreator({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
       className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-[#0F0E0D]/75 backdrop-blur-[10px]"
     >
       <motion.div
-        initial={{ scale: 0.95, y: 15 }}
-        animate={{ scale: 1, y: 0 }}
-        exit={{ scale: 0.95, y: 15 }}
+        initial={{ scale: 0.95, y: 15, opacity: 0 }}
+        animate={{ scale: 1, y: 0, opacity: 1 }}
+        exit={{ scale: 0.95, y: 15, opacity: 0 }}
+        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
         className="bg-stone-100 dark:bg-stone-900/90 w-full max-w-lg rounded-3xl shadow-2xl border border-stone-200/50 dark:border-stone-800 flex flex-col overflow-hidden max-h-[92vh]"
       >
         {/* Header */}

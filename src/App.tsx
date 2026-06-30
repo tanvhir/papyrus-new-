@@ -10,6 +10,8 @@ import { HelpCenter } from '@/src/components/HelpCenter';
 import { useAuth } from '@/src/context/AuthContext';
 import { LoginScreen } from '@/src/components/LoginScreen';
 import { InstallerOverlay } from '@/src/components/InstallerOverlay';
+import { ToastProvider, useToast } from '@/src/context/ToastContext';
+import { ToastContainer } from '@/src/components/Toast';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { 
@@ -86,7 +88,8 @@ import { preserveSpaces } from '@/lib/utils';
 
 import localforage from 'localforage';
 import { DividerRender } from '@/src/components/DividerRender';
-import { DividerData } from '@/src/types';
+import { DividerData, ImageData } from '@/src/types';
+import { DraggableImage } from '@/src/components/DraggableImage';
 
 // Configure localforage
 localforage.config({
@@ -101,6 +104,7 @@ interface Note {
   stickies: { id: string, text: string, color: string, position?: Point, isPinned?: boolean }[];
   arrows: ArrowData[];
   dividers: DividerData[];
+  images: ImageData[];
   texture: PaperTexture;
   themeId: string;
   isHandwriting: boolean;
@@ -162,7 +166,7 @@ const StickyNote = React.memo(({
   
   const fontClass = isHandwriting ? "font-handwriting" : "font-bangla";
   const proseFontClass = isHandwriting ? "[&_.ProseMirror]:font-handwriting [&_.ProseMirror_p]:font-handwriting [&_.ProseMirror_h1]:font-handwriting [&_.ProseMirror_h2]:font-handwriting [&_.ProseMirror_h3]:font-handwriting" : "[&_.ProseMirror]:font-bangla [&_.ProseMirror_p]:font-bangla [&_.ProseMirror_h1]:font-bangla [&_.ProseMirror_h2]:font-bangla [&_.ProseMirror_h3]:font-bangla";
-  
+
   return (
     <motion.div 
       drag={!isPinned}
@@ -639,6 +643,20 @@ const FloatingDivider = React.memo(({
 
 export default function App() {
   const { loggedIn, installed, isLoading: authLoading, logout } = useAuth();
+  const { showWarning } = useToast();
+
+  // Check for GEMINI_API_KEY on mount
+  useEffect(() => {
+    const apiKey = (process.env.GEMINI_API_KEY as string) || '';
+    if (!apiKey || apiKey === '""' || apiKey === "''") {
+      showWarning(
+        'API Key Not Configured',
+        'GEMINI_API_KEY is not configured on this host. Please set it in your environment or .env file.',
+        10000
+      );
+    }
+  }, [showWarning]);
+
   const [subjects, setSubjects] = useState<Subject[]>([
     {
       id: 'default-subject',
@@ -651,6 +669,7 @@ export default function App() {
           stickies: [],
           arrows: [],
           dividers: [],
+          images: [],
           texture: 'laid',
           themeId: 'light',
           isHandwriting: true,
@@ -697,6 +716,10 @@ export default function App() {
   const [disableAIArrows, setDisableAIArrows] = useState<boolean>(() => localStorage.getItem('academic_disable_ai_arrows') === 'true');
   const [disableAIStickies, setDisableAIStickies] = useState<boolean>(() => localStorage.getItem('academic_disable_ai_stickies') === 'true');
   const [disableAIDividers, setDisableAIDividers] = useState<boolean>(() => localStorage.getItem('academic_disable_ai_dividers') === 'true');
+  const [disableAIImages, setDisableAIImages] = useState<boolean>(() => localStorage.getItem('academic_disable_ai_images') === 'true');
+  const [disableAIColumns, setDisableAIColumns] = useState<boolean>(() => localStorage.getItem('academic_disable_ai_columns') === 'true');
+  const [allowNoteEnhancement, setAllowNoteEnhancement] = useState<boolean>(() => localStorage.getItem('academic_allow_note_enhancement') === 'true');
+  const [enableCleaning, setEnableCleaning] = useState<boolean>(() => localStorage.getItem('academic_enable_cleaning') === 'true');
 
   const handleUpdateCustomApiKey = (key: string) => {
     setCustomApiKey(key);
@@ -731,6 +754,26 @@ export default function App() {
   const handleUpdateDisableAIDividers = (disabled: boolean) => {
     setDisableAIDividers(disabled);
     localStorage.setItem('academic_disable_ai_dividers', String(disabled));
+  };
+
+  const handleUpdateDisableAIImages = (disabled: boolean) => {
+    setDisableAIImages(disabled);
+    localStorage.setItem('academic_disable_ai_images', String(disabled));
+  };
+
+  const handleUpdateDisableAIColumns = (disabled: boolean) => {
+    setDisableAIColumns(disabled);
+    localStorage.setItem('academic_disable_ai_columns', String(disabled));
+  };
+
+  const handleUpdateAllowNoteEnhancement = (allowed: boolean) => {
+    setAllowNoteEnhancement(allowed);
+    localStorage.setItem('academic_allow_note_enhancement', String(allowed));
+  };
+
+  const handleUpdateEnableCleaning = (enabled: boolean) => {
+    setEnableCleaning(enabled);
+    localStorage.setItem('academic_enable_cleaning', String(enabled));
   };
 
   const BUILTIN_MODELS = [
@@ -1002,6 +1045,7 @@ export default function App() {
   const [stickies, setStickies] = useState<{ id: string, text: string, color: string, position?: Point, fontSize?: number, isPinned?: boolean }[]>([]);
   const [arrows, setArrows] = useState<ArrowData[]>([]);
   const [dividers, setDividers] = useState<DividerData[]>([]);
+  const [images, setImages] = useState<ImageData[]>([]);
   const [isHandwriting, setIsHandwriting] = useState(true);
   const [fontSize, setFontSize] = useState(18);
   const [selectedArrowId, setSelectedArrowId] = useState<string | null>(null);
@@ -1211,6 +1255,7 @@ export default function App() {
       setStickies(note.stickies);
       setArrows(note.arrows || []);
       setDividers(note.dividers || []);
+      setImages(note.images || []);
       setIsHandwriting(note.isHandwriting);
       setFontSize(note.fontSize || 18);
       setPageLayout(note.pageLayout || 'a4-portrait');
@@ -1372,6 +1417,7 @@ export default function App() {
           stickies: [],
           arrows: [],
           dividers: [],
+          images: [],
           texture: 'laid',
           themeId: 'light',
           isHandwriting: true,
@@ -1394,6 +1440,7 @@ export default function App() {
       stickies: [],
       arrows: [],
       dividers: [],
+      images: [],
       texture: 'laid',
       themeId: 'light',
       isHandwriting: true,
@@ -1709,6 +1756,7 @@ export default function App() {
           stickies: disableAIStickies ? [] : stickies,
           arrows: disableAIArrows ? [] : arrows,
           dividers: disableAIDividers ? [] : dividers,
+          images: images,
           pageLayout,
           customApiKey,
           customModel,
@@ -1765,9 +1813,31 @@ export default function App() {
     disableAIDividers
   ]);
 
+  const handleImagePaste = (src: string) => {
+    const img = new Image();
+    img.onload = () => {
+      const aspectRatio = img.width / img.height;
+      const maxWidth = 300;
+      const newWidth = Math.min(img.width, maxWidth);
+      const newHeight = newWidth / aspectRatio;
+
+      const newImage: ImageData = {
+        id: Date.now().toString(),
+        src,
+        position: { x: 100, y: 100 },
+        width: newWidth,
+        height: newHeight,
+        isPinned: false,
+      };
+
+      setImages(prev => [...prev, newImage]);
+    };
+    img.src = src;
+  };
+
   const handleAISelectionFormat = useCallback(async (selectionText: string, selectionHTML: string, instruction: string) => {
     const centerY = getViewportCenterY();
-    
+
     try {
       const response = await fetch('/api/ai/format-selection.php', {
         method: 'POST',
@@ -1788,6 +1858,10 @@ export default function App() {
           disableAIArrows,
           disableAIStickies,
           disableAIDividers,
+          disableAIImages,
+          disableAIColumns,
+          allowNoteEnhancement,
+          enableCleaning,
         })
       });
 
@@ -1808,20 +1882,78 @@ export default function App() {
         alert(data.message || 'AI selection formatting failed.');
       }
     } catch (error: any) {
-      console.error('Error during AI selection formatting:', error);
-      alert('An error occurred during AI selection formatting: ' + (error.message || error));
+      console.error('AI selection format error:', error);
+      alert('Failed to format selection with AI. Please try again.');
+      return null;
     }
-    return { formattedHTML: selectionHTML };
-  }, [
-    getViewportCenterY, 
-    customApiKey, 
-    customModel, 
-    highlightStyle,
-    disableAIFlashcards,
-    disableAIArrows,
-    disableAIStickies,
-    disableAIDividers
-  ]);
+  }, [customApiKey, customModel, highlightStyle, disableAIFlashcards, disableAIArrows, disableAIStickies, disableAIDividers, disableAIImages, disableAIColumns, allowNoteEnhancement, enableCleaning]);
+
+  const handleAIGenerateFlashcards = useCallback(async (noteContent: string, noteTitle: string, instruction: string = 'Generate flashcards from this note') => {
+    try {
+      const response = await fetch('/api/ai/generate-flashcards.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(customApiKey ? { 'X-Gemini-API-Key': customApiKey } : {}),
+          ...(customModel ? { 'X-Gemini-Model': customModel } : {}),
+        },
+        body: JSON.stringify({
+          noteContent,
+          noteTitle,
+          instruction,
+          maxCards: 15,
+          customApiKey,
+          customModel,
+          highlightStyle,
+        })
+      });
+
+      const data = await response.json();
+      if (data.success && data.flashcards) {
+        return data.flashcards;
+      } else {
+        alert(data.message || 'AI flashcard generation failed.');
+        return [];
+      }
+    } catch (error: any) {
+      console.error('AI flashcard generation error:', error);
+      alert('Failed to generate flashcards with AI. Please try again.');
+      return [];
+    }
+  }, [customApiKey, customModel, highlightStyle]);
+
+  const handleGenerateFlashcardsWithAI = useCallback(async () => {
+    const context = getActiveContext();
+    if (!context) return;
+
+    const noteContent = content;
+    const noteTitle = context.note.title;
+
+    const generatedFlashcards = await handleAIGenerateFlashcards(noteContent, noteTitle);
+
+    if (generatedFlashcards.length > 0) {
+      // Convert AI flashcards to our Flashcard format
+      const newFlashcards: Flashcard[] = generatedFlashcards.map((card: any, index: number) => ({
+        id: Date.now().toString() + index,
+        type: card.type as FlashcardType,
+        front: card.front,
+        back: card.back,
+        clozeData: card.clozeData,
+        sourceNoteId: context.note.id,
+        subjectId: context.subject.id,
+        chapterId: context.note.id,
+        createdAt: new Date().toISOString(),
+        lastReviewedAt: null,
+        reviewCount: 0,
+        easeFactor: 2.5,
+        interval: 0,
+        nextReviewAt: new Date().toISOString(),
+      }));
+
+      setFlashcards(prev => [...prev, ...newFlashcards]);
+      alert(`Successfully generated ${newFlashcards.length} flashcards!`);
+    }
+  }, [content, handleAIGenerateFlashcards]);
 
   const updateArrow = useCallback((id: string, updates: Partial<ArrowData>) => {
     setArrows(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
@@ -2196,6 +2328,7 @@ export default function App() {
             stickies: data.stickies || [],
             arrows: data.arrows || [],
             dividers: data.dividers || [],
+            images: data.images || [],
             texture: data.texture || 'laid',
             themeId: data.themeId || 'light',
             isHandwriting: data.isHandwriting || true,
@@ -2376,15 +2509,16 @@ export default function App() {
   }
 
   return (
-    <div 
-      className={cn(
-        "h-screen transition-colors duration-1000 flex overflow-hidden",
-        theme.id === 'dark' && "dark",
-        isCleanMode && "is-clean-mode"
-      )}
-      style={{ backgroundColor: theme.bgColor, color: theme.inkColor }}
-      data-theme={theme.id === 'premium-dark' ? 'premium-dark' : undefined}
-    >
+    <ToastProvider>
+      <div
+        className={cn(
+          "h-screen transition-colors duration-1000 flex overflow-hidden",
+          theme.id === 'dark' && "dark",
+          isCleanMode && "is-clean-mode"
+        )}
+        style={{ backgroundColor: theme.bgColor, color: theme.inkColor }}
+        data-theme={theme.id === 'premium-dark' ? 'premium-dark' : undefined}
+      >
       <CommandPalette 
         subjects={subjects} 
         flashcards={flashcards}
@@ -2561,6 +2695,10 @@ export default function App() {
         disableAIArrows={disableAIArrows}
         disableAIStickies={disableAIStickies}
         disableAIDividers={disableAIDividers}
+        disableAIImages={disableAIImages}
+        disableAIColumns={disableAIColumns}
+        allowNoteEnhancement={allowNoteEnhancement}
+        enableCleaning={enableCleaning}
         onUpdateCustomApiKey={handleUpdateCustomApiKey}
         onUpdateCustomModel={handleUpdateCustomModel}
         onUpdateHighlightStyle={handleUpdateHighlightStyle}
@@ -2568,6 +2706,10 @@ export default function App() {
         onUpdateDisableAIArrows={handleUpdateDisableAIArrows}
         onUpdateDisableAIStickies={handleUpdateDisableAIStickies}
         onUpdateDisableAIDividers={handleUpdateDisableAIDividers}
+        onUpdateDisableAIImages={handleUpdateDisableAIImages}
+        onUpdateDisableAIColumns={handleUpdateDisableAIColumns}
+        onUpdateAllowNoteEnhancement={handleUpdateAllowNoteEnhancement}
+        onUpdateEnableCleaning={handleUpdateEnableCleaning}
         onSetCustomModelActive={setIsCustomModelActive}
         onSetCustomModelInput={setCustomModelInput}
         pageLayout={pageLayout}
@@ -2659,6 +2801,25 @@ export default function App() {
                       ? `Study Chapter Cards (${flashcards.filter(c => c.sourceNoteId === activeNoteId).length})` 
                       : "No flashcards linked to this chapter"}
                   </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              {/* AI Generate Flashcards Button */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="w-8 h-8 rounded-full opacity-60 hover:opacity-100 transition-all hover:scale-105"
+                        onClick={handleGenerateFlashcardsWithAI}
+                      >
+                        <GraduationCap className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>Generate Flashcards with AI</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
 
@@ -2801,6 +2962,29 @@ export default function App() {
                 />
               );
             })}
+            {images.map(img => {
+              const visualPos = getVisualPosition(img.position);
+              const visualImage = {
+                ...img,
+                position: visualPos
+              };
+              return (
+                <DraggableImage
+                  key={img.id}
+                  image={visualImage}
+                  containerRef={mainAreaRef}
+                  onRemove={(id) => setImages(prev => prev.filter(i => i.id !== id))}
+                  onUpdate={(id, updates) => {
+                    const canvasUpdates = { ...updates };
+                    if (updates.position) {
+                      const rawCanvasPos = getCanvasPosition(updates.position.x, updates.position.y);
+                      canvasUpdates.position = rawCanvasPos;
+                    }
+                    setImages(prev => prev.map(i => i.id === id ? { ...i, ...canvasUpdates } : i));
+                  }}
+                />
+              );
+            })}
             {arrows.map(a => {
               const visualArrow = {
                 ...a,
@@ -2875,7 +3059,7 @@ export default function App() {
           >
             {/* Premium Spiral Binding - SVG-based continuous metal wire */}
             {notebookStyle === 'spiral' && mainHeight > 0 && (
-              <SpiralBinding height={mainHeight} />
+              <SpiralBinding height={mainHeight} pageHeight={pageHeight} pageGap={PAGE_GAP} />
             )}
 
             <motion.div
@@ -2888,6 +3072,7 @@ export default function App() {
                 content={content}
                 onChange={setContent}
                 onInit={setEditor}
+                onImagePaste={handleImagePaste}
                 activeHighlighterColor={activeHighlighterColor}
                 fontSize={fontSize}
                 onFormat={handleFormat}
@@ -3025,11 +3210,18 @@ export default function App() {
       <input 
         type="file" 
         ref={fileInputRef} 
-        onChange={onFileChange} 
-        accept=".papyrus,application/json" 
-        className="hidden" 
+        onChange={onFileChange}
+        accept=".papyrus,application/json"
+        className="hidden"
       />
+      <AppToast />
     </div>
-  </div>
+    </div>
+    </ToastProvider>
   );
+}
+
+function AppToast() {
+  const { toasts, removeToast } = useToast();
+  return <ToastContainer toasts={toasts} onClose={removeToast} />;
 }

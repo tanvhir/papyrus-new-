@@ -63,14 +63,18 @@ $disableAIFlashcards = ($input['disableAIFlashcards'] ?? false) === true;
 $disableAIArrows = ($input['disableAIArrows'] ?? false) === true;
 $disableAIStickies = ($input['disableAIStickies'] ?? false) === true;
 $disableAIDividers = ($input['disableAIDividers'] ?? false) === true;
+$disableAIImages = ($input['disableAIImages'] ?? false) === true;
+$disableAIColumns = ($input['disableAIColumns'] ?? false) === true;
+$allowNoteEnhancement = ($input['allowNoteEnhancement'] ?? false) === true;
+$enableCleaning = ($input['enableCleaning'] ?? false) === true;
 
 $highlightInstruction = '';
 if ($highlightStyle === 'generous') {
-    $highlightInstruction = "- Use highlights generously with `<mark data-color=\"#ffff00\" style=\"background-color: rgb(255, 255, 0); color: inherit;\">text</mark>` to highlight key terms, critical definitions, formulas, and important concepts to make the document extremely scan-friendly and visual. (Highlight colors allowed: Yellow: #ffff00, Blue: #bfdbfe, Deep green: #15803d, Pink: #f9a8d4, Orange: #fed7aa)";
+    $highlightInstruction = "- Use highlights GENEROUSLY with `<mark data-color=\"#ffff00\" style=\"background-color: rgb(255, 255, 0); color: inherit;\">text</mark>` to highlight key terms, critical definitions, formulas, important concepts, examples, and any noteworthy information to make the document extremely scan-friendly and visual. Aim for 8-15 highlights per page. Use appropriate colors for different types of content: Yellow for general highlights, Blue for definitions, Deep green for formulas, Pink for examples, Orange for warnings/cautions.";
 } else if ($highlightStyle === 'none') {
     $highlightInstruction = "- Do NOT use any highlights (`<mark>`) at all. Keep everything un-highlighted.";
 } else {
-    $highlightInstruction = "- Use highlights sparingly with `<mark data-color=\"#ffff00\" style=\"background-color: rgb(255, 255, 0); color: inherit;\">text</mark>` ONLY for critical definitions, formulas, or key terms (maximum of 3 to 5 highlights per page). (Highlight colors allowed: Yellow: #ffff00, Blue: #bfdbfe, Deep green: #15803d, Pink: #f9a8d4, Orange: #fed7aa)";
+    $highlightInstruction = "- Use highlights SPARINGLY with `<mark data-color=\"#ffff00\" style=\"background-color: rgb(255, 255, 0); color: inherit;\">text</mark>` ONLY for the most critical definitions, formulas, or key terms (maximum of 3-5 highlights per page). Be very selective. Use appropriate colors: Yellow for general, Blue for definitions, Deep green for formulas, Pink for examples, Orange for warnings.";
 }
 
 $strictDisableInstructions = '';
@@ -85,6 +89,22 @@ if ($disableAIDividers) {
 }
 if ($disableAIFlashcards) {
     $strictDisableInstructions .= "\n- DO NOT generate any flashcard-style inline question or answer suggestions.";
+}
+if ($disableAIImages) {
+    $strictDisableInstructions .= "\n- DO NOT generate any image references or image-related content.";
+}
+if ($disableAIColumns) {
+    $strictDisableInstructions .= "\n- DO NOT use multi-column layouts (data-type=\"columns\"). Use single-column layout instead.";
+}
+
+$enhancementInstruction = '';
+if (!$allowNoteEnhancement) {
+    $enhancementInstruction .= "\n- CRITICAL: DO NOT modify the actual text content or wording. Only apply formatting (headings, lists, highlights, etc.) without changing the meaning or words.";
+}
+
+$cleaningInstruction = '';
+if ($enableCleaning) {
+    $cleaningInstruction .= "\n- Clean up random numeric artifacts like (21), (2), [1], etc. that may appear in the text. Remove these artifacts while preserving the actual content.";
 }
 
 if (empty($selectionText) && empty($selectionHTML)) {
@@ -107,7 +127,9 @@ Current visual page line height (centerY): $centerY
 Your response MUST be a single structured JSON object with the following fields:
 1. \"formattedHTML\": The beautifully formatted HTML representing ONLY the replacement for the selected portion.
    - You should restructure the HTML inline.
-   - Use headings (h1, h2, h3), paragraphs (p), list items (li), and inline styles like strong, em, u as needed.
+   - Use headings (h1, h2, h3), paragraphs (p), list items (li), and inline styles as needed.
+   - Use text formatting tools extensively: <strong> for bold emphasis on important terms, <em> for italic emphasis on examples or foreign terms, <u> for underlining critical points.
+   - Use text colors for semantic meaning: <span style=\"color: #1c1917\"> for normal text, <span style=\"color: #ef4444\"> for warnings/errors, <span style=\"color: #3b82f6\"> for definitions, <span style=\"color: #22c55e\"> for success/positive, <span style=\"color: #d97706\"> for important notes.
    $highlightInstruction
    - If requested or suitable, use multi-column elements:
      `<div data-type=\"columns\"><div data-type=\"column\"><h3>Left Column</h3><p>...</p></div><div data-type=\"column\"><h3>Right Column</h3><p>...</p></div></div>`
@@ -120,7 +142,15 @@ Your response MUST be a single structured JSON object with the following fields:
        3) A beautifully formatted bottom item containing the meaning or full word centered (e.g., `<p style=\"text-align: center; font-size: 0.85rem; color: #4b5563;\">Ellipse</p>`).
      This creates a gorgeous, perfectly aligned vertical hierarchy exactly like high-end visual student notes!
    - Use LaTeX formulas via `<math-node data-latex=\"formula_here\"></math-node>` if there are mathematical equations or terms.
-   - Embed decorative horizontal lines via: `<decorative-divider data-type=\"solid|dashed|dotted|zigzag|wave\" data-color=\"#15803d\" data-size=\"2\" data-length=\"100%\"></decorative-divider>`.
+   - Embed decorative dividers to separate sections using various styles:
+     * Solid: `<decorative-divider data-type=\"solid\" data-color=\"#15803d\" data-size=\"2\" data-length=\"100%\"></decorative-divider>`
+     * Dashed: `<decorative-divider data-type=\"dashed\" data-color=\"#3b82f6\" data-size=\"2\" data-length=\"100%\"></decorative-divider>`
+     * Dotted: `<decorative-divider data-type=\"dotted\" data-color=\"#f59e0b\" data-size=\"2\" data-length=\"100%\"></decorative-divider>`
+     * Zigzag: `<decorative-divider data-type=\"zigzag\" data-color=\"#ec4899\" data-size=\"2\" data-length=\"100%\"></decorative-divider>`
+     * Wave: `<decorative-divider data-type=\"wave\" data-color=\"#8b5cf6\" data-size=\"2\" data-length=\"100%\"></decorative-divider>`
+     Choose the style that best fits the content context (solid for major sections, dashed for subsections, dotted for minor breaks, zigzag for creative emphasis, wave for smooth transitions).
+$enhancementInstruction
+$cleaningInstruction
 2. \"stickies\": An array of optional staggered callout sticky notes ONLY if requested by the user's prompt or highly necessary (limit to 1 or 2 max):
    - Format: { \"id\": \"string\", \"text\": \"string\", \"color\": \"#ffff99|#ffccff|#ccffff|#ffcc99\", \"position\": { \"x\": number, \"y\": number }, \"fontSize\": number }
    - Placement: Best placed on the right margin side of the page (x between 850 and 920). Set 'y' coordinate close to centerY (e.g. centerY, centerY + 220, etc.) to match where the selection is located.

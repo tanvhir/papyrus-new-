@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'motion/react';
 import { useEditor, EditorContent, Extension, BubbleMenu } from '@tiptap/react';
 import Document from '@tiptap/extension-document';
 import { PageExtension } from './PageExtension';
@@ -20,11 +21,11 @@ import { DecorativeDivider } from '@/src/lib/DecorativeDivider';
 import { Columns, Column } from '@/src/lib/MultiColumn';
 import { DOMSerializer } from '@tiptap/pm/model';
 import { cn, preserveSpaces } from '@/lib/utils';
-import { 
-  Bold, 
-  Italic, 
-  Underline as UnderlineIcon, 
-  Highlighter, 
+import {
+  Bold,
+  Italic,
+  Underline as UnderlineIcon,
+  Highlighter,
   Pipette,
   Pencil,
   Type,
@@ -36,7 +37,13 @@ import {
   Sparkles,
   Loader2,
   ArrowLeft,
-  Send
+  Send,
+  Heading1,
+  Heading2,
+  Heading3,
+  AlignLeft,
+  AlignCenter,
+  AlignRight
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -58,6 +65,7 @@ interface EditorProps {
   editorClass?: string;
   onInit?: (editor: any) => void;
   editable?: boolean;
+  onImagePaste?: (src: string) => void;
   activeHighlighterColor?: string | null;
   fontSize?: number;
   onFormat?: (type: string, value?: any) => void;
@@ -195,13 +203,14 @@ const normalizeContent = (html: string) => {
   return `<div data-type="page">${preserved}</div>`;
 };
 
-const Editor: React.FC<EditorProps> = ({ 
-  content, 
-  onChange, 
-  className, 
-  editorClass, 
-  onInit, 
+const Editor: React.FC<EditorProps> = ({
+  content,
+  onChange,
+  className,
+  editorClass,
+  onInit,
   editable = true,
+  onImagePaste,
   activeHighlighterColor,
   fontSize = 18,
   onFormat,
@@ -252,6 +261,34 @@ const Editor: React.FC<EditorProps> = ({
 
   const isPaintingRef = React.useRef(false);
   const lastPaintedPosRef = React.useRef<number | null>(null);
+
+  const handlePaste = (event: ClipboardEvent) => {
+    const items = Array.from(event.clipboardData?.items || []);
+    const imageItem = items.find(item => item.type.startsWith('image/'));
+
+    if (imageItem && onImagePaste) {
+      event.preventDefault();
+      const file = imageItem.getAsFile();
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const src = e.target?.result as string;
+          onImagePaste(src);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  };
+
+  React.useEffect(() => {
+    if (editable && editor) {
+      const editorElement = editor.view.dom;
+      editorElement.addEventListener('paste', handlePaste);
+      return () => {
+        editorElement.removeEventListener('paste', handlePaste);
+      };
+    }
+  }, [editable, editor, onImagePaste]);
 
   const extensions = React.useMemo(() => {
     const baseExtensions = [
@@ -1015,7 +1052,73 @@ const Editor: React.FC<EditorProps> = ({
 
               <Separator orientation="vertical" className="h-4 mx-0.5" />
 
-              <button 
+              <button
+                onClick={() => onFormat?.('heading', 'h1')}
+                className={cn(
+                  "p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors",
+                  editor.isActive('heading', { level: 1 }) && "text-blue-600 bg-blue-50 dark:bg-blue-900/40"
+                )}
+                title="Heading 1"
+              >
+                <Heading1 className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => onFormat?.('heading', 'h2')}
+                className={cn(
+                  "p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors",
+                  editor.isActive('heading', { level: 2 }) && "text-blue-600 bg-blue-50 dark:bg-blue-900/40"
+                )}
+                title="Heading 2"
+              >
+                <Heading2 className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => onFormat?.('heading', 'h3')}
+                className={cn(
+                  "p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors",
+                  editor.isActive('heading', { level: 3 }) && "text-blue-600 bg-blue-50 dark:bg-blue-900/40"
+                )}
+                title="Heading 3"
+              >
+                <Heading3 className="w-3.5 h-3.5" />
+              </button>
+
+              <Separator orientation="vertical" className="h-4 mx-0.5" />
+
+              <button
+                onClick={() => onFormat?.('textAlign', 'left')}
+                className={cn(
+                  "p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors",
+                  editor.isActive({ textAlign: 'left' }) && "text-blue-600 bg-blue-50 dark:bg-blue-900/40"
+                )}
+                title="Align Left"
+              >
+                <AlignLeft className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => onFormat?.('textAlign', 'center')}
+                className={cn(
+                  "p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors",
+                  editor.isActive({ textAlign: 'center' }) && "text-blue-600 bg-blue-50 dark:bg-blue-900/40"
+                )}
+                title="Align Center"
+              >
+                <AlignCenter className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => onFormat?.('textAlign', 'right')}
+                className={cn(
+                  "p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors",
+                  editor.isActive({ textAlign: 'right' }) && "text-blue-600 bg-blue-50 dark:bg-blue-900/40"
+                )}
+                title="Align Right"
+              >
+                <AlignRight className="w-3.5 h-3.5" />
+              </button>
+
+              <Separator orientation="vertical" className="h-4 mx-0.5" />
+
+              <button
                 onClick={() => setActiveSubMenu('highlight')}
                 className="p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors flex items-center gap-0.5"
               >
@@ -1023,7 +1126,7 @@ const Editor: React.FC<EditorProps> = ({
                 <ChevronDown className="w-2.5 h-2.5 opacity-50" />
               </button>
 
-              <button 
+              <button
                 onClick={() => setActiveSubMenu('color')}
                 className="p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors flex items-center gap-0.5"
               >
@@ -1041,21 +1144,6 @@ const Editor: React.FC<EditorProps> = ({
                 <Sparkles className="w-3.5 h-3.5" />
               </button>
 
-              <Separator orientation="vertical" className="h-4 mx-0.5" />
-
-              <button
-                onClick={() => onToggleDrawingArrowMode?.()}
-                className={cn(
-                  "p-1.5 rounded-full transition-all relative overflow-hidden",
-                  isDrawingArrowMode 
-                    ? "bg-cyan-500 text-white hover:bg-cyan-600 dark:bg-cyan-600 dark:text-stone-900" 
-                    : "hover:bg-cyan-50 dark:hover:bg-cyan-900/20 text-cyan-700 dark:text-cyan-400"
-                )}
-                title="Draw Arrow"
-              >
-                <Pencil className="w-3.5 h-3.5" />
-              </button>
-
               {editor.isActive('columns') && (
                 <>
                   <Separator orientation="vertical" className="h-4 mx-0.5" />
@@ -1070,8 +1158,14 @@ const Editor: React.FC<EditorProps> = ({
               )}
             </>
           ) : activeSubMenu === 'ai-prompt' ? (
-            <div className="flex items-center gap-1.5 px-1.5 py-0.5 min-w-[240px]">
-              <button 
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, x: -10 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              exit={{ opacity: 0, scale: 0.95, x: -10 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="flex items-center gap-1.5 px-1.5 py-0.5 min-w-[240px]"
+            >
+              <button
                 onClick={() => {
                   setAiPromptText('');
                   setActiveSubMenu('main');
@@ -1083,9 +1177,9 @@ const Editor: React.FC<EditorProps> = ({
                 <ArrowLeft className="w-3.5 h-3.5 text-stone-500" />
               </button>
 
-              <input 
-                type="text" 
-                placeholder="Ask AI to format selection..." 
+              <input
+                type="text"
+                placeholder="Ask AI to format selection..."
                 value={aiPromptText}
                 onChange={(e) => setAiPromptText(e.target.value)}
                 onKeyDown={(e) => {
@@ -1111,7 +1205,7 @@ const Editor: React.FC<EditorProps> = ({
                   <Send className="w-3 h-3" />
                 )}
               </button>
-            </div>
+            </motion.div>
           ) : (
             <div className="flex items-center gap-2 px-1">
               <button 

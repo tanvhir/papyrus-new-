@@ -150,17 +150,19 @@ export function FlashcardImport({
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
       className="fixed inset-0 z-[500] flex items-center justify-center p-6 bg-[#3C3630]/40 backdrop-blur-[12px]"
       id="flashcard-import-overlay"
     >
-      <motion.div 
-        initial={{ scale: 0.99, y: 8 }}
-        animate={{ scale: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: [0.25, 1, 0.5, 1] }}
+      <motion.div
+        initial={{ scale: 0.95, y: 20, opacity: 0 }}
+        animate={{ scale: 1, y: 0, opacity: 1 }}
+        exit={{ scale: 0.95, y: 20, opacity: 0 }}
+        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
         className="w-full max-w-[1000px] h-[600px] rounded-[32px] shadow-[0_32px_80px_rgba(28,26,24,0.14),inset_0_1px_2px_rgba(255,255,255,0.4)] border border-[#DDD6C7]/50 flex overflow-hidden relative"
         id="flashcard-import-modal"
       >
@@ -213,11 +215,11 @@ export function FlashcardImport({
 
           {/* Text Area Container: visually melts into the panel */}
           <div className="w-full flex-1 bg-[#FAF8F4]/80 rounded-[24px] border border-[#E7E2D5] p-7 pb-10 flex flex-col relative z-10" id="textarea-container">
-            <textarea 
+            <textarea
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               placeholder="Paste your questions, answers, or notes here..."
-              className="w-full flex-1 bg-transparent border-none outline-none resize-none text-[14px] font-sans text-[#5D574E] placeholder-[#C2B79F] leading-relaxed overflow-y-auto custom-scrollbar focus:ring-0 p-0"
+              className="w-full flex-1 bg-transparent border-none outline-none resize-none text-[14px] font-sans text-[#5D574E] placeholder-[#C2B79F] leading-relaxed overflow-y-auto custom-scrollbar focus:ring-0 p-0 transition-all duration-200"
               id="import-textarea"
             />
             
