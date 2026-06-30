@@ -8,25 +8,26 @@ interface SpiralBindingProps {
 export const SpiralBinding: React.FC<SpiralBindingProps> = ({ height, className = '' }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [loopCount, setLoopCount] = useState(0);
+  const uniqueId = useRef(`spiral-${Math.random().toString(36).substr(2, 9)}`);
 
   // Configuration via CSS variables
   const config = {
     holeSpacing: 26, // pixels between hole centers
-    holeDiameter: 8, // pixels
-    wireThickness: 2, // pixels
+    holeDiameter: 10, // pixels - larger for visibility
+    wireThickness: 3.5, // pixels - thicker for visibility
     bindingWidth: 36, // pixels
     loopWidth: 28, // pixels
     loopHeight: 10, // pixels
     wireColor: {
-      light: '#e8e8e8',
-      mid: '#b8b8b8',
-      dark: '#888888',
-      shadow: '#666666'
+      light: '#a0a0a0',
+      mid: '#505050',
+      dark: '#202020',
+      shadow: '#101010'
     }
   };
 
   useEffect(() => {
-    if (svgRef.current) {
+    if (svgRef.current && height > 0) {
       const availableHeight = height - 40; // 20px padding top and bottom
       const calculatedLoops = Math.floor(availableHeight / config.holeSpacing);
       setLoopCount(Math.max(calculatedLoops, 1));
@@ -99,7 +100,7 @@ export const SpiralBinding: React.FC<SpiralBindingProps> = ({ height, className 
 
   return (
     <div 
-      className={`absolute left-0 top-0 bottom-0 pointer-events-none ${className}`}
+      className={`absolute left-0 top-0 bottom-0 pointer-events-none z-50 ${className}`}
       style={{ width: `${config.bindingWidth}px` }}
     >
       <svg
@@ -112,7 +113,7 @@ export const SpiralBinding: React.FC<SpiralBindingProps> = ({ height, className 
       >
         <defs>
           {/* Metallic gradient for the wire */}
-          <linearGradient id="wireGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+          <linearGradient id={`wireGradient-${uniqueId.current}`} x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor={config.wireColor.light} />
             <stop offset="30%" stopColor={config.wireColor.mid} />
             <stop offset="50%" stopColor={config.wireColor.light} stopOpacity="0.9" />
@@ -121,21 +122,22 @@ export const SpiralBinding: React.FC<SpiralBindingProps> = ({ height, className 
           </linearGradient>
 
           {/* Shadow gradient for depth */}
-          <linearGradient id="shadowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <linearGradient id={`shadowGradient-${uniqueId.current}`} x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor={config.wireColor.shadow} stopOpacity="0.4" />
             <stop offset="100%" stopColor={config.wireColor.shadow} stopOpacity="0" />
           </linearGradient>
 
           {/* Inner shadow for punched holes */}
-          <radialGradient id="holeShadow" cx="50%" cy="50%" r="50%">
-            <stop offset="70%" stopColor="#000000" stopOpacity="0.15" />
-            <stop offset="100%" stopColor="#000000" stopOpacity="0.3" />
+          <radialGradient id={`holeShadow-${uniqueId.current}`} cx="50%" cy="50%" r="50%">
+            <stop offset="60%" stopColor="#000000" stopOpacity="0.2" />
+            <stop offset="100%" stopColor="#000000" stopOpacity="0.5" />
           </radialGradient>
 
           {/* Drop shadow for the entire spiral */}
-          <filter id="spiralShadow" x="-50%" y="-50%" width="200%" height="200%">
-            <feDropShadow dx="0" dy="1" stdDeviation="1" floodColor="#000000" floodOpacity="0.15" />
+          <filter id={`spiralShadow-${uniqueId.current}`} x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="#000000" floodOpacity="0.25" />
           </filter>
+
         </defs>
 
         {/* Punched holes (rendered first, behind wire) */}
@@ -146,17 +148,17 @@ export const SpiralBinding: React.FC<SpiralBindingProps> = ({ height, className 
               <circle
                 cx={hole.props.cx}
                 cy={hole.props.cy}
-                r={config.holeDiameter / 2 + 1}
-                fill="url(#holeShadow)"
+                r={config.holeDiameter / 2 + 2}
+                fill={`url(#holeShadow-${uniqueId.current})`}
               />
-              {/* Hole */}
+              {/* Hole - bright red for debugging */}
               <circle
                 cx={hole.props.cx}
                 cy={hole.props.cy}
                 r={config.holeDiameter / 2}
-                fill="#FCFBF8"
-                stroke="rgba(0,0,0,0.08)"
-                strokeWidth="0.5"
+                fill="#ff0000"
+                stroke="#ff0000"
+                strokeWidth="2"
               />
             </g>
           ))}
@@ -166,18 +168,18 @@ export const SpiralBinding: React.FC<SpiralBindingProps> = ({ height, className 
         <path
           d={generateSpiralPath()}
           fill="none"
-          stroke="url(#wireGradient)"
+ stroke="#0000ff"
           strokeWidth={config.wireThickness}
           strokeLinecap="round"
           strokeLinejoin="round"
-          filter="url(#spiralShadow)"
+          filter={`url(#spiralShadow-${uniqueId.current})`}
         />
 
         {/* Subtle highlight on top of wire */}
         <path
           d={generateSpiralPath()}
           fill="none"
-          stroke="rgba(255,255,255,0.3)"
+          stroke="rgba(255,255,255,0.4)"
           strokeWidth={config.wireThickness * 0.3}
           strokeLinecap="round"
           strokeLinejoin="round"

@@ -33,6 +33,14 @@ export const THEMES: NoteTheme[] = [
     accentColor: '#3B82F6',
   },
   {
+    id: 'premium-dark',
+    name: 'Premium Black',
+    bgColor: '#0A0A0A',
+    paperColor: '#121212',
+    inkColor: '#E8E8E8',
+    accentColor: '#1E3A2A',
+  },
+  {
     id: 'botanical',
     name: 'Botanical',
     bgColor: '#EBEFE7',
