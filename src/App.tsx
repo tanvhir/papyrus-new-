@@ -390,7 +390,7 @@ const CurvedArrow = React.memo(({
 
   // Elegant collection of ink styles for paper theme
   const arrowColors = [
-    { name: 'Contrast Ink', value: theme.id === 'dark' ? '#f5f5f4' : '#1c1917' },
+    { name: 'Contrast Ink', value: (theme.id === 'dark' || theme.id === 'premium-dark') ? '#f5f5f4' : '#1c1917' },
     { name: 'Red Pen', value: '#ef4444' },
     { name: 'Blue Pen', value: '#3b82f6' },
     { name: 'Green Pen', value: '#10b981' },
@@ -1282,7 +1282,7 @@ export default function App() {
           scale: 2,
           useCORS: true,
           logging: false,
-          backgroundColor: theme.id === 'dark' || theme.id === 'charcoal' ? '#1c1917' : paperColorHex,
+          backgroundColor: (theme.id === 'dark' || theme.id === 'charcoal' || theme.id === 'premium-dark') ? '#0A0A0A' : paperColorHex,
           scrollY: 0,
           scrollX: 0,
           windowWidth: fullWidth,
@@ -1318,7 +1318,7 @@ export default function App() {
             scale: 2,
             useCORS: true,
             logging: false,
-            backgroundColor: theme.id === 'dark' || theme.id === 'charcoal' ? '#1c1917' : paperColorHex,
+            backgroundColor: (theme.id === 'dark' || theme.id === 'charcoal' || theme.id === 'premium-dark') ? '#0A0A0A' : paperColorHex,
             width: element.offsetWidth,
             height: element.offsetHeight,
           });
@@ -1337,7 +1337,7 @@ export default function App() {
               scale: 2,
               useCORS: true,
               logging: false,
-              backgroundColor: theme.id === 'dark' || theme.id === 'charcoal' ? '#262626' : paperColorHex,
+              backgroundColor: (theme.id === 'dark' || theme.id === 'charcoal' || theme.id === 'premium-dark') ? '#121212' : paperColorHex,
               width: pageEl.clientWidth,
               height: pageEl.clientHeight,
               scrollY: 0,
@@ -1661,7 +1661,7 @@ export default function App() {
       const newDivider: DividerData = {
         id: Math.random().toString(36).substr(2, 9),
         ...value,
-        color: theme.id === 'dark' ? '#57534e' : '#a8a29e',
+        color: (theme.id === 'dark' || theme.id === 'premium-dark') ? '#57534e' : '#a8a29e',
         position: clampedCanvasPos
       };
       setDividers(prev => [...prev, newDivider]);
@@ -1672,7 +1672,7 @@ export default function App() {
         // Toggle Highlighter Tool Mode if no selection
         setActiveHighlighterColor(prev => prev === value ? null : value);
       } else {
-        targetEditor.chain().focus().toggleHighlight({ color: value || (theme.id === 'dark' ? '#5E5E00' : '#ffff00') }).run();
+        targetEditor.chain().focus().toggleHighlight({ color: value || ((theme.id === 'dark' || theme.id === 'premium-dark') ? '#5E5E00' : '#ffff00') }).run();
       }
     } else if (type === 'color') {
       targetEditor.chain().focus().setColor(value).run();
@@ -1920,7 +1920,7 @@ export default function App() {
       start: startCanvas,
       end: endCanvas,
       mid: midCanvas,
-      color: theme.id === 'dark' ? '#3B82F6' : '#1c1917'
+      color: (theme.id === 'dark' || theme.id === 'premium-dark') ? '#3B82F6' : '#1c1917'
     };
 
     setArrows(prev => [...prev, newArrow]);
@@ -2383,6 +2383,7 @@ export default function App() {
         isCleanMode && "is-clean-mode"
       )}
       style={{ backgroundColor: theme.bgColor, color: theme.inkColor }}
+      data-theme={theme.id === 'premium-dark' ? 'premium-dark' : undefined}
     >
       <CommandPalette 
         subjects={subjects} 
@@ -2832,7 +2833,7 @@ export default function App() {
                   <path
                     d={`M ${drawingPoints.map(p => `${p.x} ${p.y}`).join(' L ')}`}
                     fill="none"
-                    stroke={theme.id === 'dark' ? '#3B82F6' : '#1c1917'}
+                    stroke={(theme.id === 'dark' || theme.id === 'premium-dark') ? '#3B82F6' : '#1c1917'}
                     strokeWidth={3.5}
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -2868,7 +2869,7 @@ export default function App() {
             }}
           >
             {/* Premium Spiral Binding - SVG-based continuous metal wire */}
-            {notebookStyle === 'spiral' && (
+            {notebookStyle === 'spiral' && mainHeight > 0 && (
               <SpiralBinding height={mainHeight} />
             )}
 
