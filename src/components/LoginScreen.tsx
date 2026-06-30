@@ -203,7 +203,8 @@ export const LoginScreen: React.FC = () => {
             alt="splash screen"
             decoding="async"
             src="/splash.svg"
-            className="w-full h-full object-contain"
+            className="aspect-[9/16] object-cover"
+            style={{ position: 'absolute', height: '100%', width: '100%', inset: 0, color: 'transparent' }}
           />
         </div>
       </div>
