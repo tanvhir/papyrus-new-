@@ -10,8 +10,6 @@ import { HelpCenter } from '@/src/components/HelpCenter';
 import { useAuth } from '@/src/context/AuthContext';
 import { LoginScreen } from '@/src/components/LoginScreen';
 import { InstallerOverlay } from '@/src/components/InstallerOverlay';
-import { useToast } from '@/src/context/ToastContext';
-import { ToastContainer } from '@/src/components/Toast';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { 
@@ -90,12 +88,6 @@ import localforage from 'localforage';
 import { DividerRender } from '@/src/components/DividerRender';
 import { DividerData, ImageData } from '@/src/types';
 import { DraggableImage } from '@/src/components/DraggableImage';
-
-// Configure localforage
-localforage.config({
-  name: 'Papyrus',
-  storeName: 'notes'
-});
 
 interface Note {
   id: string;
@@ -643,11 +635,20 @@ const FloatingDivider = React.memo(({
 
 export default function App() {
   const { loggedIn, installed, isLoading: authLoading, logout } = useAuth();
-  const { showWarning } = useToast();
+
+  // Configure localforage on mount
+  useEffect(() => {
+    localforage.config({
+      name: 'Papyrus',
+      storeName: 'notes'
+    });
+  }, []);
 
   // Check for GEMINI_API_KEY on mount
+  // Disabled to prevent circular dependency issues in production build
+  /*
   useEffect(() => {
-    const apiKey = (process.env.GEMINI_API_KEY as string) || '';
+    const apiKey = import.meta.env.GEMINI_API_KEY || '';
     if (!apiKey || apiKey === '""' || apiKey === "''") {
       showWarning(
         'API Key Not Configured',
@@ -656,6 +657,7 @@ export default function App() {
       );
     }
   }, [showWarning]);
+  */
 
   const [subjects, setSubjects] = useState<Subject[]>([
     {
@@ -3213,13 +3215,7 @@ export default function App() {
         accept=".papyrus,application/json"
         className="hidden"
       />
-      <AppToast />
     </div>
     </div>
   );
-}
-
-function AppToast() {
-  const { toasts, removeToast } = useToast();
-  return <ToastContainer toasts={toasts} onClose={removeToast} />;
 }

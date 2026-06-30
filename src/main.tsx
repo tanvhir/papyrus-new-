@@ -23,16 +23,13 @@ import './index.css';
 import 'katex/dist/katex.min.css';
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { AuthProvider } from '@/src/context/AuthContext';
-import { ToastProvider } from '@/src/context/ToastContext';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ToastProvider>
-      <TooltipProvider>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </TooltipProvider>
-    </ToastProvider>
+    <TooltipProvider>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </TooltipProvider>
   </StrictMode>,
 );

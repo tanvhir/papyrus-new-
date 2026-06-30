@@ -16,6 +16,17 @@ export default defineConfig(({mode}) => {
         '@': path.resolve(__dirname, '.'),
       },
     },
+    build: {
+      rollupOptions: {
+        onwarn(warning, warn) {
+          // Ignore circular dependency warnings
+          if (warning.code === 'CIRCULAR_DEPENDENCY') {
+            return;
+          }
+          warn(warning);
+        },
+      },
+    },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
