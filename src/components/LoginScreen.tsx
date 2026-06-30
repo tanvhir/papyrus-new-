@@ -1,10 +1,73 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { useAuth } from '@/src/context/AuthContext';
-import { Feather, Mail, Lock, AlertCircle, Loader, ArrowRight } from 'lucide-react';
+import { Mail, Lock, AlertCircle, Loader, ArrowRight, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+
+const PapyrusLogo = () => (
+  <svg width="36" height="44" viewBox="0 0 36 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="leafGrad" x1="6" y1="0" x2="30" y2="44" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#66BB6A"/>
+        <stop offset="20%" stopColor="#43A047"/>
+        <stop offset="45%" stopColor="#2E7D32"/>
+        <stop offset="70%" stopColor="#1B5E20"/>
+        <stop offset="100%" stopColor="#0B2E10"/>
+      </linearGradient>
+      <linearGradient id="vMid" x1="30" y1="4" x2="11" y2="38" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#1B5E20" stopOpacity="0.35"/>
+        <stop offset="100%" stopColor="#0B2E10" stopOpacity="0.3"/>
+      </linearGradient>
+      <linearGradient id="vSide" x1="20" y1="20" x2="5" y2="20" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#A5D6A7" stopOpacity="0.55"/>
+        <stop offset="100%" stopColor="#A5D6A7" stopOpacity="0.3"/>
+      </linearGradient>
+      <radialGradient id="gloss" cx="50%" cy="50%" r="50%" gradientTransform="translate(0.32 0.18) rotate(35) scale(0.42 0.95)">
+        <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.55"/>
+        <stop offset="55%" stopColor="#FFFFFF" stopOpacity="0.12"/>
+        <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0"/>
+      </radialGradient>
+      <radialGradient id="rim" cx="20%" cy="10%" r="90%">
+        <stop offset="0%" stopColor="#A5D6A7" stopOpacity="0.5"/>
+        <stop offset="40%" stopColor="#A5D6A7" stopOpacity="0"/>
+      </radialGradient>
+      <clipPath id="leafClip">
+        <path d="M32 2C32 2 20 0 10 10C4 16 2 24 3 30C4 34 7 37 11 38C15 39 20 38 24 35C30 30 34 22 34 14C34 8 32 2 32 2Z"/>
+      </clipPath>
+      <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="1.2" stdDeviation="1" floodColor="#0B2E10" floodOpacity="0.35"/>
+      </filter>
+    </defs>
+    <g filter="url(#softShadow)">
+      <path d="M32 2C32 2 20 0 10 10C4 16 2 24 3 30C4 34 7 37 11 38C15 39 20 38 24 35C30 30 34 22 34 14C34 8 32 2 32 2Z" fill="url(#leafGrad)"/>
+      <g clipPath="url(#leafClip)">
+        <path d="M10 10C4 16 2 24 3 30" stroke="url(#rim)" strokeWidth="4" fill="none" strokeLinecap="round"/>
+        <g fill="none" strokeLinecap="round">
+          <path d="M30 4 C26 12, 20 24, 11 38" stroke="url(#vMid)" strokeWidth="1"/>
+          <path d="M28.7 6.5 Q25.8 4.2 23.5 4.7" stroke="url(#vSide)" strokeWidth="0.6"/>
+          <path d="M28.7 6.5 Q31.3 4.8 33 6" stroke="url(#vSide)" strokeWidth="0.6"/>
+          <path d="M26.3 11 Q20 8 16.5 8.3" stroke="url(#vSide)" strokeWidth="0.85"/>
+          <path d="M26.3 11 Q30.5 9.3 33.2 10.8" stroke="url(#vSide)" strokeWidth="0.85"/>
+          <path d="M23.6 16 Q15 12.7 9 13" stroke="url(#vSide)" strokeWidth="1"/>
+          <path d="M23.6 16 Q29.5 14 33 15.5" stroke="url(#vSide)" strokeWidth="1"/>
+          <path d="M20.7 21.3 Q12 18.5 5.7 19.3" stroke="url(#vSide)" strokeWidth="0.95"/>
+          <path d="M20.7 21.3 Q27 19.3 31.5 21" stroke="url(#vSide)" strokeWidth="0.95"/>
+          <path d="M17.8 26.5 Q10.5 24.7 5 26.5" stroke="url(#vSide)" strokeWidth="0.85"/>
+          <path d="M17.8 26.5 Q24.5 25.3 28.8 27.2" stroke="url(#vSide)" strokeWidth="0.85"/>
+          <path d="M15 31.5 Q9.5 30 6.5 32.5" stroke="url(#vSide)" strokeWidth="0.7"/>
+          <path d="M15 31.5 Q20.5 31 24.3 33.3" stroke="url(#vSide)" strokeWidth="0.7"/>
+          <path d="M12.5 35.8 Q9.8 34.8 8.7 36.8" stroke="url(#vSide)" strokeWidth="0.55"/>
+          <path d="M12.5 35.8 Q15.8 36 18 37.5" stroke="url(#vSide)" strokeWidth="0.55"/>
+        </g>
+        <ellipse cx="18" cy="14" rx="16" ry="20" fill="url(#gloss)" style={{mixBlendMode: 'screen'}}/>
+      </g>
+    </g>
+    <path d="M11 38C9 40 6 42 3 43" stroke="#3E2723" strokeWidth="2" strokeLinecap="round" fill="none"/>
+    <path d="M3 43C1 43 0 42 0.5 40.5C1 39 2.5 39.5 2 40.5" stroke="#1B5E20" strokeWidth="1" strokeLinecap="round" fill="none"/>
+  </svg>
+);
 
 export const LoginScreen: React.FC = () => {
   const { login } = useAuth();
@@ -12,6 +75,7 @@ export const LoginScreen: React.FC = () => {
   const [password, setPassword] = useState('admin');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,155 +90,186 @@ export const LoginScreen: React.FC = () => {
     try {
       const success = await login(email, password);
       if (!success) {
-        setErrorMsg('Authentication failed. Check your security entries.');
+        setErrorMsg('Authentication failed. Check your credentials.');
       }
     } catch (err: any) {
-      setErrorMsg(err.message || 'Network lookup failed. Confirm backend server is up and database is running.');
+      setErrorMsg(err.message || 'Network lookup failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#f4f1ea] dark:bg-[#121212] px-4 py-8 select-none transition-colors duration-300">
-      
-      {/* Background elegant grid texture */}
-      <div className="absolute inset-0 bg-transparent opacity-30 dark:opacity-5 pointer-events-none" 
-        style={{
-          backgroundImage: `
-            radial-gradient(circle, #8c6d4f 1.5px, transparent 1.5px)
-          `,
-          backgroundSize: '24px 24px'
-        }}
-      />
-
-      <motion.div 
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full max-w-[440px] relative z-10"
-      >
-        <div className="bg-[#fffcf5] dark:bg-[#1c1c1a] border border-[#e6e0d3] dark:border-[#2d2d2a] rounded-2xl shadow-xl overflow-hidden p-8 sm:p-10 transition-colors duration-300">
-          
-          <div className="flex flex-col items-center text-center mb-8">
-            <div className="w-14 h-14 bg-[#8c6d4f]/10 dark:bg-[#c8a27c]/10 rounded-full flex items-center justify-center text-[#8c6d4f] dark:text-[#c8a27c] mb-4 border border-[#8c6d4f]/20">
-              <Feather className="w-6 h-6 rotate-12" />
-            </div>
-            <h1 className="font-display text-3xl font-bold tracking-tight text-[#8c6d4f] dark:text-[#c8a27c]">
-              PAPYRUS
+    <div className="min-h-screen w-full flex bg-white dark:bg-[#0A0A0A]">
+      {/* Left Side - Login Form */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-16 lg:px-24 py-12 lg:py-0">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="max-w-md mx-auto w-full"
+        >
+          {/* Logo */}
+          <div className="mb-8">
+            <PapyrusLogo />
+            <h1 className="text-3xl font-bold text-stone-900 dark:text-stone-100">
+              Welcome back
             </h1>
-            <p className="text-sm text-[#5e5e5e] dark:text-[#a0a0a0] mt-1 font-sans">
-              Enter credentials to securely sync your studies
+            <p className="text-base text-stone-500 dark:text-stone-400 mt-2">
+              Sign in to access your notes and continue where you left off.
             </p>
-            
-            <div className="w-full mt-5 p-3.5 bg-[#8c6d4f]/5 dark:bg-[#c8a27c]/5 border border-[#8c6d4f]/15 dark:border-[#c8a27c]/15 rounded-xl text-center">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#8c6d4f] dark:text-[#c8a27c] bg-[#8c6d4f]/10 dark:bg-[#c8a27c]/10 px-2 py-0.5 rounded-full inline-block mb-1.5">
-                ⚡ AI Studio Sandbox Active
-              </span>
-              <p className="text-xs text-[#6e6358] dark:text-[#b49f8a] font-sans leading-relaxed">
-                Database integration is bypassed. We've filled working credentials below for easy one-click access.
-              </p>
-              <div className="mt-2 text-[11px] font-mono text-[#5e5e5e] dark:text-[#a0a0a0] flex justify-center items-center gap-1.5">
+          </div>
+
+          {/* Error Message */}
+          {errorMsg && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6"
+            >
+              <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-lg p-4 flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                <div className="text-sm text-red-800 dark:text-red-200">
+                  {errorMsg}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-medium text-stone-700 dark:text-stone-300">
+                Email
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                className="h-12 border-stone-300 dark:border-stone-700 focus-visible:ring-2 focus-visible:ring-stone-900 dark:focus-visible:ring-stone-100"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isSubmitting}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label htmlFor="password" className="text-sm font-medium text-stone-700 dark:text-stone-300">
+                  Password
+                </Label>
                 <button
                   type="button"
-                  onClick={() => {
-                    setEmail('admin@domain.com');
-                    setPassword('admin');
-                  }}
-                  className="px-2 py-0.5 bg-[#8c6d4f]/10 hover:bg-[#8c6d4f]/25 dark:bg-[#c8a27c]/10 dark:hover:bg-[#c8a27c]/25 border border-[#8c6d4f]/20 dark:border-[#c8a27c]/20 text-[#8c6d4f] dark:text-[#c8a27c] rounded font-semibold cursor-pointer transition select-none uppercase tracking-wide text-[9px]"
+                  className="text-sm text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
                 >
-                  Reset Defaults
+                  Forgot password?
                 </button>
               </div>
-            </div>
-          </div>
-
-          <AnimatePresence mode="wait">
-            {errorMsg && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mb-6 overflow-hidden"
-              >
-                <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-lg p-4 flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                  <div className="text-xs text-red-800 dark:text-red-200 font-sans tracking-wide">
-                    {errorMsg}
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Email Address</Label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-[#5e5e5e] dark:text-[#a0a0a0]">
-                  <Mail className="w-4.5 h-4.5" />
-                </span>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="admin@domain.com"
-                  className="pl-10 h-11 bg-white/50 dark:bg-[#121212]/50 border-[#e6e0d3] dark:border-[#2d2d2a] focus-visible:ring-[#8c6d4f]"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={isSubmitting}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex justify-between items-center">
-                <Label htmlFor="password" className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Security Password</Label>
-              </div>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-[#5e5e5e] dark:text-[#a0a0a0]">
-                  <Lock className="w-4.5 h-4.5" />
-                </span>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••••••"
-                  className="pl-10 h-11 bg-white/50 dark:bg-[#121212]/50 border-[#e6e0d3] dark:border-[#2d2d2a] focus-visible:ring-[#8c6d4f]"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isSubmitting}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="pt-2">
-              <Button
-                id="login-btn"
-                type="submit"
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                className="h-12 border-stone-300 dark:border-stone-700 focus-visible:ring-2 focus-visible:ring-stone-900 dark:focus-visible:ring-stone-100"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 disabled={isSubmitting}
-                className="w-full h-11 bg-[#8c6d4f] hover:bg-[#755a40] text-white font-medium rounded-lg shadow-sm border border-[#8c6d4f]/10 flex items-center justify-center gap-2 cursor-pointer transition-colors duration-200"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader className="w-4.5 h-4.5 animate-spin" />
-                    <span>Synchronizing Portal...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Sign In to Cloud Sync</span>
-                    <ArrowRight className="w-4.5 h-4.5" />
-                  </>
-                )}
-              </Button>
+                required
+              />
             </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setRememberMe(!rememberMe)}
+                className="relative inline-flex h-5 w-5 shrink-0 cursor-pointer rounded border-2 border-stone-300 dark:border-stone-700 transition-colors focus:outline-none focus:ring-2 focus:ring-stone-400 focus:ring-offset-2"
+              >
+                {rememberMe && (
+                  <Check className="h-3.5 w-3.5 text-stone-900 dark:text-stone-100 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                )}
+              </button>
+              <Label htmlFor="remember" className="text-sm text-stone-600 dark:text-stone-400 cursor-pointer">
+                Remember me
+              </Label>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full h-12 bg-stone-900 dark:bg-stone-100 hover:bg-stone-800 dark:hover:bg-stone-200 text-white dark:text-stone-900 font-medium rounded-lg shadow-lg shadow-stone-900/10 dark:shadow-stone-100/10 transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader className="w-5 h-5 animate-spin" />
+                  <span>Signing in...</span>
+                </>
+              ) : (
+                <>
+                  <span>Sign in</span>
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
+            </Button>
           </form>
-          
-          <div className="text-center mt-6 text-[11px] font-mono text-[#5e5e5e] dark:text-[#a0a0a0]">
-            Papyrus Database Integration &bull; Securing Cookies
+
+          {/* Register Link */}
+          <div className="mt-8 text-center">
+            <p className="text-sm text-stone-600 dark:text-stone-400">
+              Don't have an account?{' '}
+              <button
+                type="button"
+                className="text-stone-900 dark:text-stone-100 font-medium hover:underline transition-colors"
+              >
+                Create an account
+              </button>
+            </p>
           </div>
-        </div>
-      </motion.div>
+
+          {/* Demo Credentials Notice */}
+          <div className="mt-8 p-4 bg-stone-50 dark:bg-stone-900/50 rounded-lg border border-stone-200 dark:border-stone-800">
+            <p className="text-xs text-stone-600 dark:text-stone-400 mb-2">
+              Demo credentials pre-filled for testing:
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('admin@domain.com');
+                setPassword('admin');
+              }}
+              className="text-xs font-mono text-stone-900 dark:text-stone-100 hover:underline"
+            >
+              Reset to defaults
+            </button>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Right Side - Illustration */}
+      <div className="hidden lg:block lg:w-1/2 bg-gradient-to-br from-stone-50 to-stone-100 dark:from-stone-900 dark:to-stone-950 relative overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="absolute inset-0 flex items-center justify-center"
+        >
+          {/* Decorative Elements */}
+          <div className="absolute top-20 right-20 w-64 h-64 bg-stone-200/50 dark:bg-stone-800/30 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 left-20 w-48 h-48 bg-stone-300/50 dark:bg-stone-700/30 rounded-full blur-3xl" />
+          
+          {/* Central Illustration */}
+          <div className="relative z-10 text-center px-12">
+            <div className="w-32 h-40 mx-auto mb-8 drop-shadow-2xl">
+              <PapyrusLogo />
+            </div>
+            <h2 className="text-4xl font-bold text-stone-900 dark:text-stone-100 mb-4">
+              Your notes, organized
+            </h2>
+            <p className="text-lg text-stone-600 dark:text-stone-400 max-w-md mx-auto">
+              Capture ideas, organize thoughts, and boost productivity with AI-powered note-taking.
+            </p>
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 };
