@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { useAuth } from '@/src/context/AuthContext';
-import { Mail, Lock, AlertCircle, Loader, ArrowRight, Check } from 'lucide-react';
+import { AlertCircle, Loader } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -100,9 +100,9 @@ export const LoginScreen: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex bg-white dark:bg-[#0A0A0A]">
+    <div className="min-h-screen w-full flex bg-white">
       {/* Left Side - Login Form */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-16 lg:px-24 py-12 lg:py-0">
+      <div className="w-full lg:w-1/2 flex flex-col justify-center px-6 sm:px-12 lg:px-16 xl:px-24 py-12 lg:py-0">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -110,13 +110,13 @@ export const LoginScreen: React.FC = () => {
           className="max-w-md mx-auto w-full"
         >
           {/* Logo */}
-          <div className="mb-8">
+          <div className="mb-10">
             <PapyrusLogo />
-            <h1 className="text-3xl font-bold text-stone-900 dark:text-stone-100">
-              Welcome back
+            <h1 className="text-3xl font-semibold text-gray-900 mt-4">
+              Sign in to your account
             </h1>
-            <p className="text-base text-stone-500 dark:text-stone-400 mt-2">
-              Sign in to access your notes and continue where you left off.
+            <p className="text-base text-gray-600 mt-2">
+              Welcome back! Please enter your details.
             </p>
           </div>
 
@@ -127,26 +127,63 @@ export const LoginScreen: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               className="mb-6"
             >
-              <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-lg p-4 flex items-start gap-3">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                <div className="text-sm text-red-800 dark:text-red-200">
+                <div className="text-sm text-red-800">
                   {errorMsg}
                 </div>
               </div>
             </motion.div>
           )}
 
+          {/* Social Login Buttons (Disabled) */}
+          <div className="space-y-3 mb-6">
+            <button
+              type="button"
+              disabled
+              className="w-full h-12 border border-gray-300 rounded-lg flex items-center justify-center gap-3 bg-gray-50 text-gray-400 cursor-not-allowed"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+              </svg>
+              <span className="text-sm font-medium">Sign in with Google</span>
+            </button>
+            <button
+              type="button"
+              disabled
+              className="w-full h-12 border border-gray-300 rounded-lg flex items-center justify-center gap-3 bg-gray-50 text-gray-400 cursor-not-allowed"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+              </svg>
+              <span className="text-sm font-medium">Sign in with Apple</span>
+            </button>
+          </div>
+
+          {/* Divider */}
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-white text-gray-500">Or continue with email</span>
+            </div>
+          </div>
+
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-stone-700 dark:text-stone-300">
+              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
                 Email
               </Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
-                className="h-12 border-stone-300 dark:border-stone-700 focus-visible:ring-2 focus-visible:ring-stone-900 dark:focus-visible:ring-stone-100"
+                placeholder="Enter your email"
+                className="h-12 border-gray-300 focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-0"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isSubmitting}
@@ -156,12 +193,12 @@ export const LoginScreen: React.FC = () => {
 
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <Label htmlFor="password" className="text-sm font-medium text-stone-700 dark:text-stone-300">
+                <Label htmlFor="password" className="text-sm font-medium text-gray-700">
                   Password
                 </Label>
                 <button
                   type="button"
-                  className="text-sm text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
+                  className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
                 >
                   Forgot password?
                 </button>
@@ -170,7 +207,7 @@ export const LoginScreen: React.FC = () => {
                 id="password"
                 type="password"
                 placeholder="••••••••"
-                className="h-12 border-stone-300 dark:border-stone-700 focus-visible:ring-2 focus-visible:ring-stone-900 dark:focus-visible:ring-stone-100"
+                className="h-12 border-gray-300 focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-0"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isSubmitting}
@@ -178,17 +215,15 @@ export const LoginScreen: React.FC = () => {
               />
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setRememberMe(!rememberMe)}
-                className="relative inline-flex h-5 w-5 shrink-0 cursor-pointer rounded border-2 border-stone-300 dark:border-stone-700 transition-colors focus:outline-none focus:ring-2 focus:ring-stone-400 focus:ring-offset-2"
-              >
-                {rememberMe && (
-                  <Check className="h-3.5 w-3.5 text-stone-900 dark:text-stone-100 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-                )}
-              </button>
-              <Label htmlFor="remember" className="text-sm text-stone-600 dark:text-stone-400 cursor-pointer">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="remember"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900"
+              />
+              <Label htmlFor="remember" className="ml-2 text-sm text-gray-600 cursor-pointer">
                 Remember me
               </Label>
             </div>
@@ -196,38 +231,35 @@ export const LoginScreen: React.FC = () => {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-12 bg-stone-900 dark:bg-stone-100 hover:bg-stone-800 dark:hover:bg-stone-200 text-white dark:text-stone-900 font-medium rounded-lg shadow-lg shadow-stone-900/10 dark:shadow-stone-100/10 transition-all duration-200 flex items-center justify-center gap-2"
+              className="w-full h-12 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-lg transition-all duration-200 flex items-center justify-center"
             >
               {isSubmitting ? (
                 <>
-                  <Loader className="w-5 h-5 animate-spin" />
+                  <Loader className="w-5 h-5 animate-spin mr-2" />
                   <span>Signing in...</span>
                 </>
               ) : (
-                <>
-                  <span>Sign in</span>
-                  <ArrowRight className="w-5 h-5" />
-                </>
+                <span>Sign in</span>
               )}
             </Button>
           </form>
 
           {/* Register Link */}
           <div className="mt-8 text-center">
-            <p className="text-sm text-stone-600 dark:text-stone-400">
+            <p className="text-sm text-gray-600">
               Don't have an account?{' '}
               <button
                 type="button"
-                className="text-stone-900 dark:text-stone-100 font-medium hover:underline transition-colors"
+                className="text-gray-900 font-medium hover:underline transition-colors"
               >
-                Create an account
+                Sign up
               </button>
             </p>
           </div>
 
           {/* Demo Credentials Notice */}
-          <div className="mt-8 p-4 bg-stone-50 dark:bg-stone-900/50 rounded-lg border border-stone-200 dark:border-stone-800">
-            <p className="text-xs text-stone-600 dark:text-stone-400 mb-2">
+          <div className="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <p className="text-xs text-gray-600 mb-2">
               Demo credentials pre-filled for testing:
             </p>
             <button
@@ -236,7 +268,7 @@ export const LoginScreen: React.FC = () => {
                 setEmail('admin@domain.com');
                 setPassword('admin');
               }}
-              className="text-xs font-mono text-stone-900 dark:text-stone-100 hover:underline"
+              className="text-xs font-mono text-gray-900 hover:underline"
             >
               Reset to defaults
             </button>
@@ -244,30 +276,19 @@ export const LoginScreen: React.FC = () => {
         </motion.div>
       </div>
 
-      {/* Right Side - Illustration */}
-      <div className="hidden lg:block lg:w-1/2 bg-gradient-to-br from-stone-50 to-stone-100 dark:from-stone-900 dark:to-stone-950 relative overflow-hidden">
+      {/* Right Side - Splash Illustration */}
+      <div className="hidden lg:block lg:w-1/2 bg-gray-50 relative overflow-hidden">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           className="absolute inset-0 flex items-center justify-center"
         >
-          {/* Decorative Elements */}
-          <div className="absolute top-20 right-20 w-64 h-64 bg-stone-200/50 dark:bg-stone-800/30 rounded-full blur-3xl" />
-          <div className="absolute bottom-20 left-20 w-48 h-48 bg-stone-300/50 dark:bg-stone-700/30 rounded-full blur-3xl" />
-          
-          {/* Central Illustration */}
-          <div className="relative z-10 text-center px-12">
-            <div className="w-32 h-40 mx-auto mb-8 drop-shadow-2xl">
-              <PapyrusLogo />
-            </div>
-            <h2 className="text-4xl font-bold text-stone-900 dark:text-stone-100 mb-4">
-              Your notes, organized
-            </h2>
-            <p className="text-lg text-stone-600 dark:text-stone-400 max-w-md mx-auto">
-              Capture ideas, organize thoughts, and boost productivity with AI-powered note-taking.
-            </p>
-          </div>
+          <img 
+            src="/splash.svg" 
+            alt="Papyrus Illustration" 
+            className="w-full h-full object-contain p-8"
+          />
         </motion.div>
       </div>
     </div>
