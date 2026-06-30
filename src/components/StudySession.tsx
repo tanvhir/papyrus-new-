@@ -756,8 +756,8 @@ export function StudySession({
       </motion.div>
       </motion.div>
 
-      {/* Backface utility overrides & premium minimal scrollbar implementation */}
       <style dangerouslySetInnerHTML={{ __html: `
+        /* Backface utility overrides & premium minimal scrollbar implementation */
         .backface-hidden {
           backface-visibility: hidden;
           -webkit-backface-visibility: hidden;
