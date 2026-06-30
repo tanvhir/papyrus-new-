@@ -37,7 +37,7 @@ try {
             'themeId' => $note['theme_id'],
             'isHandwriting' => (bool)$note['is_handwriting'],
             'fontSize' => (int)$note['font_size'],
-            'pageLayout' => $note['page_layout'] ?? 'a4-portrait',
+            'pageLayout' => $note['page_layout'] ?? 'pageless',
             'pageMargin' => $note['page_margin'] ?? 'normal',
             'pageLayoutMode' => $note['page_layout_mode'] ?? 'single',
             'flashcardIds' => json_decode($note['flashcard_ids'] ?? '[]', true),

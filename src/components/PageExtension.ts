@@ -2,7 +2,6 @@ import { Node, mergeAttributes } from '@tiptap/core';
 
 export const PageExtension = Node.create({
   name: 'page',
-  group: 'block',
   content: 'block+',
   defining: true,
 

@@ -23,6 +23,7 @@ interface StudySessionProps {
   onClose: () => void;
   onUpdateCard?: (updatedCard: Flashcard) => void;
   onRateCard?: (cardId: string, rating: number) => void;
+  cardStyle?: 'classic' | 'modern' | 'glass';
 }
 
 export function StudySession({ 

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Atma:wght@300;400;500;600&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300,1,400&family=Hind+Siliguri:wght@300;400;600&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Atma:wght@300;400;500;600&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Hind+Siliguri:wght@300;400;600&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
@@ -10,53 +10,6 @@
   --font-handwriting: "Atma", cursive;
 
   --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
-  
-  /* Evernote-style text sizes */
-  --text-sb24: 1.5rem;
-  --text-sb24--line-height: 2rem;
-  --text-sb24--font-weight: 600;
-  --text-sb32: 2rem;
-  --text-sb32--line-height: 2.75rem;
-  --text-sb32--font-weight: 600;
-  --text-sb16: 1rem;
-  --text-sb16--line-height: 1.5rem;
-  --text-sb16--font-weight: 600;
-  --text-r15: .9375rem;
-  --text-r15--line-height: 1.5rem;
-  --text-r15--font-weight: 400;
-  --text-r14: .875rem;
-  --text-r14--line-height: 1.25rem;
-  --text-r14--font-weight: 400;
-  --text-r13: .8125rem;
-  --text-r13--line-height: 1.25rem;
-  --text-r13--font-weight: 400;
-  --text-r12: .75rem;
-  --text-r12--line-height: 1rem;
-  --text-r12--font-weight: 400;
-  --text-m14: .875rem;
-  --text-m14--line-height: 1.25rem;
-  --text-m14--font-weight: 500;
-  
-  /* Evernote-style grey colors */
-  --color-grey-8: #141414;
-  --color-grey-10: #1a1a1a;
-  --color-grey-13: #212121;
-  --color-grey-15: #262626;
-  --color-grey-20: #333;
-  --color-grey-25: #404040;
-  --color-grey-30: #4d4d4d;
-  --color-grey-45: #737373;
-  --color-grey-65: #a6a6a6;
-  --color-grey-80: #ccc;
-  --color-grey-85: #d9d9d9;
-  --color-grey-90: #e6e6e6;
-  --color-grey-93: #ededed;
-  --color-grey-100: #fff;
-  
-  /* Evernote secondary blue */
-  --color-secondary-blue-400: #4d64ff;
-  --color-secondary-blue-500: #3245bb;
-  --color-secondary-blue-300: #7c8eff;
 }
 
 @layer base {
@@ -410,70 +363,6 @@
     @apply font-sans;
     }
 }
-
-/* Evernote-style text utilities */
-.text-sb24 {
-  font-size: var(--text-sb24);
-  line-height: var(--text-sb24--line-height);
-  font-weight: var(--text-sb24--font-weight);
-}
-.text-sb32 {
-  font-size: var(--text-sb32);
-  line-height: var(--text-sb32--line-height);
-  font-weight: var(--text-sb32--font-weight);
-}
-.text-sb16 {
-  font-size: var(--text-sb16);
-  line-height: var(--text-sb16--line-height);
-  font-weight: var(--text-sb16--font-weight);
-}
-.text-r15 {
-  font-size: var(--text-r15);
-  line-height: var(--text-r15--line-height);
-  font-weight: var(--text-r15--font-weight);
-}
-.text-r14 {
-  font-size: var(--text-r14);
-  line-height: var(--text-r14--line-height);
-  font-weight: var(--text-r14--font-weight);
-}
-.text-r13 {
-  font-size: var(--text-r13);
-  line-height: var(--text-r13--line-height);
-  font-weight: var(--text-r13--font-weight);
-}
-.text-r12 {
-  font-size: var(--text-r12);
-  line-height: var(--text-r12--line-height);
-  font-weight: var(--text-r12--font-weight);
-}
-.text-m14 {
-  font-size: var(--text-m14);
-  line-height: var(--text-m14--line-height);
-  font-weight: var(--text-m14--font-weight);
-}
-
-/* Evernote-style grey colors */
-.text-grey-15 { color: var(--color-grey-15); }
-.text-grey-25 { color: var(--color-grey-25); }
-.text-grey-45 { color: var(--color-grey-45); }
-.text-grey-65 { color: var(--color-grey-65); }
-.border-grey-65 { border-color: var(--color-grey-65); }
-.border-grey-80 { border-color: var(--color-grey-80); }
-.border-grey-85 { border-color: #d9d9d9; }
-
-/* Evernote secondary blue */
-.bg-secondary-blue-400 { background-color: var(--color-secondary-blue-400); }
-.bg-secondary-blue-500 { background-color: var(--color-secondary-blue-500); }
-.border-secondary-blue-400 { border-color: var(--color-secondary-blue-400); }
-.border-secondary-blue-500 { border-color: var(--color-secondary-blue-500); }
-.text-secondary-blue-400 { color: var(--color-secondary-blue-400); }
-.hover\:border-secondary-blue-400:hover { border-color: var(--color-secondary-blue-400); }
-.hover\:bg-secondary-blue-500:hover { background-color: var(--color-secondary-blue-500); }
-
-/* Evernote button text colors */
-.text-button-content-fill-primary-default { color: var(--color-grey-100); }
-.text-button-content-fill-secondary-default { color: var(--color-grey-25); }
 
 /* Custom print styles to support printing A4 pages nicely */
 @media print {

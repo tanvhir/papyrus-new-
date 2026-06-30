@@ -70,6 +70,8 @@ interface EditorProps {
   onCreateFlashcard?: (text: string) => void;
   isSimpleMode?: boolean;
   onAISelectionFormat?: (selectionText: string, selectionHTML: string, instruction: string) => Promise<{ formattedHTML: string; stickies?: any[]; arrows?: any[]; dividers?: any[] }>;
+  notebookStyle?: 'classic' | 'spiral';
+  typewriterMode?: boolean;
 }
 
 const CustomDocument = Document.extend({
@@ -213,7 +215,9 @@ const Editor: React.FC<EditorProps> = ({
   texture = 'plain',
   onCreateFlashcard,
   isSimpleMode = false,
-  onAISelectionFormat
+  onAISelectionFormat,
+  notebookStyle = 'classic',
+  typewriterMode = false
 }) => {
   const [activeSubMenu, setActiveSubMenu] = React.useState<SubMenu>('main');
   const [editingMath, setEditingMath] = React.useState<{ pos: number; latex: string } | null>(null);
@@ -330,152 +334,184 @@ const Editor: React.FC<EditorProps> = ({
     editable,
     extensions,
     content: initialContent,
-onUpdate: ({ editor }) => {
-       if (onChange) {
-         onChange(preserveSpaces(editor.getHTML()));
-       }
-     },
-editorProps: {
-    attributes: {
-      class: cn(
-        editorClass || 'prose prose-stone dark:prose-invert max-w-none focus:outline-none min-h-[700px] font-serif leading-[1.6] antialiased',
-        activeHighlighterColor && "cursor-crosshair selection:bg-transparent",
-        !isSimpleMode && texture === 'laid' && "texture-laid",
-        !isSimpleMode && texture === 'grid' && "texture-grid",
-        !isSimpleMode && texture === 'linen' && "texture-linen"
-      ),
-      style: isSimpleMode 
-        ? `font-size: ${fontSize}px;` 
-        : `font-size: ${fontSize}px; --page-height: ${
-            pageLayout === 'pageless' ? 'auto' : pageLayout === 'a4-landscape' ? '820px' : '1160px'
-          }; --page-width: ${
-            pageLayout === 'pageless' ? '850px' : pageLayout === 'a4-landscape' ? '1160px' : '820px'
-          }; --page-bg: ${
-            theme?.paperColor || '#ffffff'
-          }; --page-ink: ${
-            theme?.inkColor || '#1a1a1a'
-          }; --page-margin-x: ${
-            pageMargin === 'none' ? '0px' : pageMargin === 'narrow' ? '40px' : '96px'
-          }; --page-margin-y: ${
-            pageMargin === 'none' ? '0px' : pageMargin === 'narrow' ? '40px' : '96px'
-          };`,
+    onUpdate: ({ editor }) => {
+      if (onChange) {
+        onChange(preserveSpaces(editor.getHTML()));
+      }
     },
-    handleDOMEvents: {
-      paste: (view, event) => {
-        if (!isSimpleMode && editor) {
-          event.preventDefault();
-          const html = event.clipboardData?.getData('text/html') || '';
-          const text = event.clipboardData?.getData('text/plain') || '';
-          
-          // Strip page wrappers from pasted HTML to prevent nested pages
-          let cleanHTML = html;
-          cleanHTML = cleanHTML.replace(/<div[^>]*data-type="page"[^>]*>/gi, '');
-          cleanHTML = cleanHTML.replace(/<\/div>\s*$/gi, '');
-          
-          if (cleanHTML) {
-            editor.chain().focus().insertContent(cleanHTML).run();
-          } else if (text) {
-            editor.chain().focus().insertContent(text).run();
-          }
-          return true;
-        }
-        return false;
+    editorProps: {
+      attributes: {
+        class: cn(
+          editorClass || 'prose prose-stone dark:prose-invert max-w-none focus:outline-none min-h-[700px] font-serif leading-[1.6] antialiased',
+          activeHighlighterColor && "cursor-crosshair selection:bg-transparent",
+          !isSimpleMode && texture === 'laid' && "texture-laid",
+          !isSimpleMode && texture === 'grid' && "texture-grid",
+          !isSimpleMode && texture === 'linen' && "texture-linen",
+          !isSimpleMode && texture === 'plain' && "texture-plain",
+          !isSimpleMode && notebookStyle === 'spiral' && "notebook-style-spiral",
+          !isSimpleMode && notebookStyle === 'classic' && "notebook-style-classic"
+        ),
+        style: isSimpleMode 
+          ? `font-size: ${fontSize}px;` 
+          : `font-size: ${fontSize}px; --page-height: ${
+              pageLayout === 'pageless' ? 'auto' : pageLayout === 'a4-landscape' ? '820px' : '1160px'
+            }; --page-width: ${
+              pageLayout === 'pageless' ? '850px' : pageLayout === 'a4-landscape' ? '1160px' : '820px'
+            }; --page-bg: ${
+              theme?.paperColor || '#ffffff'
+            }; --page-ink: ${
+              theme?.inkColor || '#1a1a1a'
+            }; --page-margin-x: ${
+              pageMargin === 'none' ? '0px' : pageMargin === 'narrow' ? '40px' : '96px'
+            }; --page-margin-y: ${
+              pageMargin === 'none' ? '0px' : pageMargin === 'narrow' ? '40px' : '96px'
+            };`,
       },
-      mousedown: (view, event) => {
-        if (activeHighlighterColor && event.button === 0) {
-          const posAt = view.posAtCoords({ left: event.clientX, top: event.clientY });
-          const pos = posAt?.pos;
-          if (pos !== undefined && pos !== null) {
-            isPaintingRef.current = true;
-            const { state, dispatch } = view;
-            const { tr } = state;
-            const $pos = state.doc.resolve(pos);
-            
-            if ($pos.parent.isTextblock) {
-              const docSize = state.doc.content.size;
-              const from = Math.max(0, Math.min(pos, docSize));
-              const to = Math.max(0, Math.min(pos + 1, docSize));
-              if (from < to) {
-                try {
-                  state.doc.resolve(from);
-                  state.doc.resolve(to);
-                  
-                  tr.addMark(from, to, state.schema.marks.highlight.create({ color: activeHighlighterColor }));
-                  dispatch(tr);
-                  lastPaintedPosRef.current = pos;
-                } catch (e) {
-                  console.error('Painting error:', e);
+      handleDOMEvents: {
+        mousedown: (view, event) => {
+          if (activeHighlighterColor && event.button === 0) {
+            const posAt = view.posAtCoords({ left: event.clientX, top: event.clientY });
+            const pos = posAt?.pos;
+            if (pos !== undefined && pos !== null) {
+              isPaintingRef.current = true;
+              const { state, dispatch } = view;
+              const { tr } = state;
+              const $pos = state.doc.resolve(pos);
+              
+              if ($pos.parent.isTextblock) {
+                const docSize = state.doc.content.size;
+                const from = Math.max(0, Math.min(pos, docSize));
+                const to = Math.max(0, Math.min(pos + 1, docSize));
+                if (from < to) {
+                  try {
+                    state.doc.resolve(from);
+                    state.doc.resolve(to);
+                    
+                    tr.addMark(from, to, state.schema.marks.highlight.create({ color: activeHighlighterColor }));
+                    dispatch(tr);
+                    lastPaintedPosRef.current = pos;
+                  } catch (e) {
+                    console.error('Painting error:', e);
+                  }
                 }
               }
             }
+            return true;
           }
-          return true;
-        }
-        return false;
-      },
-      mousemove: (view, event) => {
-        if (isPaintingRef.current && activeHighlighterColor) {
-          const posAt = view.posAtCoords({ left: event.clientX, top: event.clientY });
-          const pos = posAt?.pos;
-          if (pos !== undefined && pos !== null && lastPaintedPosRef.current !== null && pos !== lastPaintedPosRef.current) {
-            const { state, dispatch } = view;
-            const { tr } = state;
-            const docSize = state.doc.content.size;
-            
-            const start = Math.min(pos, lastPaintedPosRef.current);
-            const end = Math.max(pos, lastPaintedPosRef.current);
-            
-            const safeStart = Math.max(0, Math.min(start, docSize));
-            const safeEnd = Math.max(0, Math.min(end + 1, docSize));
-            
-            if (safeStart < safeEnd) {
-              try {
-                state.doc.resolve(safeStart);
-                state.doc.resolve(safeEnd);
-                
-                tr.addMark(safeStart, safeEnd, state.schema.marks.highlight.create({ color: activeHighlighterColor }));
-                dispatch(tr);
-                lastPaintedPosRef.current = pos;
-              } catch (e) {
-                console.warn('Painting move range error:', e);
+          return false;
+        },
+        mousemove: (view, event) => {
+          if (isPaintingRef.current && activeHighlighterColor) {
+            const posAt = view.posAtCoords({ left: event.clientX, top: event.clientY });
+            const pos = posAt?.pos;
+            if (pos !== undefined && pos !== null && lastPaintedPosRef.current !== null && pos !== lastPaintedPosRef.current) {
+              const { state, dispatch } = view;
+              const { tr } = state;
+              const docSize = state.doc.content.size;
+              
+              const start = Math.min(pos, lastPaintedPosRef.current);
+              const end = Math.max(pos, lastPaintedPosRef.current);
+              
+              const safeStart = Math.max(0, Math.min(start, docSize));
+              const safeEnd = Math.max(0, Math.min(end + 1, docSize));
+              
+              if (safeStart < safeEnd) {
+                try {
+                  state.doc.resolve(safeStart);
+                  state.doc.resolve(safeEnd);
+                  
+                  tr.addMark(safeStart, safeEnd, state.schema.marks.highlight.create({ color: activeHighlighterColor }));
+                  dispatch(tr);
+                  lastPaintedPosRef.current = pos;
+                } catch (e) {
+                  console.warn('Painting move range error:', e);
+                }
               }
             }
+            return true;
           }
-          return true;
+          return false;
+        },
+        mouseup: () => {
+          isPaintingRef.current = false;
+          lastPaintedPosRef.current = null;
+          return false;
+        },
+        mouseleave: () => {
+          isPaintingRef.current = false;
+          lastPaintedPosRef.current = null;
+          return false;
+        },
+        dblclick: (view, event) => {
+          const target = event.target as HTMLElement;
+          const mathNode = target.closest('.math-node');
+          if (mathNode) {
+            event.preventDefault();
+            event.stopPropagation();
+            const latex = mathNode.getAttribute('data-latex') || '';
+            const pos = view.posAtDOM(mathNode, 0);
+            
+            setEditingMath({
+              pos,
+              latex,
+            });
+            setMathInputVal(latex);
+            return true;
+          }
+          return false;
         }
-        return false;
       },
-      mouseup: () => {
-        isPaintingRef.current = false;
-        lastPaintedPosRef.current = null;
-        return false;
-      },
-      mouseleave: () => {
-        isPaintingRef.current = false;
-        lastPaintedPosRef.current = null;
-        return false;
-      },
-      dblclick: (view, event) => {
-        const target = event.target as HTMLElement;
-        const mathNode = target.closest('.math-node');
-        if (mathNode) {
-          event.preventDefault();
-          event.stopPropagation();
-          const latex = mathNode.getAttribute('data-latex') || '';
-          const pos = view.posAtDOM(mathNode, 0);
-          
-          setEditingMath({
-            pos,
-            latex,
+      transformPastedHTML(html) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        const unsafeTags = ['script', 'iframe', 'object', 'embed', 'link', 'style', 'meta', 'base'];
+        unsafeTags.forEach(tag => {
+          doc.querySelectorAll(tag).forEach(el => el.remove());
+        });
+
+        doc.querySelectorAll('*').forEach(el => {
+          Array.from(el.attributes).forEach(attr => {
+            if (attr.name.startsWith('on')) {
+              el.removeAttribute(attr.name);
+            } else if (['src', 'href'].includes(attr.name) && attr.value.trim().toLowerCase().startsWith('javascript:')) {
+              el.removeAttribute(attr.name);
+            }
           });
-          setMathInputVal(latex);
-          return true;
+          
+          if (el.getAttribute('data-type') === 'page') {
+            el.removeAttribute('data-type');
+          }
+        });
+
+        return doc.body.innerHTML;
+      },
+      handlePaste(view, event) {
+        const items = Array.from(event.clipboardData?.items || []);
+        const imageItem = items.find(item => item.type.startsWith('image/'));
+        if (imageItem) {
+          const file = imageItem.getAsFile();
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const src = e.target?.result as string;
+              if (src && !view.state.destroyed) {
+                const { schema, tr } = view.state;
+                const nodeType = schema.nodes.image || schema.nodes.resizableImage;
+                if (nodeType) {
+                  const node = nodeType.create({ src });
+                  view.dispatch(tr.replaceSelectionWith(node));
+                }
+              }
+            };
+            reader.readAsDataURL(file);
+            return true;
+          }
         }
         return false;
       }
     }
-  }
-    });
+  });
 
   const handleSaveMath = React.useCallback(() => {
     if (editingMath && editor) {
@@ -886,6 +922,42 @@ editorProps: {
       };
     }
   }, [editor]);
+
+  React.useEffect(() => {
+    if (!editor || editor.isDestroyed || !typewriterMode) return;
+
+    const handleSelection = () => {
+      const { selection } = editor.state;
+      if (!selection.empty) return;
+      
+      requestAnimationFrame(() => {
+        try {
+          const { view } = editor;
+          if (view.state.destroyed) return;
+          const coords = view.coordsAtPos(selection.from);
+          const scrollContainer = view.dom.closest('main') || document.querySelector('main');
+          if (scrollContainer) {
+            const rect = scrollContainer.getBoundingClientRect();
+            const relativeCursorTop = coords.top - rect.top;
+            const targetCenter = rect.height / 2;
+            const diff = relativeCursorTop - targetCenter;
+            
+            if (Math.abs(diff) > 20) {
+              scrollContainer.scrollBy({
+                top: diff,
+                behavior: 'smooth'
+              });
+            }
+          }
+        } catch (e) {}
+      });
+    };
+
+    editor.on('selectionUpdate', handleSelection);
+    return () => {
+      editor.off('selectionUpdate', handleSelection);
+    };
+  }, [editor, typewriterMode]);
 
   const getNormalizedContent = React.useCallback((html: string) => {
     if (isSimpleMode) {
