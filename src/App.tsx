@@ -680,29 +680,6 @@ export default function App() {
   const [isCleanMode, setIsCleanMode] = useState(false);
   const mainAreaRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  
-  // Guard ref to prevent switching notes from overwriting new content with old state
-  const lastLoadedNoteIdRef = useRef<string | null>(null);
-
-  // New settings states
-  const [appTheme, setAppTheme] = useState<'light' | 'dark' | 'system'>(() => (localStorage.getItem('academic_app_theme') as any) || 'system');
-  const [systemDark, setSystemDark] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches);
-  const [cardStyle, setCardStyle] = useState<'classic' | 'modern' | 'glass'>(() => (localStorage.getItem('academic_card_style') as any) || 'classic');
-  const [customAccentColor, setCustomAccentColor] = useState<string | null>(() => localStorage.getItem('academic_custom_accent_color'));
-  const [customEditorWidth, setCustomEditorWidth] = useState<number>(() => Number(localStorage.getItem('academic_editor_width')) || 820);
-  const [autoSaveEnabled, setAutoSaveEnabled] = useState<boolean>(() => localStorage.getItem('academic_auto_save') !== 'false');
-  const [typewriterMode, setTypewriterMode] = useState<boolean>(() => localStorage.getItem('academic_typewriter_mode') === 'true');
-  const [notebookStyle, setNotebookStyle] = useState<'classic' | 'spiral'>(() => (localStorage.getItem('academic_notebook_style') as any) || 'classic');
-
-  useEffect(() => {
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
-    const listener = (e: MediaQueryListEvent) => setSystemDark(e.matches);
-    media.addEventListener('change', listener);
-    return () => media.removeEventListener('change', listener);
-  }, []);
-
-  const isDarkModeActive = appTheme === 'dark' || (appTheme === 'system' && systemDark) || theme.id === 'dark';
-
   const [scale, setScale] = useState(1);
   const [mainHeight, setMainHeight] = useState(1000);
   const [pageLayout, setPageLayout] = useState<'pageless' | 'a4-portrait' | 'a4-landscape'>('a4-portrait');
@@ -969,43 +946,6 @@ export default function App() {
     }
     loadData();
   }, [authLoading, loggedIn, installed]);
-
-  // Reset all note-related state variables and set isLoading to true on logout
-  useEffect(() => {
-    if (!loggedIn) {
-      setSubjects([
-        {
-          id: 'default-subject',
-          name: 'General Notes',
-          notes: [
-            {
-              id: 'default-note',
-              title: 'Chapter 1',
-              content: '',
-              stickies: [],
-              arrows: [],
-              dividers: [],
-              texture: 'laid',
-              themeId: 'light',
-              isHandwriting: true,
-              fontSize: 18,
-              pageLayout: 'a4-portrait',
-            }
-          ]
-        }
-      ]);
-      setActiveNoteId('default-note');
-      setFlashcards([]);
-      setStudyStats({
-        totalStudied: 0,
-        streak: 0,
-        lastStudyDate: new Date().toISOString(),
-        weakConceptIds: []
-      });
-      setIsLoading(true);
-      lastLoadedNoteIdRef.current = null;
-    }
-  }, [loggedIn]);
 
   // Keyboard shortcut for Clean Mode (Alt+Z) & Escape to cancel drawing
   useEffect(() => {
@@ -1280,19 +1220,11 @@ export default function App() {
       setPageLayout(note.pageLayout || 'a4-portrait');
       setPageMargin(note.pageMargin || 'normal');
       setPageLayoutMode(note.pageLayoutMode || 'single');
-      
-      // Update ref to indicate that volatile states now belong to the current activeNoteId
-      lastLoadedNoteIdRef.current = note.id;
     }
   }, [activeNoteId]);
 
   // Update subjects collection when volatile states change
   useEffect(() => {
-    // Only update subjects if the volatile states match the note we are currently targeting
-    if (lastLoadedNoteIdRef.current !== activeNoteId) {
-      return;
-    }
-
     setSubjects(prev => prev.map(s => ({
       ...s,
       notes: s.notes.map(n => n.id === activeNoteId ? {

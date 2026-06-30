@@ -70,8 +70,6 @@ interface EditorProps {
   onCreateFlashcard?: (text: string) => void;
   isSimpleMode?: boolean;
   onAISelectionFormat?: (selectionText: string, selectionHTML: string, instruction: string) => Promise<{ formattedHTML: string; stickies?: any[]; arrows?: any[]; dividers?: any[] }>;
-  notebookStyle?: 'classic' | 'spiral';
-  typewriterMode?: boolean;
 }
 
 const CustomDocument = Document.extend({
@@ -215,9 +213,7 @@ const Editor: React.FC<EditorProps> = ({
   texture = 'plain',
   onCreateFlashcard,
   isSimpleMode = false,
-  onAISelectionFormat,
-  notebookStyle = 'classic',
-  typewriterMode = false
+  onAISelectionFormat
 }) => {
   const [activeSubMenu, setActiveSubMenu] = React.useState<SubMenu>('main');
   const [editingMath, setEditingMath] = React.useState<{ pos: number; latex: string } | null>(null);
@@ -346,10 +342,7 @@ const Editor: React.FC<EditorProps> = ({
           activeHighlighterColor && "cursor-crosshair selection:bg-transparent",
           !isSimpleMode && texture === 'laid' && "texture-laid",
           !isSimpleMode && texture === 'grid' && "texture-grid",
-          !isSimpleMode && texture === 'linen' && "texture-linen",
-          !isSimpleMode && texture === 'plain' && "texture-plain",
-          !isSimpleMode && notebookStyle === 'spiral' && "notebook-style-spiral",
-          !isSimpleMode && notebookStyle === 'classic' && "notebook-style-classic"
+          !isSimpleMode && texture === 'linen' && "texture-linen"
         ),
         style: isSimpleMode 
           ? `font-size: ${fontSize}px;` 
@@ -366,6 +359,29 @@ const Editor: React.FC<EditorProps> = ({
             }; --page-margin-y: ${
               pageMargin === 'none' ? '0px' : pageMargin === 'narrow' ? '40px' : '96px'
             };`,
+      },
+      transformPastedHTML: (html) => {
+        // Sanitize HTML to prevent nested page creation from clipboard
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        
+        // Remove page-like structures to prevent nested pages
+        const pageElements = tempDiv.querySelectorAll('[data-type="page"], .page-container-node');
+        pageElements.forEach(el => {
+          // Replace with its content, removing the page wrapper
+          while (el.firstChild) {
+            el.parentNode?.insertBefore(el.firstChild, el);
+          }
+          el.remove();
+        });
+        
+        // Remove other potentially problematic elements
+        const unwantedTags = ['script', 'style', 'meta', 'link'];
+        unwantedTags.forEach(tag => {
+          tempDiv.querySelectorAll(tag).forEach(el => el.remove());
+        });
+        
+        return tempDiv.innerHTML;
       },
       handleDOMEvents: {
         mousedown: (view, event) => {
@@ -460,55 +476,6 @@ const Editor: React.FC<EditorProps> = ({
           }
           return false;
         }
-      },
-      transformPastedHTML(html) {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        
-        const unsafeTags = ['script', 'iframe', 'object', 'embed', 'link', 'style', 'meta', 'base'];
-        unsafeTags.forEach(tag => {
-          doc.querySelectorAll(tag).forEach(el => el.remove());
-        });
-
-        doc.querySelectorAll('*').forEach(el => {
-          Array.from(el.attributes).forEach(attr => {
-            if (attr.name.startsWith('on')) {
-              el.removeAttribute(attr.name);
-            } else if (['src', 'href'].includes(attr.name) && attr.value.trim().toLowerCase().startsWith('javascript:')) {
-              el.removeAttribute(attr.name);
-            }
-          });
-          
-          if (el.getAttribute('data-type') === 'page') {
-            el.removeAttribute('data-type');
-          }
-        });
-
-        return doc.body.innerHTML;
-      },
-      handlePaste(view, event) {
-        const items = Array.from(event.clipboardData?.items || []);
-        const imageItem = items.find(item => item.type.startsWith('image/'));
-        if (imageItem) {
-          const file = imageItem.getAsFile();
-          if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-              const src = e.target?.result as string;
-              if (src && !view.state.destroyed) {
-                const { schema, tr } = view.state;
-                const nodeType = schema.nodes.image || schema.nodes.resizableImage;
-                if (nodeType) {
-                  const node = nodeType.create({ src });
-                  view.dispatch(tr.replaceSelectionWith(node));
-                }
-              }
-            };
-            reader.readAsDataURL(file);
-            return true;
-          }
-        }
-        return false;
       }
     }
   });
@@ -923,42 +890,6 @@ const Editor: React.FC<EditorProps> = ({
     }
   }, [editor]);
 
-  React.useEffect(() => {
-    if (!editor || editor.isDestroyed || !typewriterMode) return;
-
-    const handleSelection = () => {
-      const { selection } = editor.state;
-      if (!selection.empty) return;
-      
-      requestAnimationFrame(() => {
-        try {
-          const { view } = editor;
-          if (view.state.destroyed) return;
-          const coords = view.coordsAtPos(selection.from);
-          const scrollContainer = view.dom.closest('main') || document.querySelector('main');
-          if (scrollContainer) {
-            const rect = scrollContainer.getBoundingClientRect();
-            const relativeCursorTop = coords.top - rect.top;
-            const targetCenter = rect.height / 2;
-            const diff = relativeCursorTop - targetCenter;
-            
-            if (Math.abs(diff) > 20) {
-              scrollContainer.scrollBy({
-                top: diff,
-                behavior: 'smooth'
-              });
-            }
-          }
-        } catch (e) {}
-      });
-    };
-
-    editor.on('selectionUpdate', handleSelection);
-    return () => {
-      editor.off('selectionUpdate', handleSelection);
-    };
-  }, [editor, typewriterMode]);
-
   const getNormalizedContent = React.useCallback((html: string) => {
     if (isSimpleMode) {
       const preserved = preserveSpaces(html);
@@ -980,7 +911,9 @@ const Editor: React.FC<EditorProps> = ({
     
     const currentHTML = editor.getHTML();
     const cleanContent = getNormalizedContent(content);
-    if (cleanContent !== currentHTML && cleanContent !== lastContentRef.current) {
+    
+    // Always update if content differs from current editor state
+    if (cleanContent !== currentHTML) {
       lastContentRef.current = cleanContent;
       queueMicrotask(() => {
         if (!editor.isDestroyed) {
