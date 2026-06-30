@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef } from 'react';
 
 interface SpiralBindingProps {
   height: number;
@@ -7,7 +7,6 @@ interface SpiralBindingProps {
 
 export const SpiralBinding: React.FC<SpiralBindingProps> = ({ height, className = '' }) => {
   const svgRef = useRef<SVGSVGElement>(null);
-  const [loopCount, setLoopCount] = useState(0);
   const uniqueId = useRef(`spiral-${Math.random().toString(36).substr(2, 9)}`);
 
   // Configuration via CSS variables
@@ -26,15 +25,12 @@ export const SpiralBinding: React.FC<SpiralBindingProps> = ({ height, className 
     }
   };
 
-  useEffect(() => {
-    console.log('[SpiralBinding] height:', height, 'loopCount:', loopCount);
-    if (svgRef.current && height > 0) {
-      const availableHeight = height - 40; // 20px padding top and bottom
-      const calculatedLoops = Math.floor(availableHeight / config.holeSpacing);
-      console.log('[SpiralBinding] calculatedLoops:', calculatedLoops);
-      setLoopCount(Math.max(calculatedLoops, 1));
-    }
-  }, [height, config.holeSpacing]);
+  // Calculate loopCount directly from height - no state needed
+  const availableHeight = height - 40;
+  const calculatedLoops = Math.floor(availableHeight / config.holeSpacing);
+  const loopCount = height > 0 ? Math.max(1, calculatedLoops) : 0;
+
+  console.log('[SpiralBinding] height:', height, 'availableHeight:', availableHeight, 'calculatedLoops:', calculatedLoops, 'final loopCount:', loopCount);
 
   const generateSpiralPath = () => {
     if (loopCount === 0) return '';
@@ -98,17 +94,12 @@ export const SpiralBinding: React.FC<SpiralBindingProps> = ({ height, className 
     return holes;
   };
 
-  if (loopCount === 0) {
-    console.log('[SpiralBinding] Returning null because loopCount is 0');
-    return null;
-  }
-
-  console.log('[SpiralBinding] Rendering with loopCount:', loopCount, 'height:', height);
+  if (loopCount === 0) return null;
 
   return (
     <div
       className={`absolute left-0 top-0 bottom-0 pointer-events-none z-50 ${className}`}
-      style={{ width: `${config.bindingWidth}px`, backgroundColor: 'rgba(255,0,0,0.1)' }}
+      style={{ width: `${config.bindingWidth}px` }}
     >
       <svg
         ref={svgRef}
