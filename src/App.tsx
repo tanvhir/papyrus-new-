@@ -10,7 +10,7 @@ import { HelpCenter } from '@/src/components/HelpCenter';
 import { useAuth } from '@/src/context/AuthContext';
 import { LoginScreen } from '@/src/components/LoginScreen';
 import { InstallerOverlay } from '@/src/components/InstallerOverlay';
-import { ToastProvider, useToast } from '@/src/context/ToastContext';
+import { useToast } from '@/src/context/ToastContext';
 import { ToastContainer } from '@/src/components/Toast';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -2509,16 +2509,15 @@ export default function App() {
   }
 
   return (
-    <ToastProvider>
-      <div
-        className={cn(
-          "h-screen transition-colors duration-1000 flex overflow-hidden",
-          theme.id === 'dark' && "dark",
-          isCleanMode && "is-clean-mode"
-        )}
-        style={{ backgroundColor: theme.bgColor, color: theme.inkColor }}
-        data-theme={theme.id === 'premium-dark' ? 'premium-dark' : undefined}
-      >
+    <div
+      className={cn(
+        "h-screen transition-colors duration-1000 flex overflow-hidden",
+        theme.id === 'dark' && "dark",
+        isCleanMode && "is-clean-mode"
+      )}
+      style={{ backgroundColor: theme.bgColor, color: theme.inkColor }}
+      data-theme={theme.id === 'premium-dark' ? 'premium-dark' : undefined}
+    >
       <CommandPalette 
         subjects={subjects} 
         flashcards={flashcards}
@@ -3217,7 +3216,6 @@ export default function App() {
       <AppToast />
     </div>
     </div>
-    </ToastProvider>
   );
 }
 
