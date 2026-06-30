@@ -1,13 +1,8 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
 import { useAuth } from '@/src/context/AuthContext';
-import { AlertCircle, Loader } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 
 const PapyrusLogo = () => (
-  <svg width="36" height="44" viewBox="0 0 36 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <svg width="100" height="100" viewBox="0 0 36 44" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <linearGradient id="leafGrad" x1="6" y1="0" x2="30" y2="44" gradientUnits="userSpaceOnUse">
         <stop offset="0%" stopColor="#66BB6A"/>
@@ -69,228 +64,168 @@ const PapyrusLogo = () => (
   </svg>
 );
 
+const AppleIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M20.0039 7.65962C19.8821 7.75412 17.7315 8.96595 17.7315 11.6605C17.7315 14.7772 20.468 15.8798 20.55 15.9071C20.5374 15.9743 20.1152 17.4172 19.1071 18.8873C18.2082 20.1811 17.2694 21.4727 15.8413 21.4727C14.4131 21.4727 14.0456 20.6431 12.3969 20.6431C10.7903 20.6431 10.219 21.5 8.91269 21.5C7.60636 21.5 6.69487 20.3029 5.64687 18.8327C4.43295 17.1064 3.45215 14.4244 3.45215 11.8789C3.45215 7.79613 6.10681 5.63081 8.71947 5.63081C10.1077 5.63081 11.2649 6.5423 12.1365 6.5423C12.9661 6.5423 14.2598 5.57621 15.8392 5.57621C16.4377 5.57621 18.5884 5.63081 20.0039 7.65962ZM15.0894 3.84773C15.7426 3.07276 16.2046 1.99745 16.2046 0.922142C16.2046 0.773027 16.192 0.621812 16.1647 0.5C15.102 0.539904 13.8377 1.20777 13.0753 2.09196C12.4768 2.77243 11.9181 3.84773 11.9181 4.93774C11.9181 5.10156 11.9454 5.26538 11.958 5.31788C12.0252 5.33048 12.1344 5.34518 12.2436 5.34518C13.1971 5.34518 14.3963 4.70672 15.0894 3.84773Z" fill="currentColor"/>
+  </svg>
+);
+
 export const LoginScreen: React.FC = () => {
   const { login } = useAuth();
-  const [email, setEmail] = useState('admin@domain.com');
-  const [password, setPassword] = useState('admin');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [rememberMe, setRememberMe] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-      setErrorMsg('Please enter both your email address and password.');
-      return;
-    }
+    if (!email || !password) return;
 
-    setErrorMsg(null);
     setIsSubmitting(true);
 
     try {
-      const success = await login(email, password);
-      if (!success) {
-        setErrorMsg('Authentication failed. Check your credentials.');
-      }
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Network lookup failed. Please try again.');
+      await login(email, password);
+    } catch (err) {
+      console.error('Login failed:', err);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen w-full flex bg-white">
-      {/* Left Side - Login Form */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-center px-6 sm:px-12 lg:px-16 xl:px-24 py-12 lg:py-0">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="max-w-md mx-auto w-full"
-        >
-          {/* Logo */}
-          <div className="mb-10">
-            <PapyrusLogo />
-            <h1 className="text-3xl font-semibold text-gray-900 mt-4">
-              Sign in to your account
-            </h1>
-            <p className="text-base text-gray-600 mt-2">
-              Welcome back! Please enter your details.
-            </p>
-          </div>
-
-          {/* Error Message */}
-          {errorMsg && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6"
-            >
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                <div className="text-sm text-red-800">
-                  {errorMsg}
+    <main className="relative flex min-h-screen flex-col items-center justify-between">
+      <div className="flex h-screen w-full">
+        {/* Left Side - Form */}
+        <div className="flex h-full w-full flex-col items-center justify-center">
+          <div className="w-full max-w-[600px] px-6 py-2 text-center md:px-12 md:pb-16">
+            <div className="flex flex-col items-center space-y-2">
+              <PapyrusLogo />
+              <h1 className="text-2xl font-semibold text-gray-900 md:text-3xl">
+                Welcome to Papyrus!
+              </h1>
+              <p className="text-sm text-gray-900">
+                Sign up and start taking notes.
+              </p>
+            </div>
+            
+            <div className="relative z-20 flex flex-col space-y-4 pt-8 md:pt-10">
+              <form onSubmit={handleSubmit}>
+                <div className="flex flex-col space-y-4">
+                  <input
+                    id="email"
+                    autoComplete="off"
+                    placeholder="Email address"
+                    className="border-gray-300 rounded-sm border py-3 pl-3 pr-2 text-base text-gray-900 placeholder:text-gray-400"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={isSubmitting}
+                    required
+                  />
+                  <input
+                    id="password"
+                    placeholder="Password"
+                    className="border-gray-300 rounded-sm border py-3 pl-3 pr-2 text-base text-gray-900 placeholder:text-gray-400"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isSubmitting}
+                    required
+                  />
                 </div>
+                
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !email || !password}
+                  className="flex justify-center transition-all p-3 w-full rounded-sm border disabled:bg-gray-200 disabled:border-gray-200 disabled:cursor-not-allowed bg-green-600 border-green-600 hover:bg-green-700 hover:border-green-700 text-white mt-4"
+                >
+                 Continue
+                </button>
+              </form>
+
+              <div className="flex items-center">
+                <div className="flex-grow border-t border-gray-300"></div>
+                <span className="px-4 text-sm text-gray-400">or</span>
+                <div className="flex-grow border-t border-gray-300"></div>
               </div>
-            </motion.div>
-          )}
 
-          {/* Social Login Buttons (Disabled) */}
-          <div className="space-y-3 mb-6">
-            <button
-              type="button"
-              disabled
-              className="w-full h-12 border border-gray-300 rounded-lg flex items-center justify-center gap-3 bg-gray-50 text-gray-400 cursor-not-allowed"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-              </svg>
-              <span className="text-sm font-medium">Sign in with Google</span>
-            </button>
-            <button
-              type="button"
-              disabled
-              className="w-full h-12 border border-gray-300 rounded-lg flex items-center justify-center gap-3 bg-gray-50 text-gray-400 cursor-not-allowed"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-              </svg>
-              <span className="text-sm font-medium">Sign in with Apple</span>
-            </button>
-          </div>
-
-          {/* Divider */}
-          <div className="relative mb-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-gray-500">Or continue with email</span>
-            </div>
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                className="h-12 border-gray-300 focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-0"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isSubmitting}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                  Password
-                </Label>
+              <div className="flex w-full flex-col justify-center items-center gap-2 md:flex-row text-base px-0">
                 <button
                   type="button"
-                  className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                  disabled
+                  className="flex justify-center transition-all p-3 w-full rounded-sm border disabled:bg-gray-200 disabled:border-gray-200 disabled:cursor-not-allowed bg-transparent text-gray-600 hover:bg-gray-100 border-gray-300 py-2 rounded-sm w-full"
                 >
-                  Forgot password?
+                  <span className="whitespace-nowrap text-base flex items-center justify-center">
+                    <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    </svg>
+                    Continue with Google
+                  </span>
+                </button>
+                
+                <button
+                  type="button"
+                  disabled
+                  className="flex justify-center transition-all p-3 w-full rounded-sm border disabled:bg-gray-200 disabled:border-gray-200 disabled:cursor-not-allowed bg-transparent text-gray-600 hover:bg-gray-100 border-gray-300 py-2 rounded-sm w-full"
+                >
+                  <span className="whitespace-nowrap text-base text-gray-600 flex items-center justify-center">
+                    <AppleIcon />
+                    Continue with Apple
+                  </span>
                 </button>
               </div>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                className="h-12 border-gray-300 focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-0"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isSubmitting}
-                required
-              />
+
+              <div className="flex flex-col space-y-6">
+                <div className="block w-full px-6 text-xs text-gray-500">
+                  By creating an account, you are agreeing to our{' '}
+                  <a className="font-medium text-green-600" target="_blank" href="#">
+                    Terms of Service
+                  </a>{' '}
+                  and acknowledging receipt of our{' '}
+                  <a className="font-medium text-green-600" target="_blank" href="#">
+                    Privacy Policy
+                  </a>.
+                </div>
+                <a className="block w-full px-6 py-2 text-sm text-gray-500" href="#">
+                  Already have an account?{' '}
+                  <span className="font-semibold text-green-600">Log in</span>
+                </a>
+              </div>
             </div>
-
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="remember"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900"
-              />
-              <Label htmlFor="remember" className="ml-2 text-sm text-gray-600 cursor-pointer">
-                Remember me
-              </Label>
-            </div>
-
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full h-12 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-lg transition-all duration-200 flex items-center justify-center"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader className="w-5 h-5 animate-spin mr-2" />
-                  <span>Signing in...</span>
-                </>
-              ) : (
-                <span>Sign in</span>
-              )}
-            </Button>
-          </form>
-
-          {/* Register Link */}
-          <div className="mt-8 text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <button
-                type="button"
-                className="text-gray-900 font-medium hover:underline transition-colors"
-              >
-                Sign up
-              </button>
-            </p>
           </div>
+        </div>
 
-          {/* Demo Credentials Notice */}
-          <div className="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <p className="text-xs text-gray-600 mb-2">
-              Demo credentials pre-filled for testing:
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                setEmail('admin@domain.com');
-                setPassword('admin');
-              }}
-              className="text-xs font-mono text-gray-900 hover:underline"
-            >
-              Reset to defaults
-            </button>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Right Side - Splash Illustration */}
-      <div className="hidden lg:block lg:w-1/2 bg-gray-50 relative overflow-hidden">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="absolute inset-0 flex items-center justify-center"
-        >
-          <img 
-            src="/splash.svg" 
-            alt="Papyrus Illustration" 
-            className="w-full h-full object-contain p-8"
+        {/* Right Side - Splash Image */}
+        <div className="relative hidden h-full w-full lg:block">
+          <img
+            alt="splash screen"
+            decoding="async"
+            className="aspect-w-9 aspect-h-16 object-center-right object-cover"
+            src="/splash.svg"
+            style={{ position: 'absolute', height: '100%', width: '100%', inset: 0, color: 'transparent' }}
           />
-        </motion.div>
+        </div>
       </div>
-    </div>
+
+      {/* Footer */}
+      <footer className="bottom-0 left-0 -z-0 w-full px-5 py-8 md:py-12 lg:absolute lg:px-10">
+        <div className="text-gray-500 flex flex-col items-center justify-between space-y-4 text-xs md:flex-row md:space-y-0">
+          <span className="text-center">© 2026 Papyrus. All rights reserved.</span>
+          <div className="flex space-x-8">
+            <a target="_blank" className="hover:text-gray-400 hover:underline" href="#">
+              Security
+            </a>
+            <a target="_blank" className="hover:text-gray-400 hover:underline" href="#">
+              Legal
+            </a>
+            <a target="_blank" className="hover:text-gray-400 hover:underline" href="#">
+              Privacy
+            </a>
+          </div>
+        </div>
+      </footer>
+    </main>
   );
 };
