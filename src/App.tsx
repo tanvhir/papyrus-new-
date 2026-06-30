@@ -2607,7 +2607,7 @@ export default function App() {
             </div>
             
             <div className="flex items-center gap-2">
-              {/* Settings / Configuration */}
+              {/* Flashcards Button */}
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -2615,51 +2615,32 @@ export default function App() {
                       <Button 
                         variant="ghost" 
                         size="icon"
-                        className={cn("w-8 h-8 rounded-full", isHandwriting ? "bg-stone-200 dark:bg-stone-800 opacity-100" : "opacity-60")}
-                        onClick={() => setIsHandwriting(!isHandwriting)}
+                        className={cn(
+                          "w-8 h-8 rounded-full relative transition-all duration-300",
+                          flashcards.filter(c => c.sourceNoteId === activeNoteId).length > 0 
+                            ? "bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 opacity-100 hover:scale-110" 
+                            : "opacity-60"
+                        )}
+                        onClick={() => handleStartStudy('note', activeNoteId)}
                       >
-                        <PenTool className="w-4 h-4" />
+                        <Brain className="w-4 h-4" />
+                        {flashcards.filter(c => c.sourceNoteId === activeNoteId).length > 0 && (
+                          <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 rounded-full bg-amber-500 text-[#FFFCF5] text-[8px] font-mono font-bold flex items-center justify-center shadow-sm animate-bounce-slow">
+                            {flashcards.filter(c => c.sourceNoteId === activeNoteId).length}
+                          </span>
+                        )}
                       </Button>
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent>Toggle Handwriting (Hand font is Bangla)</TooltipContent>
+                  <TooltipContent>
+                    {flashcards.filter(c => c.sourceNoteId === activeNoteId).length > 0 
+                      ? `Study Chapter Cards (${flashcards.filter(c => c.sourceNoteId === activeNoteId).length})` 
+                      : "No flashcards linked to this chapter"}
+                  </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-    
-              <Popover>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span>
-                        <PopoverTrigger render={
-                          <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full opacity-60">
-                            <Palette className="w-4 h-4" />
-                          </Button>
-                        } />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>Change Theme</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <PopoverContent align="end" className="w-auto p-2">
-                  <div className="flex items-center gap-2">
-                    {THEMES.map(t => (
-                      <Button
-                        key={t.id}
-                        variant="ghost"
-                        size="icon"
-                        className={cn(
-                          "w-6 h-6 rounded-full border transition-all shadow-sm",
-                          theme.id === t.id ? "border-stone-500 scale-110" : "border-stone-200 dark:border-stone-800 opacity-50"
-                        )}
-                        style={{ backgroundColor: t.paperColor }}
-                        onClick={() => setTheme(t)}
-                      />
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
 
+              {/* Page Setup Button */}
               <Popover>
                 <TooltipProvider>
                   <Tooltip>
@@ -2672,10 +2653,10 @@ export default function App() {
                         } />
                       </span>
                     </TooltipTrigger>
-                    <TooltipContent>Page Setup & Print</TooltipContent>
+                    <TooltipContent>Page Setup</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                <PopoverContent align="end" className="w-80 p-4 border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-xl rounded-xl">
+                <PopoverContent align="end" className="w-96 p-4 border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-xl rounded-xl">
                   <div className="space-y-4">
                     <div>
                       <h4 className="font-serif text-sm font-bold tracking-tight text-stone-900 dark:text-stone-100 flex items-center gap-1.5 leading-none">
@@ -2683,14 +2664,90 @@ export default function App() {
                         Page Setup
                       </h4>
                       <p className="text-[10px] text-stone-500 dark:text-stone-400 font-sans mt-1">
-                        Configure page formats and margins for printing.
+                        Configure page appearance and printing options.
                       </p>
                     </div>
 
                     <Separator className="bg-stone-100 dark:bg-stone-850" />
 
+                    {/* Theme */}
                     <div className="space-y-2">
-                      <Label className="text-[9px] uppercase tracking-wider font-bold opacity-60 block">Dimensions</Label>
+                      <Label className="text-[9px] uppercase tracking-wider font-bold opacity-60 block">Theme</Label>
+                      <div className="flex items-center gap-2">
+                        {THEMES.map(t => (
+                          <Button
+                            key={t.id}
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                              "w-8 h-8 rounded-full border transition-all shadow-sm",
+                              theme.id === t.id ? "border-stone-500 scale-110" : "border-stone-200 dark:border-stone-800 opacity-50"
+                            )}
+                            style={{ backgroundColor: t.paperColor }}
+                            onClick={() => setTheme(t)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Font Size */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[9px] uppercase tracking-wider font-bold opacity-60 block">Font Size</Label>
+                        <span className="text-xs font-mono font-bold">{fontSize}px</span>
+                      </div>
+                      <div className="grid grid-cols-4 gap-1">
+                        {[12, 14, 16, 18, 20, 24, 28, 32].map(size => (
+                          <Button
+                            key={size}
+                            variant={fontSize === size ? "default" : "ghost"}
+                            size="sm"
+                            className="h-8 px-0 text-[10px] font-mono"
+                            onClick={() => setFontSize(size)}
+                          >
+                            {size}
+                          </Button>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="flex-1 h-7 text-[10px] uppercase font-bold"
+                          onClick={() => setFontSize(Math.max(10, fontSize - 1))}
+                        >
+                          Smaller
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="flex-1 h-7 text-[10px] uppercase font-bold"
+                          onClick={() => setFontSize(Math.min(72, fontSize + 1))}
+                        >
+                          Larger
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Handwriting Mode */}
+                    <div className="space-y-2">
+                      <Label className="text-[9px] uppercase tracking-wider font-bold opacity-60 block">Handwriting Mode</Label>
+                      <Button
+                        variant={isHandwriting ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setIsHandwriting(!isHandwriting)}
+                        className="w-full h-9 text-[10px] font-semibold flex items-center gap-2"
+                      >
+                        <PenTool className="w-4 h-4" />
+                        {isHandwriting ? "Handwriting Enabled" : "Handwriting Disabled"}
+                      </Button>
+                    </div>
+
+                    <Separator className="bg-stone-100 dark:bg-stone-850" />
+
+                    {/* Page Layout */}
+                    <div className="space-y-2">
+                      <Label className="text-[9px] uppercase tracking-wider font-bold opacity-60 block">Page Layout</Label>
                       <div className="grid grid-cols-3 gap-1.5">
                         <Button
                           variant={pageLayout === 'pageless' ? "default" : "outline"}
@@ -2722,6 +2779,7 @@ export default function App() {
                       </div>
                     </div>
 
+                    {/* Margins */}
                     <div className="space-y-2">
                       <Label className="text-[9px] uppercase tracking-wider font-bold opacity-60 block">Printing Margins</Label>
                       <div className="grid grid-cols-3 gap-1.5">
@@ -2755,6 +2813,7 @@ export default function App() {
                       </div>
                     </div>
 
+                    {/* Layout Interface */}
                     <div className="space-y-2">
                       <Label className="text-[9px] uppercase tracking-wider font-bold opacity-60 block">Layout Interface</Label>
                       <div className="grid grid-cols-2 gap-1.5">
@@ -2781,6 +2840,7 @@ export default function App() {
 
                     <Separator className="bg-stone-100 dark:bg-stone-850" />
 
+                    {/* Print Options */}
                     <div className="space-y-2">
                       <Button
                         onClick={exportPageToPDF}
@@ -2795,7 +2855,7 @@ export default function App() {
                         ) : (
                           <>
                             <Download className="w-3.5 h-3.5 group-hover:scale-110 transition-transform text-white dark:text-stone-900" />
-                            <span>Save as PDF (Direct Download)</span>
+                            <span>Save as PDF</span>
                           </>
                         )}
                       </Button>
@@ -2806,113 +2866,19 @@ export default function App() {
                         disabled={isExportingPDF}
                       >
                         <Printer className="w-3.5 h-3.5 opacity-70" />
-                        <span>Open System Print Dialog</span>
+                        <span>Print</span>
                       </Button>
                       {pageLayout !== 'pageless' && (
                         <p className="text-[8.5px] text-stone-500 text-center leading-normal italic pt-1">
-                          Red guidelines mark A4 printing boundaries. Match items inside markers for crisp multi-page output.
+                          Red guidelines mark A4 printing boundaries.
                         </p>
                       )}
                     </div>
                   </div>
                 </PopoverContent>
               </Popover>
-    
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        className={cn(
-                          "w-8 h-8 rounded-full relative transition-all duration-300",
-                          flashcards.filter(c => c.sourceNoteId === activeNoteId).length > 0 
-                            ? "bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 opacity-100 hover:scale-110" 
-                            : "opacity-60"
-                        )}
-                        onClick={() => handleStartStudy('note', activeNoteId)}
-                      >
-                        <Brain className="w-4 h-4" />
-                        {flashcards.filter(c => c.sourceNoteId === activeNoteId).length > 0 && (
-                          <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 rounded-full bg-amber-500 text-[#FFFCF5] text-[8px] font-mono font-bold flex items-center justify-center shadow-sm animate-bounce-slow">
-                            {flashcards.filter(c => c.sourceNoteId === activeNoteId).length}
-                          </span>
-                        )}
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {flashcards.filter(c => c.sourceNoteId === activeNoteId).length > 0 
-                      ? `Study Chapter Cards (${flashcards.filter(c => c.sourceNoteId === activeNoteId).length})` 
-                      : "No flashcards linked to this chapter"}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
 
-              <div className="w-px h-4 bg-stone-200 dark:bg-stone-800 mx-1" />
-
-              <Popover>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span>
-                        <PopoverTrigger render={
-                          <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full opacity-60 flex items-center justify-center font-mono text-[10px] font-bold">
-                            {fontSize}
-                          </Button>
-                        } />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>Font Size</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <PopoverContent align="end" className="w-48 p-3">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase tracking-widest font-bold opacity-50">Size</span>
-                      <span className="text-xs font-mono font-bold">{fontSize}px</span>
-                    </div>
-                    <div className="grid grid-cols-4 gap-1">
-                      {[12, 14, 16, 18, 20, 24, 28, 32].map(size => (
-                        <Button
-                          key={size}
-                          variant={fontSize === size ? "default" : "ghost"}
-                          size="sm"
-                          className="h-8 px-0 text-[10px] font-mono"
-                          onClick={() => setFontSize(size)}
-                        >
-                          {size}
-                        </Button>
-                      ))}
-                    </div>
-                    <div className="pt-2 border-t border-stone-100 dark:border-stone-800">
-                      <div className="flex items-center gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="flex-1 h-7 text-[10px] uppercase font-bold"
-                          onClick={() => setFontSize(Math.max(10, fontSize - 1))}
-                        >
-                          Smaller
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="flex-1 h-7 text-[10px] uppercase font-bold"
-                          onClick={() => setFontSize(Math.min(72, fontSize + 1))}
-                        >
-                          Larger
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-    
-              <div className="w-px h-4 bg-stone-200 dark:bg-stone-800 mx-1" />
-
-              {/* Help & Cheat Sheet Button */}
+              {/* Help Button */}
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -2927,7 +2893,7 @@ export default function App() {
                       </Button>
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent>Help & AI Cheat Sheet</TooltipContent>
+                  <TooltipContent>Help Center</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
 
@@ -2946,7 +2912,7 @@ export default function App() {
                       </Button>
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent>AI & Model Settings</TooltipContent>
+                  <TooltipContent>Settings</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
 

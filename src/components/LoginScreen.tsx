@@ -198,13 +198,12 @@ export const LoginScreen: React.FC = () => {
         </div>
 
         {/* Right Side - Splash Image */}
-        <div className="relative hidden h-full w-full lg:block">
+        <div className="relative hidden h-full w-full lg:block bg-gray-50">
           <img
             alt="splash screen"
             decoding="async"
-            className="aspect-w-9 aspect-h-16 object-center-right object-cover"
             src="/splash.svg"
-            style={{ position: 'absolute', height: '100%', width: '100%', inset: 0, color: 'transparent' }}
+            className="w-full h-full object-contain"
           />
         </div>
       </div>
