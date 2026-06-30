@@ -40,6 +40,12 @@ jobs:
         if [ -d "storage" ]; then cp -r storage deploy_dir/; fi
         if [ -f ".htaccess" ]; then cp .htaccess deploy_dir/; fi
         
+        # 3. Copy splash assets from root folder
+        if [ -f "splash.html" ]; then cp splash.html deploy_dir/; fi
+        if [ -f "splash.svg" ]; then cp splash.svg deploy_dir/; fi
+        if [ -f "Papyruslogo.html" ]; then cp Papyruslogo.html deploy_dir/; fi
+        if [ -f "Papyruslogo.svg" ]; then cp Papyruslogo.svg deploy_dir/; fi
+        
         # Create empty uploads directory if needed by backend
         mkdir -p deploy_dir/uploads
 
