@@ -25,6 +25,12 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { AuthProvider } from '@/src/context/AuthContext';
 import { ToastProvider } from '@/src/context/ToastContext';
 
+// Expose version to console
+const PAPYRUS_VERSION = '1.0.0';
+(window as any).PAPYRUS_VERSION = PAPYRUS_VERSION;
+console.log(`%c📚 Papyrus v${PAPYRUS_VERSION}`, 'font-size: 14px; font-weight: bold; color: #8c6d4f;');
+console.log('Check version with: window.PAPYRUS_VERSION');
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <TooltipProvider>
