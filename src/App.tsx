@@ -7,6 +7,7 @@ import { StudySession } from '@/src/components/StudySession';
 import { FlashcardCreator } from '@/src/components/FlashcardCreator';
 import { SettingsModal } from '@/src/components/SettingsModal';
 import { HelpCenter } from '@/src/components/HelpCenter';
+import { FormattingProgress, FormattingProgress as FormattingProgressType } from '@/src/components/FormattingProgress';
 import { useAuth } from '@/src/context/AuthContext';
 import { useToast } from '@/src/context/ToastContext';
 import { LoginScreen } from '@/src/components/LoginScreen';
@@ -726,6 +727,14 @@ export default function App() {
   const [disableAIColumns, setDisableAIColumns] = useState<boolean>(() => localStorage.getItem('academic_disable_ai_columns') === 'true');
   const [allowNoteEnhancement, setAllowNoteEnhancement] = useState<boolean>(() => localStorage.getItem('academic_allow_note_enhancement') === 'true');
   const [enableCleaning, setEnableCleaning] = useState<boolean>(() => localStorage.getItem('academic_enable_cleaning') === 'true');
+  
+  // Formatting progress state
+  const [formattingProgress, setFormattingProgress] = useState<FormattingProgressType>({
+    active: false,
+    currentChunk: 0,
+    totalChunks: 1,
+    stage: 'processing'
+  });
 
   const handleUpdateCustomApiKey = (key: string) => {
     setCustomApiKey(key);
@@ -1754,6 +1763,7 @@ export default function App() {
   const handleAIFormat = useCallback(async () => {
     if (!editor) return;
     setIsAILoading(true);
+    setFormattingProgress({ active: true, currentChunk: 0, totalChunks: 1, stage: 'processing' });
 
     const activeContext = getActiveContext();
     const currentTitle = activeContext?.note.title || 'Untitled Note';
@@ -1782,6 +1792,10 @@ export default function App() {
           disableAIArrows,
           disableAIStickies,
           disableAIDividers,
+          disableAIImages,
+          disableAIColumns,
+          allowNoteEnhancement,
+          enableCleaning,
         })
       });
 
@@ -1804,30 +1818,49 @@ export default function App() {
         if (data.dividers && !disableAIDividers) {
           setDividers(data.dividers);
         }
+        
+        // Update progress if chunked
+        if (data.isChunked) {
+          setFormattingProgress(prev => ({
+            ...prev,
+            totalChunks: data.totalChunks || 1,
+            currentChunk: data.totalChunks || 1
+          }));
+        }
       } else {
+        setFormattingProgress(prev => ({ ...prev, stage: 'fallback' }));
         showError('AI formatting failed', data.message || 'AI formatting failed.');
       }
     } catch (error: any) {
       console.error('Error during AI formatting:', error);
+      setFormattingProgress(prev => ({ ...prev, stage: 'fallback' }));
       showError('AI formatting error', 'An error occurred during AI formatting: ' + (error.message || error));
     } finally {
       setIsAILoading(false);
+      setFormattingProgress({ active: false, currentChunk: 0, totalChunks: 1, stage: 'processing' });
     }
   }, [
     editor, 
     stickies, 
     arrows, 
     dividers, 
+    images,
     pageLayout, 
-    activeNoteId, 
-    getActiveContext, 
-    customApiKey, 
-    customModel, 
+    customApiKey,
+    customModel,
     highlightStyle,
     disableAIFlashcards,
     disableAIArrows,
     disableAIStickies,
-    disableAIDividers
+    disableAIDividers,
+    disableAIImages,
+    disableAIColumns,
+    allowNoteEnhancement,
+    enableCleaning,
+    activeNoteId, 
+    getActiveContext, 
+    renameNote,
+    showError
   ]);
 
   const handleImagePaste = (src: string) => {
@@ -2459,7 +2492,10 @@ export default function App() {
   }
 
   return (
-    <div
+    <>
+      <FormattingProgress progress={formattingProgress} />
+      
+      <div
       className={cn(
         "h-screen transition-colors duration-1000 flex overflow-hidden",
         theme.id === 'dark' && "dark",
@@ -3147,5 +3183,6 @@ export default function App() {
       />
     </div>
     </div>
+    </>
   );
 }

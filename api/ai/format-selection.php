@@ -6,6 +6,9 @@
 
 require_once __DIR__ . '/../helpers/response.php';
 require_once __DIR__ . '/../helpers/auth.php';
+require_once __DIR__ . '/tool-registry.php';
+require_once __DIR__ . '/prompt-builder.php';
+require_once __DIR__ . '/gemini-client.php';
 
 // Safe authentication
 startSecureSession();
@@ -68,224 +71,71 @@ $disableAIColumns = ($input['disableAIColumns'] ?? false) === true;
 $allowNoteEnhancement = ($input['allowNoteEnhancement'] ?? false) === true;
 $enableCleaning = ($input['enableCleaning'] ?? false) === true;
 
-$highlightInstruction = '';
-if ($highlightStyle === 'generous') {
-    $highlightInstruction = "- Use highlights GENEROUSLY with `<mark data-color=\"#ffff00\" style=\"background-color: rgb(255, 255, 0); color: inherit;\">text</mark>` to highlight key terms, critical definitions, formulas, important concepts, examples, and any noteworthy information to make the document extremely scan-friendly and visual. Aim for 8-15 highlights per page. Use appropriate colors for different types of content: Yellow for general highlights, Blue for definitions, Deep green for formulas, Pink for examples, Orange for warnings/cautions.";
-} else if ($highlightStyle === 'none') {
-    $highlightInstruction = "- Do NOT use any highlights (`<mark>`) at all. Keep everything un-highlighted.";
-} else {
-    $highlightInstruction = "- Use highlights SPARINGLY with `<mark data-color=\"#ffff00\" style=\"background-color: rgb(255, 255, 0); color: inherit;\">text</mark>` ONLY for the most critical definitions, formulas, or key terms (maximum of 3-5 highlights per page). Be very selective. Use appropriate colors: Yellow for general, Blue for definitions, Deep green for formulas, Pink for examples, Orange for warnings.";
-}
-
-$strictDisableInstructions = '';
-if ($disableAIArrows) {
-    $strictDisableInstructions .= "\n- DO NOT generate any connection or callout arrows in the \"arrows\" array. Keep the \"arrows\" array completely empty ([]) in your response.";
-}
-if ($disableAIStickies) {
-    $strictDisableInstructions .= "\n- DO NOT generate any margin sticky notes in the \"stickies\" array. Keep the \"stickies\" array completely empty ([]) in your response.";
-}
-if ($disableAIDividers) {
-    $strictDisableInstructions .= "\n- DO NOT generate any canvas dividers in the \"dividers\" array. Keep the \"dividers\" array completely empty ([]) in your response.";
-}
-if ($disableAIFlashcards) {
-    $strictDisableInstructions .= "\n- DO NOT generate any flashcard-style inline question or answer suggestions.";
-}
-if ($disableAIImages) {
-    $strictDisableInstructions .= "\n- DO NOT generate any image references or image-related content.";
-}
-if ($disableAIColumns) {
-    $strictDisableInstructions .= "\n- DO NOT use multi-column layouts (data-type=\"columns\"). Use single-column layout instead.";
-}
-
-$enhancementInstruction = '';
-if (!$allowNoteEnhancement) {
-    $enhancementInstruction .= "\n- CRITICAL: DO NOT modify the actual text content or wording. Only apply formatting (headings, lists, highlights, etc.) without changing the meaning or words.";
-}
-
-$cleaningInstruction = '';
-if ($enableCleaning) {
-    $cleaningInstruction .= "\n- Clean up random numeric artifacts like (21), (2), [1], etc. that may appear in the text. Remove these artifacts while preserving the actual content.";
-}
-
 if (empty($selectionText) && empty($selectionHTML)) {
     errorResponse('No text or HTML selected for formatting.', 400);
 }
 
-// 3. Construct precise prompt for selection-only styling
-$prompt = "You are an expert academic content designer. Your task is to format a SPECIFIC portion of a note based on the user's instructions.
-
-User's custom formatting instruction: \"$instruction\"
-
-Selected text to format:
-$selectionText
-
-Selected HTML of selection (if any structure exists):
-$selectionHTML
-
-Current visual page line height (centerY): $centerY
-
-Your response MUST be a single structured JSON object with the following fields:
-1. \"formattedHTML\": The beautifully formatted HTML representing ONLY the replacement for the selected portion.
-   - CRITICAL: NEVER include `<div data-type=\"page\">` or any page wrapper tags in your formattedHTML output. Only return inline content (headings, paragraphs, lists, etc.) without page wrappers.
-   - You should restructure the HTML inline.
-   - Use headings (h1, h2, h3), paragraphs (p), list items (li), and inline styles as needed.
-   - Use text formatting tools extensively: <strong> for bold emphasis on important terms, <em> for italic emphasis on examples or foreign terms, <u> for underlining critical points.
-   - Use text colors for semantic meaning: <span style=\"color: #1c1917\"> for normal text, <span style=\"color: #ef4444\"> for warnings/errors, <span style=\"color: #3b82f6\"> for definitions, <span style=\"color: #22c55e\"> for success/positive, <span style=\"color: #d97706\"> for important notes.
-   $highlightInstruction
-   - If requested or suitable, use multi-column elements:
-     `<div data-type=\"columns\"><div data-type=\"column\"><h3>Left Column</h3><p>...</p></div><div data-type=\"column\"><h3>Right Column</h3><p>...</p></div></div>`
-   - CRITICAL VISUAL MNEMONIC / DOWNWARD ARROW RESTRUCTURING PATTERN:
-     If the user wants a vertical mnemonic layout (like a letter/prefix/symbol on top, an arrow pointing down, and its meaning or full word directly below, side-by-side across multiple columns as in \"E -> Ellipse, A -> Area, T -> Time\"):
-     You MUST generate a responsive multi-column element `<div data-type=\"columns\">`.
-     Inside, each column (`<div data-type=\"column\">`) must have:
-       1) A beautifully formatted top item (usually a single letter, prefix, or word, e.g., `<p style=\"text-align: center; font-size: 1.25rem; font-weight: bold; margin-bottom: 2px;\">E</p>`).
-       2) An elegant, curved inline vertical SVG arrow pointing down (e.g., `<svg viewBox=\"0 0 24 32\" width=\"20\" height=\"28\" style=\"margin: 4px auto; display: block; overflow: visible;\"><path d=\"M12,2 Q14,14 12,26\" fill=\"none\" stroke=\"#3b82f6\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M8,21 L12,26 L16,21\" fill=\"none\" stroke=\"#3b82f6\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>`). Ensure you use correct SVG coordinates to render a clean downward curved path with an arrowhead! Use any vibrant color or note theme color.
-       3) A beautifully formatted bottom item containing the meaning or full word centered (e.g., `<p style=\"text-align: center; font-size: 0.85rem; color: #4b5563;\">Ellipse</p>`).
-     This creates a gorgeous, perfectly aligned vertical hierarchy exactly like high-end visual student notes!
-   - CRITICAL: Preserve ALL mathematical equations and formulas. If you see LaTeX equations wrapped in `$` delimiters (e.g., `$\frac{d^2x}{dt^2} + \omega^2x = 0$`), you MUST convert them to `<span data-type=\"math\" data-latex=\"...\"></span>` format by removing the `$` delimiters and placing the LaTeX content in the data-latex attribute. Never remove or drop equation content.
-   - Embed decorative dividers to separate sections using various styles:
-     * Solid: `<decorative-divider data-type=\"solid\" data-color=\"#15803d\" data-size=\"2\" data-length=\"100%\"></decorative-divider>`
-     * Dashed: `<decorative-divider data-type=\"dashed\" data-color=\"#3b82f6\" data-size=\"2\" data-length=\"100%\"></decorative-divider>`
-     * Dotted: `<decorative-divider data-type=\"dotted\" data-color=\"#f59e0b\" data-size=\"2\" data-length=\"100%\"></decorative-divider>`
-     * Zigzag: `<decorative-divider data-type=\"zigzag\" data-color=\"#ec4899\" data-size=\"2\" data-length=\"100%\"></decorative-divider>`
-     * Wave: `<decorative-divider data-type=\"wave\" data-color=\"#8b5cf6\" data-size=\"2\" data-length=\"100%\"></decorative-divider>`
-     Choose the style that best fits the content context (solid for major sections, dashed for subsections, dotted for minor breaks, zigzag for creative emphasis, wave for smooth transitions).
-$enhancementInstruction
-$cleaningInstruction
-2. \"stickies\": An array of optional staggered callout sticky notes ONLY if requested by the user's prompt or highly necessary (limit to 1 or 2 max):
-   - Format: { \"id\": \"string\", \"text\": \"string\", \"color\": \"#ffff99|#ffccff|#ccffff|#ffcc99\", \"position\": { \"x\": number, \"y\": number }, \"fontSize\": number }
-   - Placement: Best placed on the right margin side of the page (x between 850 and 920). Set 'y' coordinate close to centerY (e.g. centerY, centerY + 220, etc.) to match where the selection is located.
-3. \"arrows\": An array of connection arrows pointing from the main text body to the generated stickies:
-   - Format: { \"id\": \"string\", \"start\": { \"x\": number, \"y\": number }, \"end\": { \"x\": number, \"y\": number }, \"mid\": { \"x\": number, \"y\": number }, \"color\": \"string\" }
-   - Alignment: Arrow should start around x: 600, y: centerY. It should end at the sticky note's position (e.g. x: 840, y: centerY). The 'mid' coordinate must have a slight curved bend (e.g., mid.x = (start.x + end.x) / 2, mid.y = (start.y + end.y) / 2 - 30).
-4. \"dividers\": An array of background dividers if relevant (usually empty `[]` unless explicitly requested).
-
-$strictDisableInstructions
-
-Keep the content highly polished, academic, and extremely accurate to the user's instruction. Do not wrap the JSON output in markdown backticks.";
-
-// 4. Gemini API Call
-$url = "https://generativelanguage.googleapis.com/v1beta/models/" . urlencode($modelName) . ":generateContent?key=" . urlencode($apiKey);
-
-$payload = [
-    'contents' => [
-        [
-            'parts' => [
-                ['text' => $prompt]
-            ]
-        ]
-    ],
-    'generationConfig' => [
-        'responseMimeType' => 'application/json',
-        'responseSchema' => [
-            'type' => 'OBJECT',
-            'properties' => [
-                'formattedHTML' => ['type' => 'STRING'],
-                'stickies' => [
-                    'type' => 'ARRAY',
-                    'items' => [
-                        'type' => 'OBJECT',
-                        'properties' => [
-                            'id' => ['type' => 'STRING'],
-                            'text' => ['type' => 'STRING'],
-                            'color' => ['type' => 'STRING'],
-                            'position' => [
-                                'type' => 'OBJECT',
-                                'properties' => [
-                                    'x' => ['type' => 'NUMBER'],
-                                    'y' => ['type' => 'NUMBER']
-                                ],
-                                'required' => ['x', 'y']
-                            ],
-                            'fontSize' => ['type' => 'NUMBER']
-                        ],
-                        'required' => ['id', 'text', 'color', 'position']
-                    ]
-                ],
-                'arrows' => [
-                    'type' => 'ARRAY',
-                    'items' => [
-                        'type' => 'OBJECT',
-                        'properties' => [
-                            'id' => ['type' => 'STRING'],
-                            'start' => [
-                                'type' => 'OBJECT',
-                                'properties' => [
-                                    'x' => ['type' => 'NUMBER'],
-                                    'y' => ['type' => 'NUMBER']
-                                ],
-                                'required' => ['x', 'y']
-                            ],
-                            'end' => [
-                                'type' => 'OBJECT',
-                                'properties' => [
-                                    'x' => ['type' => 'NUMBER'],
-                                    'y' => ['type' => 'NUMBER']
-                                ],
-                                'required' => ['x', 'y']
-                            ],
-                            'mid' => [
-                                'type' => 'OBJECT',
-                                'properties' => [
-                                    'x' => ['type' => 'NUMBER'],
-                                    'y' => ['type' => 'NUMBER']
-                                ],
-                                'required' => ['x', 'y']
-                            ],
-                            'color' => ['type' => 'STRING']
-                        ],
-                        'required' => ['id', 'start', 'end', 'mid', 'color']
-                    ]
-                ],
-                'dividers' => [
-                    'type' => 'ARRAY',
-                    'items' => [
-                        'type' => 'OBJECT',
-                        'properties' => [
-                            'id' => ['type' => 'STRING'],
-                            'type' => ['type' => 'STRING', 'enum' => ['solid', 'dashed', 'zigzag', 'dotted', 'wave']],
-                            'orientation' => ['type' => 'STRING', 'enum' => ['horizontal', 'vertical']],
-                            'size' => ['type' => 'NUMBER'],
-                            'length' => ['type' => 'STRING'],
-                            'color' => ['type' => 'STRING'],
-                            'position' => [
-                                'type' => 'OBJECT',
-                                'properties' => [
-                                    'x' => ['type' => 'NUMBER'],
-                                    'y' => ['type' => 'NUMBER']
-                                ],
-                                'required' => ['x', 'y']
-                            ]
-                        ],
-                        'required' => ['id', 'type', 'orientation', 'size', 'length', 'color', 'position']
-                    ]
-                ]
-            ],
-            'required' => ['formattedHTML', 'stickies', 'arrows', 'dividers']
-        ]
-    ]
+// Build settings array
+$settings = [
+    'disableAIFlashcards' => $disableAIFlashcards,
+    'disableAIArrows' => $disableAIArrows,
+    'disableAIStickies' => $disableAIStickies,
+    'disableAIDividers' => $disableAIDividers,
+    'disableAIImages' => $disableAIImages,
+    'disableAIColumns' => $disableAIColumns,
+    'allowNoteEnhancement' => $allowNoteEnhancement,
+    'enableCleaning' => $enableCleaning
 ];
 
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $url);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'Content-Type: application/json'
-]);
-curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+// Build content array
+$content = [
+    'instruction' => $instruction,
+    'text' => $selectionText,
+    'html' => $selectionHTML,
+    'centerY' => $centerY
+];
 
-$response = curl_exec($ch);
-$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-curl_close($ch);
+// Use PromptBuilder to generate prompt
+$promptBuilder = new PromptBuilder($settings, 'selection', $content, $highlightStyle);
+$prompt = $promptBuilder->build();
 
-if ($httpCode !== 200 || !$response) {
-    errorResponse('Gemini API request failed.', 500, 'GEMINI_API_ERROR');
+// Add JSON schema instructions to prompt
+$prompt .= "\n\nYour response MUST follow this JSON schema:\n";
+$prompt .= "{\n";
+$prompt .= "  \"formattedHTML\": \"string (required)\",\n";
+$prompt .= "  \"stickies\": \"array of sticky note objects (optional)\",\n";
+$prompt .= "  \"arrows\": \"array of arrow objects (optional)\",\n";
+$prompt .= "  \"dividers\": \"array of divider objects (optional)\"\n";
+$prompt .= "}\n\n";
+$prompt .= "Sticky note format: { \"id\": \"string\", \"text\": \"string\", \"color\": \"#ffff99|#ffccff|#ccffff|#ffcc99\", \"position\": { \"x\": number, \"y\": number }, \"fontSize\": number }\n";
+$prompt .= "Arrow format: { \"id\": \"string\", \"start\": { \"x\": number, \"y\": number }, \"end\": { \"x\": number, \"y\": number }, \"mid\": { \"x\": number, \"y\": number }, \"color\": \"string\" }\n";
+$prompt .= "Divider format: { \"id\": \"string\", \"type\": \"solid|dashed|dotted|zigzag|wave\", \"orientation\": \"horizontal|vertical\", \"size\": number, \"length\": string, \"color\": string, \"position\": { \"x\": number, \"y\": number } }\n";
+$prompt .= "\nPlacement: Stickies on right margin (x: 850-920), y near centerY. Arrows from text (x: 600) to sticky.\n";
+$prompt .= "Do not wrap JSON output in markdown backticks.";
+
+// Call Gemini API with retry logic
+$result = GeminiClient::call($prompt, $apiKey, $modelName);
+
+if (!$result['success']) {
+    // Try fallback with simplified prompt
+    error_log("Primary formatting failed: " . $result['message']);
+    
+    if ($result['retries_exhausted'] ?? false) {
+        $fallbackPrompt = $promptBuilder->buildSimplifiedPrompt('basic');
+        $fallbackResult = GeminiClient::call($fallbackPrompt, $apiKey, $modelName);
+        
+        if ($fallbackResult['success']) {
+            $result = $fallbackResult;
+        } else {
+            errorResponse('AI formatting failed after retries: ' . $result['message'], 500, 'GEMINI_API_ERROR');
+        }
+    } else {
+        errorResponse('AI formatting failed: ' . $result['message'], 500, 'GEMINI_API_ERROR');
+    }
 }
 
-$resData = json_decode($response, true);
-$candidateJson = $resData['candidates'][0]['content']['parts'][0]['text'] ?? null;
+// Parse response
+$candidateJson = $result['text'] ?? null;
 
 if (!$candidateJson) {
     errorResponse('Gemini did not return any content.', 500, 'GEMINI_EMPTY_RESPONSE');
