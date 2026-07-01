@@ -9,7 +9,6 @@ require_once __DIR__ . '/../helpers/auth.php';
 require_once __DIR__ . '/tool-registry.php';
 require_once __DIR__ . '/prompt-builder.php';
 require_once __DIR__ . '/gemini-client.php';
-require_once __DIR__ . '/content-chunker.php';
 
 // Safe authentication (optional or required depending on session)
 startSecureSession();
@@ -59,6 +58,8 @@ if (empty($apiKey)) {
 
 $title = $input['title'] ?? 'Untitled Note';
 $content = $input['content'] ?? '';
+$chunkIndex = intval($input['chunkIndex'] ?? 0);
+$totalChunks = intval($input['totalChunks'] ?? 1);
 $stickies = $input['stickies'] ?? [];
 $arrows = $input['arrows'] ?? [];
 $dividers = $input['dividers'] ?? [];
@@ -89,155 +90,83 @@ $settings = [
     'enableCleaning' => $enableCleaning
 ];
 
-// Build content array
+// Build content array - adjust title if chunked
+$noteTitle = $title;
+if ($totalChunks > 1) {
+    $noteTitle = $title . " (Part " . ($chunkIndex + 1) . ")";
+}
+
 $noteContent = [
-    'title' => $title,
+    'title' => $noteTitle,
     'content' => $cleanContent
 ];
 
-// Check if content needs chunking (large notes)
-$chunks = ContentChunker::chunkContent($cleanContent, $cleanContent);
-$isChunked = count($chunks) > 1;
+// Use PromptBuilder
+$promptBuilder = new PromptBuilder($settings, 'full-note', $noteContent, $highlightStyle);
+$prompt = $promptBuilder->build();
 
-if ($isChunked) {
-    // Process chunks progressively
-    $formattedChunks = [];
-    $totalChunks = count($chunks);
+// Add chunk progress context if chunked
+if ($totalChunks > 1) {
+    $prompt .= "\nPROGRESS: Processing chunk " . ($chunkIndex + 1) . " of {$totalChunks}. ";
     
-    for ($i = 0; $i < $totalChunks; $i++) {
-        $chunk = $chunks[$i];
-        
-        // Build content for this chunk
-        $chunkContent = [
-            'title' => $title . ($totalChunks > 1 ? " (Part " . ($i + 1) . ")" : ""),
-            'content' => $chunk['html']
-        ];
-        
-        // Use PromptBuilder
-        $promptBuilder = new PromptBuilder($settings, 'full-note', $chunkContent, $highlightStyle);
-        $prompt = $promptBuilder->build();
-        
-        // Add progress context
-        $prompt .= ContentChunker::getProgressContext($i, $totalChunks);
-        
-        // Add JSON schema instructions
-        $prompt .= "\n\nYour response MUST follow this JSON schema:\n";
-        $prompt .= "{\n";
-        $prompt .= "  \"title\": \"string (required)\",\n";
-        $prompt .= "  \"content\": \"string (required)\",\n";
-        $prompt .= "  \"stickies\": \"array of sticky note objects (optional)\",\n";
-        $prompt .= "  \"arrows\": \"array of arrow objects (optional)\",\n";
-        $prompt .= "  \"dividers\": \"array of divider objects (optional)\"\n";
-        $prompt .= "}\n\n";
-        $prompt .= "Sticky note format: { \"id\": \"string\", \"text\": \"string\", \"color\": \"#ffff99|#ffccff|#ccffff|#ffcc99\", \"position\": { \"x\": number, \"y\": number }, \"fontSize\": number }\n";
-        $prompt .= "Arrow format: { \"id\": \"string\", \"start\": { \"x\": number, \"y\": number }, \"end\": { \"x\": number, \"y\": number }, \"mid\": { \"x\": number, \"y\": number }, \"color\": \"string\" }\n";
-        $prompt .= "Divider format: { \"id\": \"string\", \"type\": \"solid|dashed|dotted|zigzag|wave\", \"orientation\": \"horizontal|vertical\", \"size\": number, \"length\": string, \"color\": string, \"position\": { \"x\": number, \"y\": number } }\n";
-        $prompt .= "\nPlacement: Stickies on right margin (x: 850-920), stagger y by 250px starting from 150. Arrows from text (x: 600) to sticky.\n";
-        $prompt .= "Do not wrap JSON output in markdown backticks.";
-        
-        // Call Gemini API
-        $result = GeminiClient::call($prompt, $apiKey, $modelName);
-        
-        if (!$result['success']) {
-            error_log("Chunk {$i} formatting failed: " . $result['message']);
-            // Try fallback
-            $fallbackPrompt = $promptBuilder->buildSimplifiedPrompt('basic');
-            $fallbackResult = GeminiClient::call($fallbackPrompt, $apiKey, $modelName);
-            
-            if ($fallbackResult['success']) {
-                $result = $fallbackResult;
-            } else {
-                errorResponse('AI formatting failed for chunk ' . ($i + 1) . ': ' . $result['message'], 500, 'GEMINI_API_ERROR');
-            }
-        }
-        
-        // Parse response
-        $candidateJson = $result['text'] ?? null;
-        if (!$candidateJson) {
-            errorResponse('Gemini did not return content for chunk ' . ($i + 1), 500, 'GEMINI_EMPTY_RESPONSE');
-        }
-        
-        $formattedResult = json_decode(trim($candidateJson), true);
-        if (!$formattedResult) {
-            errorResponse('Failed to parse Gemini output for chunk ' . ($i + 1), 500, 'PARSE_ERROR');
-        }
-        
-        $formattedChunks[] = $formattedResult['content'] ?? '';
-        
-        // Small delay between chunks
-        if ($i < $totalChunks - 1) {
-            usleep(500000); // 0.5 second
-        }
+    if ($chunkIndex > 0) {
+        $prompt .= "Maintain consistency with previous chunks. ";
     }
     
-    // Merge chunks
-    $finalContent = ContentChunker::mergeFormattedChunks($formattedChunks);
-    
-    // Return merged result
-    $finalResult = [
-        'title' => $title,
-        'content' => $finalContent,
-        'stickies' => [],
-        'arrows' => [],
-        'dividers' => [],
-        'isChunked' => true,
-        'totalChunks' => $totalChunks
-    ];
-    
-    successResponse($finalResult, 'Note formatted successfully by Gemini AI (processed in ' . $totalChunks . ' chunks)!');
-    
-} else {
-    // Single chunk processing
-    $promptBuilder = new PromptBuilder($settings, 'full-note', $noteContent, $highlightStyle);
-    $prompt = $promptBuilder->build();
-    
-    // Add JSON schema instructions
-    $prompt .= "\n\nYour response MUST follow this JSON schema:\n";
-    $prompt .= "{\n";
-    $prompt .= "  \"title\": \"string (required)\",\n";
-    $prompt .= "  \"content\": \"string (required)\",\n";
-    $prompt .= "  \"stickies\": \"array of sticky note objects (optional)\",\n";
-    $prompt .= "  \"arrows\": \"array of arrow objects (optional)\",\n";
-    $prompt .= "  \"dividers\": \"array of divider objects (optional)\"\n";
-    $prompt .= "}\n\n";
-    $prompt .= "Sticky note format: { \"id\": \"string\", \"text\": \"string\", \"color\": \"#ffff99|#ffccff|#ccffff|#ffcc99\", \"position\": { \"x\": number, \"y\": number }, \"fontSize\": number }\n";
-    $prompt .= "Arrow format: { \"id\": \"string\", \"start\": { \"x\": number, \"y\": number }, \"end\": { \"x\": number, \"y\": number }, \"mid\": { \"x\": number, \"y\": number }, \"color\": \"string\" }\n";
-    $prompt .= "Divider format: { \"id\": \"string\", \"type\": \"solid|dashed|dotted|zigzag|wave\", \"orientation\": \"horizontal|vertical\", \"size\": number, \"length\": string, \"color\": string, \"position\": { \"x\": number, \"y\": number } }\n";
-    $prompt .= "\nPlacement: Stickies on right margin (x: 850-920), stagger y by 250px starting from 150. Arrows from text (x: 600) to sticky.\n";
-    $prompt .= "Do not wrap JSON output in markdown backticks.";
-    
-    // Call Gemini API with retry logic
-    $result = GeminiClient::call($prompt, $apiKey, $modelName);
-    
-    if (!$result['success']) {
-        // Try fallback with simplified prompt
-        error_log("Primary formatting failed: " . $result['message']);
-        
-        if ($result['retries_exhausted'] ?? false) {
-            $fallbackPrompt = $promptBuilder->buildSimplifiedPrompt('basic');
-            $fallbackResult = GeminiClient::call($fallbackPrompt, $apiKey, $modelName);
-            
-            if ($fallbackResult['success']) {
-                $result = $fallbackResult;
-            } else {
-                errorResponse('AI formatting failed after retries: ' . $result['message'], 500, 'GEMINI_API_ERROR');
-            }
-        } else {
-            errorResponse('AI formatting failed: ' . $result['message'], 500, 'GEMINI_API_ERROR');
-        }
+    if ($chunkIndex < $totalChunks - 1) {
+        $prompt .= "This is not the final chunk - ensure content flows naturally to the next section. ";
+    } else {
+        $prompt .= "This is the final chunk - provide a complete ending. ";
     }
-    
-    // Parse response
-    $candidateJson = $result['text'] ?? null;
-    
-    if (!$candidateJson) {
-        errorResponse('Gemini did not return any content.', 500, 'GEMINI_EMPTY_RESPONSE');
-    }
-    
-    $formattedResult = json_decode(trim($candidateJson), true);
-    if (!$formattedResult) {
-        errorResponse('Failed to parse Gemini output as structured format JSON.', 500, 'PARSE_ERROR');
-    }
-    
-    successResponse($formattedResult, 'Note formatted successfully by Gemini AI!');
 }
+
+// Add JSON schema instructions
+$prompt .= "\n\nYour response MUST follow this JSON schema:\n";
+$prompt .= "{\n";
+$prompt .= "  \"title\": \"string (required)\",\n";
+$prompt .= "  \"content\": \"string (required)\",\n";
+$prompt .= "  \"stickies\": \"array of sticky note objects (optional)\",\n";
+$prompt .= "  \"arrows\": \"array of arrow objects (optional)\",\n";
+$prompt .= "  \"dividers\": \"array of divider objects (optional)\"\n";
+$prompt .= "}\n\n";
+$prompt .= "Sticky note format: { \"id\": \"string\", \"text\": \"string\", \"color\": \"#ffff99|#ffccff|#ccffff|#ffcc99\", \"position\": { \"x\": number, \"y\": number }, \"fontSize\": number }\n";
+$prompt .= "Arrow format: { \"id\": \"string\", \"start\": { \"x\": number, \"y\": number }, \"end\": { \"x\": number, \"y\": number }, \"mid\": { \"x\": number, \"y\": number }, \"color\": \"string\" }\n";
+$prompt .= "Divider format: { \"id\": \"string\", \"type\": \"solid|dashed|dotted|zigzag|wave\", \"orientation\": \"horizontal|vertical\", \"size\": number, \"length\": string, \"color\": string, \"position\": { \"x\": number, \"y\": number } }\n";
+$prompt .= "\nPlacement: Stickies on right margin (x: 850-920), stagger y by 250px starting from 150. Arrows from text (x: 600) to sticky.\n";
+$prompt .= "Do not wrap JSON output in markdown backticks.";
+
+// Call Gemini API with retry logic
+$result = GeminiClient::call($prompt, $apiKey, $modelName);
+
+if (!$result['success']) {
+    // Try fallback with simplified prompt
+    error_log("Primary formatting failed: " . $result['message']);
+    
+    if ($result['retries_exhausted'] ?? false) {
+        $fallbackPrompt = $promptBuilder->buildSimplifiedPrompt('basic');
+        $fallbackResult = GeminiClient::call($fallbackPrompt, $apiKey, $modelName);
+        
+        if ($fallbackResult['success']) {
+            $result = $fallbackResult;
+        } else {
+            errorResponse('AI formatting failed after retries: ' . $result['message'], 500, 'GEMINI_API_ERROR');
+        }
+    } else {
+        errorResponse('AI formatting failed: ' . $result['message'], 500, 'GEMINI_API_ERROR');
+    }
+}
+
+// Parse response
+$candidateJson = $result['text'] ?? null;
+
+if (!$candidateJson) {
+    errorResponse('Gemini did not return any content.', 500, 'GEMINI_EMPTY_RESPONSE');
+}
+
+$formattedResult = json_decode(trim($candidateJson), true);
+if (!$formattedResult) {
+    errorResponse('Failed to parse Gemini output as structured format JSON.', 500, 'PARSE_ERROR');
+}
+
+// Return formatted chunk
+successResponse($formattedResult, 'Chunk formatted successfully by Gemini AI!');

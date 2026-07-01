@@ -8,6 +8,7 @@ import { FlashcardCreator } from '@/src/components/FlashcardCreator';
 import { SettingsModal } from '@/src/components/SettingsModal';
 import { HelpCenter } from '@/src/components/HelpCenter';
 import { FormattingProgress, FormattingProgress as FormattingProgressType } from '@/src/components/FormattingProgress';
+import { ContentChunker } from '@/src/lib/contentChunker';
 import { useAuth } from '@/src/context/AuthContext';
 import { useToast } from '@/src/context/ToastContext';
 import { LoginScreen } from '@/src/components/LoginScreen';
@@ -1763,74 +1764,159 @@ export default function App() {
   const handleAIFormat = useCallback(async () => {
     if (!editor) return;
     setIsAILoading(true);
-    setFormattingProgress({ active: true, currentChunk: 0, totalChunks: 1, stage: 'processing' });
 
     const activeContext = getActiveContext();
     const currentTitle = activeContext?.note.title || 'Untitled Note';
     const currentHTML = editor.getHTML();
 
     try {
-      const response = await fetch('/api/ai/format.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(customApiKey ? { 'X-Gemini-API-Key': customApiKey } : {}),
-          ...(customModel ? { 'X-Gemini-Model': customModel } : {}),
-        },
-        body: JSON.stringify({
-          title: currentTitle,
-          content: currentHTML,
-          stickies: disableAIStickies ? [] : stickies,
-          arrows: disableAIArrows ? [] : arrows,
-          dividers: disableAIDividers ? [] : dividers,
-          images: images,
-          pageLayout,
-          customApiKey,
-          customModel,
-          highlightStyle,
-          disableAIFlashcards,
-          disableAIArrows,
-          disableAIStickies,
-          disableAIDividers,
-          disableAIImages,
-          disableAIColumns,
-          allowNoteEnhancement,
-          enableCleaning,
-        })
+      // Chunk content on frontend
+      const chunks = ContentChunker.chunkContent(currentHTML);
+      const totalChunks = chunks.length;
+      
+      // Initialize progress
+      setFormattingProgress({ 
+        active: true, 
+        currentChunk: 0, 
+        totalChunks: totalChunks, 
+        stage: 'processing' 
       });
 
-      const data = await response.json();
-      if (data.success) {
-        if (data.title && activeNoteId) {
-          renameNote(activeNoteId, data.title);
-        }
-
-        // Set content back to Tiptap editor
-        editor.commands.setContent(data.content);
-
-        // Map stickies, arrows, and dividers safely
-        if (data.stickies && !disableAIStickies) {
-          setStickies(data.stickies);
-        }
-        if (data.arrows && !disableAIArrows) {
-          setArrows(data.arrows);
-        }
-        if (data.dividers && !disableAIDividers) {
-          setDividers(data.dividers);
-        }
+      const formattedChunks: string[] = [];
+      
+      // Process chunks sequentially
+      for (let i = 0; i < totalChunks; i++) {
+        const chunk = chunks[i];
         
-        // Update progress if chunked
-        if (data.isChunked) {
-          setFormattingProgress(prev => ({
-            ...prev,
-            totalChunks: data.totalChunks || 1,
-            currentChunk: data.totalChunks || 1
-          }));
+        // Update progress
+        setFormattingProgress(prev => ({
+          ...prev,
+          currentChunk: i + 1,
+          stage: 'processing'
+        }));
+
+        try {
+          const response = await fetch('/api/ai/format.php', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(customApiKey ? { 'X-Gemini-API-Key': customApiKey } : {}),
+              ...(customModel ? { 'X-Gemini-Model': customModel } : {}),
+            },
+            body: JSON.stringify({
+              title: currentTitle,
+              content: chunk.html,
+              chunkIndex: i,
+              totalChunks: totalChunks,
+              stickies: disableAIStickies ? [] : stickies,
+              arrows: disableAIArrows ? [] : arrows,
+              dividers: disableAIDividers ? [] : dividers,
+              images: images,
+              pageLayout,
+              customApiKey,
+              customModel,
+              highlightStyle,
+              disableAIFlashcards,
+              disableAIArrows,
+              disableAIStickies,
+              disableAIDividers,
+              disableAIImages,
+              disableAIColumns,
+              allowNoteEnhancement,
+              enableCleaning,
+            })
+          });
+
+          const data = await response.json();
+          
+          if (!data.success) {
+            throw new Error(data.message || 'Chunk formatting failed');
+          }
+
+          formattedChunks.push(data.content || '');
+          
+          // Small delay between chunks to avoid rate limiting
+          if (i < totalChunks - 1) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        } catch (chunkError: any) {
+          console.error(`Error processing chunk ${i + 1}:`, chunkError);
+          
+          // Retry this chunk once
+          setFormattingProgress(prev => ({ ...prev, stage: 'retrying' }));
+          
+          try {
+            const retryResponse = await fetch('/api/ai/format.php', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(customApiKey ? { 'X-Gemini-API-Key': customApiKey } : {}),
+                ...(customModel ? { 'X-Gemini-Model': customModel } : {}),
+              },
+              body: JSON.stringify({
+                title: currentTitle,
+                content: chunk.html,
+                chunkIndex: i,
+                totalChunks: totalChunks,
+                stickies: disableAIStickies ? [] : stickies,
+                arrows: disableAIArrows ? [] : arrows,
+                dividers: disableAIDividers ? [] : dividers,
+                images: images,
+                pageLayout,
+                customApiKey,
+                customModel,
+                highlightStyle,
+                disableAIFlashcards,
+                disableAIArrows,
+                disableAIStickies,
+                disableAIDividers,
+                disableAIImages,
+                disableAIColumns,
+                allowNoteEnhancement,
+                enableCleaning,
+              })
+            });
+
+            const retryData = await retryResponse.json();
+            
+            if (!retryData.success) {
+              throw new Error('Retry also failed');
+            }
+
+            formattedChunks.push(retryData.content || '');
+            setFormattingProgress(prev => ({ ...prev, stage: 'processing' }));
+          } catch (retryError: any) {
+            // If retry fails, use original chunk content
+            console.error('Retry failed, using original content');
+            formattedChunks.push(chunk.html);
+          }
         }
-      } else {
-        setFormattingProgress(prev => ({ ...prev, stage: 'fallback' }));
-        showError('AI formatting failed', data.message || 'AI formatting failed.');
       }
+
+      // Merge all chunks
+      const finalContent = ContentChunker.mergeFormattedChunks(formattedChunks);
+
+      // Update editor with merged content
+      editor.commands.setContent(finalContent);
+
+      // Clear annotations for chunked notes (they would be inconsistent)
+      if (totalChunks > 1) {
+        setStickies([]);
+        setArrows([]);
+        setDividers([]);
+      } else {
+        // For single chunk, use AI annotations if enabled
+        if (!disableAIStickies) {
+          setStickies([]);
+        }
+        if (!disableAIArrows) {
+          setArrows([]);
+        }
+        if (!disableAIDividers) {
+          setDividers([]);
+        }
+      }
+
     } catch (error: any) {
       console.error('Error during AI formatting:', error);
       setFormattingProgress(prev => ({ ...prev, stage: 'fallback' }));
