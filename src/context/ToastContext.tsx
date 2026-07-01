@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { Toast, ToastType } from '@/src/components/Toast';
+import { Toast, ToastType, ToastContainer } from '@/src/components/Toast';
 import { AlertModal, AlertType } from '@/src/components/AlertModal';
 
 interface ToastContextType {
@@ -84,6 +84,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }}
     >
       {children}
+      <ToastContainer toasts={toasts} onClose={removeToast} />
       <AlertModal
         open={alertModal.open}
         onOpenChange={(open) => setAlertModal(prev => ({ ...prev, open }))}
