@@ -693,6 +693,7 @@ export default function App() {
     weakConceptIds: []
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [hasLoadedInitialData, setHasLoadedInitialData] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -708,6 +709,7 @@ export default function App() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [mainHeight, setMainHeight] = useState(1000);
+  const [spiralHeight, setSpiralHeight] = useState(1000);
   const [pageLayout, setPageLayout] = useState<'pageless' | 'a4-portrait' | 'a4-landscape'>('a4-portrait');
   const [pageMargin, setPageMargin] = useState<'normal' | 'narrow' | 'none'>('normal');
   const [pageLayoutMode, setPageLayoutMode] = useState<'single' | 'book'>('single');
@@ -984,6 +986,7 @@ export default function App() {
         console.error('Failed to load data from persistence:', err);
       } finally {
         setIsLoading(false);
+        setHasLoadedInitialData(true);
       }
     }
     loadData();
@@ -1104,16 +1107,20 @@ export default function App() {
           if (naturalHeight > 0) {
             setMainHeight(naturalHeight);
           }
+          // Use actual content height for spiral binding to avoid extra loops beyond content
+          setSpiralHeight(textHeight + 64);
         } else if (paperContent) {
           // Fallback if ProseMirror is not active yet
           const contentHeight = paperContent.scrollHeight || paperContent.offsetHeight;
           if (contentHeight > 0) {
             setMainHeight(contentHeight);
+            setSpiralHeight(contentHeight);
           }
         } else {
           const rectHeight = container.getBoundingClientRect().height;
           if (rectHeight > 0) {
             setMainHeight(rectHeight);
+            setSpiralHeight(rectHeight);
           }
         }
 
@@ -1156,7 +1163,7 @@ export default function App() {
 
   // Auto-save logic
   useEffect(() => {
-    if (isLoading) return; // Don't save while loading initial data
+    if (isLoading || !hasLoadedInitialData) return; // Don't save while loading initial data
 
     const timer = setTimeout(async () => {
       setIsSaving(true);
@@ -1211,7 +1218,7 @@ export default function App() {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [subjects, activeNoteId, flashcards, studyStats, isLoading, fileHandle, loggedIn, installed]);
+  }, [subjects, activeNoteId, flashcards, studyStats, isLoading, hasLoadedInitialData, fileHandle, loggedIn, installed]);
 
   // Connect/Restore local file
   const requestNativeFile = async () => {
@@ -2981,8 +2988,8 @@ export default function App() {
             }}
           >
             {/* Premium Spiral Binding - SVG-based continuous metal wire */}
-            {notebookStyle === 'spiral' && mainHeight > 0 && (
-              <SpiralBinding height={mainHeight} pageHeight={pageHeight} pageGap={PAGE_GAP} />
+            {notebookStyle === 'spiral' && spiralHeight > 0 && (
+              <SpiralBinding height={spiralHeight} pageHeight={pageHeight} pageGap={PAGE_GAP} />
             )}
 
             <motion.div

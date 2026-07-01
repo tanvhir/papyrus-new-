@@ -240,8 +240,18 @@ function Editor({
 
     try {
       const { from, to } = editor.state.selection;
-      const selectionText = editor.state.doc.textBetween(from, to, ' ');
-      
+      let selectionText = '';
+
+      // Iterate through the selection to extract text including math nodes
+      editor.state.doc.nodesBetween(from, to, (node, pos) => {
+        if (node.isText) {
+          selectionText += node.text;
+        } else if (node.type.name === 'math') {
+          // Extract LaTeX from math nodes
+          selectionText += `$${node.attrs.latex}$`;
+        }
+      });
+
       const slice = editor.state.selection.content();
       const fragment = slice.content;
       const serializer = DOMSerializer.fromSchema(editor.schema);
@@ -1013,7 +1023,16 @@ function Editor({
               <button
                 onClick={() => {
                   const { from, to } = editor.state.selection;
-                  const text = editor.state.doc.textBetween(from, to, ' ');
+                  let text = '';
+                  // Iterate through the selection to extract text including math nodes
+                  editor.state.doc.nodesBetween(from, to, (node, pos) => {
+                    if (node.isText) {
+                      text += node.text;
+                    } else if (node.type.name === 'math') {
+                      // Extract LaTeX from math nodes
+                      text += `$${node.attrs.latex}$`;
+                    }
+                  });
                   if (text && onCreateFlashcard) {
                     onCreateFlashcard(text);
                   }
