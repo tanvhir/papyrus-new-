@@ -15,9 +15,9 @@ interface FormattingProgressProps {
 export const FormattingProgress: React.FC<FormattingProgressProps> = ({ progress }) => {
   if (!progress.active) return null;
   
-  const percentage = progress.totalChunks > 1 
+  const percentage = progress.totalChunks > 0 
     ? (progress.currentChunk / progress.totalChunks) * 100 
-    : 50;
+    : 0;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
@@ -39,20 +39,23 @@ export const FormattingProgress: React.FC<FormattingProgressProps> = ({ progress
           </span>
         </div>
         
-        {progress.totalChunks > 1 && (
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm text-stone-600 dark:text-stone-400">
-              <span>Chunk {progress.currentChunk} of {progress.totalChunks}</span>
-              <span>{Math.round(percentage)}%</span>
-            </div>
-            <div className="h-2 bg-stone-200 dark:bg-stone-800 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-blue-500 transition-all duration-300 ease-out"
-                style={{ width: `${percentage}%` }}
-              />
-            </div>
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm text-stone-600 dark:text-stone-400">
+            <span>
+              {progress.totalChunks > 1 
+                ? `Chunk ${progress.currentChunk} of ${progress.totalChunks}`
+                : 'Processing...'
+              }
+            </span>
+            <span>{Math.round(percentage)}%</span>
           </div>
-        )}
+          <div className="h-2 bg-stone-200 dark:bg-stone-800 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-blue-500 transition-all duration-300 ease-out"
+              style={{ width: `${percentage}%` }}
+            />
+          </div>
+        </div>
         
         {progress.stage === 'retrying' && (
           <p className="text-sm text-stone-600 dark:text-stone-400 mt-3">
@@ -66,9 +69,12 @@ export const FormattingProgress: React.FC<FormattingProgressProps> = ({ progress
           </p>
         )}
         
-        {progress.stage === 'processing' && progress.totalChunks === 1 && (
+        {progress.stage === 'processing' && (
           <p className="text-sm text-stone-600 dark:text-stone-400 mt-3">
-            AI is formatting your content. This may take a moment...
+            {progress.totalChunks > 1 
+              ? 'Processing chunks sequentially...'
+              : 'AI is formatting your content. This may take a moment...'
+            }
           </p>
         )}
       </div>
