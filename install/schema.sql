@@ -2,10 +2,7 @@
 -- Standard SQL for shared hosting (MySQL 5.7+ & MySQL 8.0+)
 
 SET FOREIGN_KEY_CHECKS = 0;
-DROP TABLE IF EXISTS `note_tags`;
-DROP TABLE IF EXISTS `tags`;
 DROP TABLE IF EXISTS `settings`;
-DROP TABLE IF EXISTS `study_sessions`;
 DROP TABLE IF EXISTS `flashcard_progress`;
 DROP TABLE IF EXISTS `flashcards`;
 DROP TABLE IF EXISTS `notes`;
@@ -52,6 +49,7 @@ CREATE TABLE `notes` (
   `page_layout` VARCHAR(50) DEFAULT 'pageless',
   `page_margin` VARCHAR(50) DEFAULT 'normal',
   `page_layout_mode` VARCHAR(50) DEFAULT 'single',
+  `notebook_style` VARCHAR(50) DEFAULT 'spiral',
   `flashcard_ids` LONGTEXT, -- JSON array of flashcard associations
   `user_id` INT NOT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -98,18 +96,6 @@ CREATE TABLE `flashcard_progress` (
   INDEX `idx_progress_next_review` (`next_review_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Study Sessions Table
-CREATE TABLE `study_sessions` (
-  `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `user_id` INT NOT NULL,
-  `date` DATE NOT NULL,
-  `duration` INT DEFAULT 0, -- in seconds or minutes
-  `notes_created` INT DEFAULT 0,
-  `cards_reviewed` INT DEFAULT 0,
-  FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  UNIQUE KEY `idx_user_session_date` (`user_id`, `date`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 -- Settings Table
 CREATE TABLE `settings` (
   `user_id` INT PRIMARY KEY,
@@ -117,22 +103,4 @@ CREATE TABLE `settings` (
   `font_family` VARCHAR(100) DEFAULT 'Inter',
   `other_settings` LONGTEXT, -- JSON string mapping user study statistics/preferences
   FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Tags Table
-CREATE TABLE `tags` (
-  `id` VARCHAR(50) PRIMARY KEY,
-  `name` VARCHAR(100) NOT NULL,
-  `user_id` INT NOT NULL,
-  FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  INDEX `idx_tags_user` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Note-Tags Junction Table
-CREATE TABLE `note_tags` (
-  `note_id` VARCHAR(50) NOT NULL,
-  `tag_id` VARCHAR(50) NOT NULL,
-  PRIMARY KEY (`note_id`, `tag_id`),
-  FOREIGN KEY (`note_id`) REFERENCES `notes` (`id`) ON DELETE CASCADE,
-  FOREIGN KEY (`tag_id`) REFERENCES `tags` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

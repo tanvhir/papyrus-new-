@@ -120,7 +120,7 @@ export const SpiralBinding: React.FC<SpiralBindingProps> = ({ height, className 
         return (
           <div
             key={segment.page}
-            className="absolute left-0"
+            className="absolute left-0 overflow-hidden"
             style={{
               top: `${segment.top}px`,
               height: `${segment.height}px`,

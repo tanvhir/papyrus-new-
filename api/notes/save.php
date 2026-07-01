@@ -39,8 +39,8 @@ try {
         INSERT INTO notes (
             id, subject_id, title, content, stickies, arrows, dividers, 
             texture, theme_id, is_handwriting, font_size, page_layout, 
-            page_margin, page_layout_mode, flashcard_ids, user_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            page_margin, page_layout_mode, notebook_style, flashcard_ids, user_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
             subject_id = VALUES(subject_id),
             title = VALUES(title),
@@ -55,6 +55,7 @@ try {
             page_layout = VALUES(page_layout),
             page_margin = VALUES(page_margin),
             page_layout_mode = VALUES(page_layout_mode),
+            notebook_style = VALUES(notebook_style),
             flashcard_ids = VALUES(flashcard_ids)
     ");
 
@@ -97,6 +98,7 @@ try {
                 $note['pageLayout'] ?? 'pageless',
                 $note['pageMargin'] ?? 'normal',
                 $note['pageLayoutMode'] ?? 'single',
+                $note['notebookStyle'] ?? 'spiral',
                 $flashcardIdsJson,
                 $userId
             ]);

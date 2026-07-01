@@ -229,6 +229,8 @@ function Editor({
   const [mathInputVal, setMathInputVal] = React.useState('');
   const [aiPromptText, setAiPromptText] = React.useState('');
   const [isAISelectionLoading, setIsAISelectionLoading] = React.useState(false);
+  const [headingLevel, setHeadingLevel] = React.useState<3 | 2 | 1>(3);
+  const [textAlign, setTextAlign] = React.useState<'left' | 'center' | 'right'>('left');
 
   const handleAISelectionSubmit = async () => {
     if (!editor || !onAISelectionFormat || !aiPromptText.trim()) return;
@@ -1053,67 +1055,39 @@ function Editor({
               <Separator orientation="vertical" className="h-4 mx-0.5" />
 
               <button
-                onClick={() => onFormat?.('heading', 'h1')}
+                onClick={() => {
+                  const nextLevel = headingLevel === 3 ? 2 : headingLevel === 2 ? 1 : 3;
+                  setHeadingLevel(nextLevel);
+                  onFormat?.('heading', `h${nextLevel}`);
+                }}
                 className={cn(
                   "p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors",
-                  editor.isActive('heading', { level: 1 }) && "text-blue-600 bg-blue-50 dark:bg-blue-900/40"
+                  editor.isActive('heading', { level: headingLevel }) && "text-blue-600 bg-blue-50 dark:bg-blue-900/40"
                 )}
-                title="Heading 1"
+                title={`Heading ${headingLevel}`}
               >
-                <Heading1 className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => onFormat?.('heading', 'h2')}
-                className={cn(
-                  "p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors",
-                  editor.isActive('heading', { level: 2 }) && "text-blue-600 bg-blue-50 dark:bg-blue-900/40"
-                )}
-                title="Heading 2"
-              >
-                <Heading2 className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => onFormat?.('heading', 'h3')}
-                className={cn(
-                  "p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors",
-                  editor.isActive('heading', { level: 3 }) && "text-blue-600 bg-blue-50 dark:bg-blue-900/40"
-                )}
-                title="Heading 3"
-              >
-                <Heading3 className="w-3.5 h-3.5" />
+                {headingLevel === 1 && <Heading1 className="w-3.5 h-3.5" />}
+                {headingLevel === 2 && <Heading2 className="w-3.5 h-3.5" />}
+                {headingLevel === 3 && <Heading3 className="w-3.5 h-3.5" />}
               </button>
 
               <Separator orientation="vertical" className="h-4 mx-0.5" />
 
               <button
-                onClick={() => onFormat?.('textAlign', 'left')}
+                onClick={() => {
+                  const nextAlign = textAlign === 'left' ? 'center' : textAlign === 'center' ? 'right' : 'left';
+                  setTextAlign(nextAlign);
+                  onFormat?.('textAlign', nextAlign);
+                }}
                 className={cn(
                   "p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors",
-                  editor.isActive({ textAlign: 'left' }) && "text-blue-600 bg-blue-50 dark:bg-blue-900/40"
+                  editor.isActive({ textAlign }) && "text-blue-600 bg-blue-50 dark:bg-blue-900/40"
                 )}
-                title="Align Left"
+                title={`Align ${textAlign}`}
               >
-                <AlignLeft className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => onFormat?.('textAlign', 'center')}
-                className={cn(
-                  "p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors",
-                  editor.isActive({ textAlign: 'center' }) && "text-blue-600 bg-blue-50 dark:bg-blue-900/40"
-                )}
-                title="Align Center"
-              >
-                <AlignCenter className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => onFormat?.('textAlign', 'right')}
-                className={cn(
-                  "p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors",
-                  editor.isActive({ textAlign: 'right' }) && "text-blue-600 bg-blue-50 dark:bg-blue-900/40"
-                )}
-                title="Align Right"
-              >
-                <AlignRight className="w-3.5 h-3.5" />
+                {textAlign === 'left' && <AlignLeft className="w-3.5 h-3.5" />}
+                {textAlign === 'center' && <AlignCenter className="w-3.5 h-3.5" />}
+                {textAlign === 'right' && <AlignRight className="w-3.5 h-3.5" />}
               </button>
 
               <Separator orientation="vertical" className="h-4 mx-0.5" />

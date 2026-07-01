@@ -7,7 +7,8 @@ import {
   RotateCcw,
   Trophy,
   Check,
-  Edit
+  Edit,
+  Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Flashcard, StudyStats, NoteTheme, Subject, PaperTexture } from '@/src/types';
@@ -23,6 +24,7 @@ interface StudySessionProps {
   onClose: () => void;
   onUpdateCard?: (updatedCard: Flashcard) => void;
   onRateCard?: (cardId: string, rating: number) => void;
+  onDeleteCard?: (cardId: string) => void;
 }
 
 export function StudySession({ 
@@ -34,7 +36,8 @@ export function StudySession({
   onFinish, 
   onClose,
   onUpdateCard,
-  onRateCard
+  onRateCard,
+  onDeleteCard
 }: StudySessionProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isRevealed, setIsRevealed] = useState(false);
@@ -76,6 +79,18 @@ export function StudySession({
       });
     }
     setIsEditing(false);
+  };
+
+  const handleDeleteCard = () => {
+    if (!currentCard || !onDeleteCard) return;
+    if (confirm('Are you sure you want to delete this flashcard?')) {
+      onDeleteCard(currentCard.id);
+      if (currentIndex < cards.length - 1) {
+        setCurrentIndex(prev => prev + 1);
+      } else if (currentIndex > 0) {
+        setCurrentIndex(prev => prev - 1);
+      }
+    }
   };
 
   const progress = ((currentIndex + (isFinished ? 1 : 0)) / cards.length) * 100;
@@ -454,16 +469,28 @@ export function StudySession({
                         </span>
                         <div className="flex items-center gap-2">
                           {!isEditing && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setIsEditing(true);
-                              }}
-                              className="p-1 hover:bg-stone-500/10 rounded-full text-[#A89F8B] hover:text-stone-850 dark:hover:text-[#f8f6f2] transition-colors"
-                              title="Edit question text"
-                            >
-                              <Edit className="w-3.5 h-3.5" />
-                            </button>
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setIsEditing(true);
+                                }}
+                                className="p-1 hover:bg-stone-500/10 rounded-full text-[#A89F8B] hover:text-stone-850 dark:hover:text-[#f8f6f2] transition-colors"
+                                title="Edit question text"
+                              >
+                                <Edit className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteCard();
+                                }}
+                                className="p-1 hover:bg-red-500/10 rounded-full text-[#A89F8B] hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                                title="Delete flashcard"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </>
                           )}
                           <div className="flex items-center gap-1 opacity-[0.8] font-mono text-[9px] tracking-wider font-extrabold bg-stone-500/5 px-2.5 py-1 rounded-md border border-stone-500/10">
                             <span>CARD</span>
@@ -572,16 +599,28 @@ export function StudySession({
                         </span>
                         <div className="flex items-center gap-1.5">
                           {!isEditing && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setIsEditing(true);
-                              }}
-                              className="p-1 hover:bg-stone-500/10 rounded-full text-[#A89F8B] hover:text-stone-850 dark:hover:text-[#f8f6f2] transition-colors"
-                              title="Edit answer text"
-                            >
-                              <Edit className="w-3.5 h-3.5" />
-                            </button>
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setIsEditing(true);
+                                }}
+                                className="p-1 hover:bg-stone-500/10 rounded-full text-[#A89F8B] hover:text-stone-850 dark:hover:text-[#f8f6f2] transition-colors"
+                                title="Edit answer text"
+                              >
+                                <Edit className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteCard();
+                                }}
+                                className="p-1 hover:bg-red-500/10 rounded-full text-[#A89F8B] hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                                title="Delete flashcard"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </>
                           )}
                           <button 
                             onClick={(e) => { e.stopPropagation(); setIsRevealed(false); }}

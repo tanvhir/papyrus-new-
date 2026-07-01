@@ -231,10 +231,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -10 }}
                 transition={{ duration: 0.15 }}
-                className="p-8"
+                className="p-8 w-full"
               >
                 {activeTab === 'ai' && (
-                  <div className="space-y-8">
+                  <div className="space-y-8 w-full">
                     <div>
                       <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-1">AI Model</h3>
                       <p className="text-sm text-stone-500 dark:text-stone-400">Select your preferred AI model</p>
@@ -378,7 +378,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 )}
 
                 {activeTab === 'appearance' && (
-                  <div className="space-y-8">
+                  <div className="space-y-8 w-full">
                     <div>
                       <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-1">Appearance</h3>
                       <p className="text-sm text-stone-500 dark:text-stone-400">Customize your editor look</p>
@@ -431,7 +431,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 )}
 
                 {activeTab === 'page' && (
-                  <div className="space-y-8">
+                  <div className="space-y-8 w-full">
                     <div>
                       <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-1">Page Setup</h3>
                       <p className="text-sm text-stone-500 dark:text-stone-400">Configure page layout and appearance</p>
@@ -595,7 +595,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 )}
 
                 {activeTab === 'editor' && (
-                  <div className="space-y-8">
+                  <div className="space-y-8 w-full">
                     <div>
                       <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-1">Editor</h3>
                       <p className="text-sm text-stone-500 dark:text-stone-400">Configure editor behavior</p>
@@ -635,7 +635,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 )}
 
                 {activeTab === 'general' && (
-                  <div className="space-y-8">
+                  <div className="space-y-8 w-full">
                     <div>
                       <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-1">General</h3>
                       <p className="text-sm text-stone-500 dark:text-stone-400">Basic application settings</p>
@@ -647,7 +647,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 )}
 
                 {activeTab === 'keyboard' && (
-                  <div className="space-y-8">
+                  <div className="space-y-8 w-full">
                     <div>
                       <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-1">Keyboard Shortcuts</h3>
                       <p className="text-sm text-stone-500 dark:text-stone-400">Customize your shortcuts</p>
@@ -659,7 +659,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 )}
 
                 {activeTab === 'about' && (
-                  <div className="space-y-8">
+                  <div className="space-y-8 w-full">
                     <div>
                       <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-1">About</h3>
                       <p className="text-sm text-stone-500 dark:text-stone-400">Application information</p>

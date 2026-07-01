@@ -127,5 +127,6 @@ export interface Note {
   pageLayout?: 'pageless' | 'a4-portrait' | 'a4-landscape';
   pageMargin?: 'normal' | 'narrow' | 'none';
   pageLayoutMode?: 'single' | 'book';
+  notebookStyle?: 'classic' | 'spiral';
   flashcardIds?: string[];
 }

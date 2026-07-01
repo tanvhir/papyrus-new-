@@ -1043,7 +1043,7 @@ export default function App() {
   const [content, setContent] = useState('');
   const [texture, setTexture] = useState<PaperTexture>('laid');
   const [theme, setTheme] = useState<NoteTheme>(THEMES[0]);
-  const [notebookStyle, setNotebookStyle] = useState<'classic' | 'spiral'>('classic');
+  const [notebookStyle, setNotebookStyle] = useState<'classic' | 'spiral'>('spiral');
   const [stickies, setStickies] = useState<{ id: string, text: string, color: string, position?: Point, fontSize?: number, isPinned?: boolean }[]>([]);
   const [arrows, setArrows] = useState<ArrowData[]>([]);
   const [dividers, setDividers] = useState<DividerData[]>([]);
@@ -1282,10 +1282,11 @@ export default function App() {
         fontSize,
         pageLayout,
         pageMargin,
-        pageLayoutMode
+        pageLayoutMode,
+        notebookStyle
       } : n)
     })));
-  }, [content, texture, theme, stickies, arrows, dividers, isHandwriting, fontSize, pageLayout, pageMargin, pageLayoutMode, activeNoteId]);
+  }, [content, texture, theme, stickies, arrows, dividers, isHandwriting, fontSize, pageLayout, pageMargin, pageLayoutMode, notebookStyle, activeNoteId]);
 
   const exportPageToPDF = async () => {
     if (!mainAreaRef.current) return;
@@ -1600,6 +1601,11 @@ export default function App() {
     setStudyQueue(prev => prev.map(c => c.id === updatedCard.id ? updatedCard : c));
   };
 
+  const handleDeleteCardInSession = (cardId: string) => {
+    setFlashcards(prev => prev.filter(c => c.id !== cardId));
+    setStudyQueue(prev => prev.filter(c => c.id !== cardId));
+  };
+
   const handleFlashcardImport = (newCards: Flashcard[]) => {
     setFlashcards(prev => [...prev, ...newCards]);
     setIsImportOpen(false);
@@ -1889,73 +1895,6 @@ export default function App() {
       return null;
     }
   }, [customApiKey, customModel, highlightStyle, disableAIFlashcards, disableAIArrows, disableAIStickies, disableAIDividers, disableAIImages, disableAIColumns, allowNoteEnhancement, enableCleaning]);
-
-  const handleAIGenerateFlashcards = useCallback(async (noteContent: string, noteTitle: string, instruction: string = 'Generate flashcards from this note') => {
-    try {
-      const response = await fetch('/api/ai/generate-flashcards.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(customApiKey ? { 'X-Gemini-API-Key': customApiKey } : {}),
-          ...(customModel ? { 'X-Gemini-Model': customModel } : {}),
-        },
-        body: JSON.stringify({
-          noteContent,
-          noteTitle,
-          instruction,
-          maxCards: 15,
-          customApiKey,
-          customModel,
-          highlightStyle,
-        })
-      });
-
-      const data = await response.json();
-      if (data.success && data.flashcards) {
-        return data.flashcards;
-      } else {
-        alert(data.message || 'AI flashcard generation failed.');
-        return [];
-      }
-    } catch (error: any) {
-      console.error('AI flashcard generation error:', error);
-      alert('Failed to generate flashcards with AI. Please try again.');
-      return [];
-    }
-  }, [customApiKey, customModel, highlightStyle]);
-
-  const handleGenerateFlashcardsWithAI = useCallback(async () => {
-    const context = getActiveContext();
-    if (!context) return;
-
-    const noteContent = content;
-    const noteTitle = context.note.title;
-
-    const generatedFlashcards = await handleAIGenerateFlashcards(noteContent, noteTitle);
-
-    if (generatedFlashcards.length > 0) {
-      // Convert AI flashcards to our Flashcard format
-      const newFlashcards: Flashcard[] = generatedFlashcards.map((card: any, index: number) => ({
-        id: Date.now().toString() + index,
-        type: card.type as FlashcardType,
-        front: card.front,
-        back: card.back,
-        clozeData: card.clozeData,
-        sourceNoteId: context.note.id,
-        subjectId: context.subject.id,
-        chapterId: context.note.id,
-        createdAt: new Date().toISOString(),
-        lastReviewedAt: null,
-        reviewCount: 0,
-        easeFactor: 2.5,
-        interval: 0,
-        nextReviewAt: new Date().toISOString(),
-      }));
-
-      setFlashcards(prev => [...prev, ...newFlashcards]);
-      alert(`Successfully generated ${newFlashcards.length} flashcards!`);
-    }
-  }, [content, handleAIGenerateFlashcards]);
 
   const updateArrow = useCallback((id: string, updates: Partial<ArrowData>) => {
     setArrows(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
@@ -2805,25 +2744,6 @@ export default function App() {
                 </Tooltip>
               </TooltipProvider>
 
-              {/* AI Generate Flashcards Button */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="w-8 h-8 rounded-full opacity-60 hover:opacity-100 transition-all hover:scale-105"
-                        onClick={handleGenerateFlashcardsWithAI}
-                      >
-                        <GraduationCap className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>Generate Flashcards with AI</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
               {/* Help Button */}
               <TooltipProvider>
                 <Tooltip>
@@ -3117,6 +3037,7 @@ export default function App() {
             onFinish={onStudyFinish}
             onUpdateCard={handleUpdateCardInSession}
             onRateCard={handleRateSingleCard}
+            onDeleteCard={handleDeleteCardInSession}
           />
         )}
         {creationCardData && !isSelectingBackActive && (
