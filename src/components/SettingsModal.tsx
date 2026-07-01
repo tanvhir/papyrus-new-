@@ -74,7 +74,7 @@ const TABS = [
 ];
 
 const MODELS = [
-  { id: 'gemma-4-31b', name: 'Gemma 4 31B' },
+  { id: 'gemma-4-31b-it', name: 'Gemma 4 31B' },
   { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash' },
   { id: 'gemini-3.1-flash-lite', name: 'Gemini 3.1 Flash Lite' },
   { id: 'gemini-3.5-flash', name: 'Gemini 3.5 Flash' },
@@ -191,7 +191,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           transition={{ duration: 0.2, ease: "easeOut" }}
           className="flex h-full min-h-0"
         >
-        <div className="flex h-full min-h-0">
+        <div className="flex h-full min-h-0 w-full">
           {/* Left Sidebar */}
           <div className="w-56 border-r border-stone-200/50 dark:border-stone-800/50 bg-white/50 dark:bg-stone-950/50 backdrop-blur-sm flex-shrink-0">
             <div className="p-4">
@@ -231,7 +231,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -10 }}
                 transition={{ duration: 0.15 }}
-                className="p-8 w-full"
+                className="p-8 w-full max-w-none"
               >
                 {activeTab === 'ai' && (
                   <div className="space-y-8 w-full">

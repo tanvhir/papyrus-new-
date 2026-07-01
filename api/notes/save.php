@@ -37,10 +37,10 @@ try {
 
     $noteUpsert = $db->prepare("
         INSERT INTO notes (
-            id, subject_id, title, content, stickies, arrows, dividers, 
+            id, subject_id, title, content, stickies, arrows, dividers, images,
             texture, theme_id, is_handwriting, font_size, page_layout, 
             page_margin, page_layout_mode, notebook_style, flashcard_ids, user_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
             subject_id = VALUES(subject_id),
             title = VALUES(title),
@@ -48,6 +48,7 @@ try {
             stickies = VALUES(stickies),
             arrows = VALUES(arrows),
             dividers = VALUES(dividers),
+            images = VALUES(images),
             texture = VALUES(texture),
             theme_id = VALUES(theme_id),
             is_handwriting = VALUES(is_handwriting),
@@ -78,6 +79,7 @@ try {
             $stickiesJson = json_encode($note['stickies'] ?? []);
             $arrowsJson = json_encode($note['arrows'] ?? []);
             $dividersJson = json_encode($note['dividers'] ?? []);
+            $imagesJson = json_encode($note['images'] ?? []);
             $flashcardIdsJson = json_encode($note['flashcardIds'] ?? []);
             
             $isHandwritingInt = !empty($note['isHandwriting']) ? 1 : 0;
@@ -91,6 +93,7 @@ try {
                 $stickiesJson,
                 $arrowsJson,
                 $dividersJson,
+                $imagesJson,
                 $note['texture'] ?? 'plain',
                 $note['themeId'] ?? 'classic',
                 $isHandwritingInt,
@@ -106,24 +109,27 @@ try {
     }
 
     // 2. Clear deleted notes for this user
-    if (!empty($receivedNoteIds)) {
-        $inClause = implode(',', array_fill(0, count($receivedNoteIds), '?'));
-        $stmtDeleteNotes = $db->prepare("DELETE FROM notes WHERE user_id = ? AND id NOT IN ($inClause)");
-        $stmtDeleteNotes->execute(array_merge([$userId], $receivedNoteIds));
-    } else {
-        $stmtDeleteAllNotes = $db->prepare("DELETE FROM notes WHERE user_id = ?");
-        $stmtDeleteAllNotes->execute([$userId]);
-    }
+    // DISABLED: Automatic deletion is dangerous and can cause data loss if frontend sends incomplete data
+    // Users should manually delete notes through the UI instead
+    // if (!empty($receivedNoteIds)) {
+    //     $inClause = implode(',', array_fill(0, count($receivedNoteIds), '?'));
+    //     $stmtDeleteNotes = $db->prepare("DELETE FROM notes WHERE user_id = ? AND id NOT IN ($inClause)");
+    //     $stmtDeleteNotes->execute(array_merge([$userId], $receivedNoteIds));
+    // } else {
+    //     $stmtDeleteAllNotes = $db->prepare("DELETE FROM notes WHERE user_id = ?");
+    //     $stmtDeleteAllNotes->execute([$userId]);
+    // }
 
     // 3. Clear deleted folders/subjects for this user
-    if (!empty($receivedFolderIds)) {
-        $inClause = implode(',', array_fill(0, count($receivedFolderIds), '?'));
-        $stmtDeleteFolders = $db->prepare("DELETE FROM folders WHERE user_id = ? AND id NOT IN ($inClause)");
-        $stmtDeleteFolders->execute(array_merge([$userId], $receivedFolderIds));
-    } else {
-        $stmtDeleteAllFolders = $db->prepare("DELETE FROM folders WHERE user_id = ?");
-        $stmtDeleteAllFolders->execute([$userId]);
-    }
+    // DISABLED: Automatic deletion is dangerous and can cause data loss if frontend sends incomplete data
+    // if (!empty($receivedFolderIds)) {
+    //     $inClause = implode(',', array_fill(0, count($receivedFolderIds), '?'));
+    //     $stmtDeleteFolders = $db->prepare("DELETE FROM folders WHERE user_id = ? AND id NOT IN ($inClause)");
+    //     $stmtDeleteFolders->execute(array_merge([$userId], $receivedFolderIds));
+    // } else {
+    //     $stmtDeleteAllFolders = $db->prepare("DELETE FROM folders WHERE user_id = ?");
+    //     $stmtDeleteAllFolders->execute([$userId]);
+    // }
 
     // 4. Update core settings / preferences (activeNoteId, studyStats)
     $otherSettings = [

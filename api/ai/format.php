@@ -116,15 +116,15 @@ $highlightInstruction
 You must return a structured JSON object with the following fields:
 1. \"title\": A polished, clear title for the note.
 2. \"content\": A beautifully structured HTML string that uses rich formatting features supported by our editor:
+   - CRITICAL: NEVER include `<div data-type=\"page\">` or any page wrapper tags in your content output. Only return inline content (headings, paragraphs, lists, etc.) without page wrappers. The page structure is handled automatically by the editor.
    - Use headings (h1, h2, h3) and paragraph blocks.
    - Use lists (ul, ol) to organize lists of items.
    - Apply inline styles like bold (strong), italics (em), underlines (u).
    - Use highlights via `<mark data-color=\"#ffff00\" style=\"background-color: rgb(255, 255, 0); color: inherit;\">text</mark>`. (Highlight colors allowed: Yellow: #ffff00, Blue: #bfdbfe, Deep green: #15803d, Pink: #f9a8d4, Orange: #fed7aa)
    - Use side-by-side columns whenever information fits comparison or dual-structure layouts:
      `<div data-type=\"columns\"><div data-type=\"column\"><h3>Left</h3><p>...</p></div><div data-type=\"column\"><h3>Right</h3><p>...</p></div></div>`
-   - Render mathematical equations or numerical derivations using `<math-node data-latex=\"LaTeX_Formula\"></math-node>`. E.g., `<math-node data-latex=\"E = mc^2\"></math-node>`.
+   - CRITICAL: Preserve ALL mathematical equations and formulas. If you see LaTeX equations wrapped in `$` delimiters (e.g., `$\frac{d^2x}{dt^2} + \omega^2x = 0$`), you MUST convert them to `<math-node data-latex=\"...\"></math-node>` format by removing the `$` delimiters and placing the LaTeX content in the data-latex attribute. Never remove or drop equation content.
    - Embed decorative separation lines between thematic sections using: `<decorative-divider data-type=\"solid|dashed|dotted|zigzag|wave\" data-color=\"#15803d\" data-size=\"2\" data-length=\"100%\"></decorative-divider>`.
-   - Group page boundaries inside `<div data-type=\"page\">...</div>` containers.
 3. \"stickies\": An array of sticky notes for key Callouts, Reminders, definitions, or Quick Flashcards (following the placement algorithm).
 4. \"arrows\": An array of curved connection or callout arrows pointing from main concepts in the text block to relevant stickies (following the arrow algorithm).
 5. \"dividers\": An array of decorative background canvas dividers (keep empty unless requested).

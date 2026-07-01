@@ -126,6 +126,7 @@ Current visual page line height (centerY): $centerY
 
 Your response MUST be a single structured JSON object with the following fields:
 1. \"formattedHTML\": The beautifully formatted HTML representing ONLY the replacement for the selected portion.
+   - CRITICAL: NEVER include `<div data-type=\"page\">` or any page wrapper tags in your formattedHTML output. Only return inline content (headings, paragraphs, lists, etc.) without page wrappers.
    - You should restructure the HTML inline.
    - Use headings (h1, h2, h3), paragraphs (p), list items (li), and inline styles as needed.
    - Use text formatting tools extensively: <strong> for bold emphasis on important terms, <em> for italic emphasis on examples or foreign terms, <u> for underlining critical points.
@@ -141,7 +142,7 @@ Your response MUST be a single structured JSON object with the following fields:
        2) An elegant, curved inline vertical SVG arrow pointing down (e.g., `<svg viewBox=\"0 0 24 32\" width=\"20\" height=\"28\" style=\"margin: 4px auto; display: block; overflow: visible;\"><path d=\"M12,2 Q14,14 12,26\" fill=\"none\" stroke=\"#3b82f6\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M8,21 L12,26 L16,21\" fill=\"none\" stroke=\"#3b82f6\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>`). Ensure you use correct SVG coordinates to render a clean downward curved path with an arrowhead! Use any vibrant color or note theme color.
        3) A beautifully formatted bottom item containing the meaning or full word centered (e.g., `<p style=\"text-align: center; font-size: 0.85rem; color: #4b5563;\">Ellipse</p>`).
      This creates a gorgeous, perfectly aligned vertical hierarchy exactly like high-end visual student notes!
-   - Use LaTeX formulas via `<math-node data-latex=\"formula_here\"></math-node>` if there are mathematical equations or terms.
+   - CRITICAL: Preserve ALL mathematical equations and formulas. If you see LaTeX equations wrapped in `$` delimiters (e.g., `$\frac{d^2x}{dt^2} + \omega^2x = 0$`), you MUST convert them to `<math-node data-latex=\"...\"></math-node>` format by removing the `$` delimiters and placing the LaTeX content in the data-latex attribute. Never remove or drop equation content.
    - Embed decorative dividers to separate sections using various styles:
      * Solid: `<decorative-divider data-type=\"solid\" data-color=\"#15803d\" data-size=\"2\" data-length=\"100%\"></decorative-divider>`
      * Dashed: `<decorative-divider data-type=\"dashed\" data-color=\"#3b82f6\" data-size=\"2\" data-length=\"100%\"></decorative-divider>`

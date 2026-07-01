@@ -8,6 +8,7 @@ import { FlashcardCreator } from '@/src/components/FlashcardCreator';
 import { SettingsModal } from '@/src/components/SettingsModal';
 import { HelpCenter } from '@/src/components/HelpCenter';
 import { useAuth } from '@/src/context/AuthContext';
+import { useToast } from '@/src/context/ToastContext';
 import { LoginScreen } from '@/src/components/LoginScreen';
 import { InstallerOverlay } from '@/src/components/InstallerOverlay';
 import { clsx, type ClassValue } from 'clsx';
@@ -635,6 +636,7 @@ const FloatingDivider = React.memo(({
 
 export default function App() {
   const { loggedIn, installed, isLoading: authLoading, logout } = useAuth();
+  const { showError, showWarning, showSuccess } = useToast();
 
   // Configure localforage on mount
   useEffect(() => {
@@ -1473,9 +1475,9 @@ export default function App() {
 
     if (queue.length === 0) {
       if (mode === 'weak') {
-        alert("Excellent! You currently have no weak concepts flagged. Select 'Again' or 'Hard' on any card to repeat it!");
+        showWarning("No weak concepts", "Excellent! You currently have no weak concepts flagged. Select 'Again' or 'Hard' on any card to repeat it!");
       } else {
-        alert("No cards found for this criteria. Add and link study cards to get started.");
+        showWarning("No cards found", "No cards found for this criteria. Add and link study cards to get started.");
       }
       return;
     }
@@ -1796,11 +1798,11 @@ export default function App() {
           setDividers(data.dividers);
         }
       } else {
-        alert(data.message || 'AI formatting failed.');
+        showError('AI formatting failed', data.message || 'AI formatting failed.');
       }
     } catch (error: any) {
       console.error('Error during AI formatting:', error);
-      alert('An error occurred during AI formatting: ' + (error.message || error));
+      showError('AI formatting error', 'An error occurred during AI formatting: ' + (error.message || error));
     } finally {
       setIsAILoading(false);
     }
@@ -1887,11 +1889,11 @@ export default function App() {
         }
         return { formattedHTML: data.formattedHTML };
       } else {
-        alert(data.message || 'AI selection formatting failed.');
+        showError('AI selection formatting failed', data.message || 'AI selection formatting failed.');
       }
     } catch (error: any) {
       console.error('AI selection format error:', error);
-      alert('Failed to format selection with AI. Please try again.');
+      showError('AI selection format error', 'Failed to format selection with AI. Please try again.');
       return null;
     }
   }, [customApiKey, customModel, highlightStyle, disableAIFlashcards, disableAIArrows, disableAIStickies, disableAIDividers, disableAIImages, disableAIColumns, allowNoteEnhancement, enableCleaning]);
@@ -2298,10 +2300,10 @@ export default function App() {
           setActiveNoteId(newId);
         }
         
-        alert('Data successfully imported and active elements updated!');
+        showSuccess('Import successful', 'Data successfully imported and active elements updated!');
       } catch (err) {
         console.error('Import error:', err);
-        alert('Failed to import notebook data. Please check the file format.');
+        showError('Import failed', 'Failed to import notebook data. Please check the file format.');
       }
     };
     reader.readAsText(file);
@@ -3081,7 +3083,7 @@ export default function App() {
                     setCreationCardData(prev => prev ? { ...prev, back: sel.trim() } : null);
                     setIsSelectingBackActive(false);
                   } else {
-                    alert("Please highlight/select the answer text in your note first!");
+                    showWarning('Selection required', "Please highlight/select the answer text in your note first!");
                   }
                 }}
                 className="bg-amber-600 hover:bg-amber-700 text-white shadow-xl font-bold text-[10px] uppercase tracking-wider rounded-xl px-4 h-8 flex items-center justify-center transition-all hover:scale-105 active:scale-95 flex-1 sm:flex-initial"

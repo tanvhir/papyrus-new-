@@ -21,6 +21,7 @@ import { DecorativeDivider } from '@/src/lib/DecorativeDivider';
 import { Columns, Column } from '@/src/lib/MultiColumn';
 import { DOMSerializer } from '@tiptap/pm/model';
 import { cn, preserveSpaces } from '@/lib/utils';
+import { useToast } from '@/src/context/ToastContext';
 import {
   Bold,
   Italic,
@@ -224,6 +225,7 @@ function Editor({
   isSimpleMode = false,
   onAISelectionFormat
 }: EditorProps) {
+  const { showError } = useToast();
   const [activeSubMenu, setActiveSubMenu] = React.useState<SubMenu>('main');
   const [editingMath, setEditingMath] = React.useState<{ pos: number; latex: string } | null>(null);
   const [mathInputVal, setMathInputVal] = React.useState('');
@@ -255,7 +257,7 @@ function Editor({
       }
     } catch (e: any) {
       console.error(e);
-      alert('Error formatting selection: ' + (e.message || e));
+      showError('Error formatting selection', e.message || String(e));
     } finally {
       setIsAISelectionLoading(false);
     }

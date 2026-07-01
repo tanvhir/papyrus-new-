@@ -27,10 +27,8 @@ export const SpiralBinding: React.FC<SpiralBindingProps> = ({ height, className 
     }
   };
 
-  // Calculate number of pages
+  // Calculate number of pages - only count pages that have actual content
   const numPages = pageHeight > 0 ? Math.ceil(height / (pageHeight + pageGap)) : 1;
-
-  console.log('[SpiralBinding] height:', height, 'pageHeight:', pageHeight, 'pageGap:', pageGap, 'numPages:', numPages);
 
   const generatePageSegments = () => {
     const segments = [];
@@ -40,7 +38,13 @@ export const SpiralBinding: React.FC<SpiralBindingProps> = ({ height, className 
       const pageBottom = pageTop + pageHeight;
       const pageHeightActual = Math.min(pageHeight, height - pageTop);
 
+      // Skip if this page is beyond the actual content height
       if (pageHeightActual <= 0) continue;
+
+      // Skip if this is a trailing empty page (last page with minimal content)
+      const isLastPage = page === numPages - 1;
+      const contentInLastPage = height - pageTop;
+      if (isLastPage && contentInLastPage < 100) continue;
 
       const availableHeight = pageHeightActual - 40;
       const calculatedLoops = Math.floor(availableHeight / config.holeSpacing);

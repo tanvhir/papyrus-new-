@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { Toast, ToastType } from '@/components/Toast';
+import { AlertModal, AlertType } from '@/components/AlertModal';
 
 interface ToastContextType {
   toasts: Toast[];
@@ -23,14 +24,35 @@ export const useToast = () => {
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [alertModal, setAlertModal] = useState<{
+    open: boolean;
+    type: AlertType;
+    title: string;
+    message?: string;
+  }>({
+    open: false,
+    type: 'info',
+    title: '',
+    message: ''
+  });
 
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
   const showToast = useCallback((type: ToastType, title: string, message?: string, duration?: number) => {
-    const id = Math.random().toString(36).substr(2, 9);
-    setToasts((prev) => [...prev, { id, type, title, message, duration }]);
+    // Use modal for errors and warnings, toast for success and info
+    if (type === 'error' || type === 'warning') {
+      setAlertModal({
+        open: true,
+        type: type as AlertType,
+        title,
+        message
+      });
+    } else {
+      const id = Math.random().toString(36).substr(2, 9);
+      setToasts((prev) => [...prev, { id, type, title, message, duration }]);
+    }
   }, []);
 
   const showSuccess = useCallback((title: string, message?: string, duration?: number) => {
@@ -62,6 +84,13 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }}
     >
       {children}
+      <AlertModal
+        open={alertModal.open}
+        onOpenChange={(open) => setAlertModal(prev => ({ ...prev, open }))}
+        type={alertModal.type}
+        title={alertModal.title}
+        message={alertModal.message}
+      />
     </ToastContext.Provider>
   );
 };

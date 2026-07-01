@@ -16,7 +16,7 @@ try {
     $folders = $foldersStmt->fetchAll();
 
     // 2. Fetch all Notes
-    $notesStmt = $db->prepare("SELECT id, subject_id, title, content, stickies, arrows, dividers, texture, theme_id, is_handwriting, font_size, page_layout, page_margin, page_layout_mode, notebook_style, flashcard_ids FROM notes WHERE user_id = ?");
+    $notesStmt = $db->prepare("SELECT id, subject_id, title, content, stickies, arrows, dividers, images, texture, theme_id, is_handwriting, font_size, page_layout, page_margin, page_layout_mode, notebook_style, flashcard_ids FROM notes WHERE user_id = ?");
     $notesStmt->execute([$userId]);
     $notes = $notesStmt->fetchAll();
 
@@ -33,6 +33,7 @@ try {
             'stickies' => json_decode($note['stickies'] ?? '[]', true),
             'arrows' => json_decode($note['arrows'] ?? '[]', true),
             'dividers' => json_decode($note['dividers'] ?? '[]', true),
+            'images' => json_decode($note['images'] ?? '[]', true),
             'texture' => $note['texture'],
             'themeId' => $note['theme_id'],
             'isHandwriting' => (bool)$note['is_handwriting'],
