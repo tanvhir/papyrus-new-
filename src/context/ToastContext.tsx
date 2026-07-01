@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { Toast, ToastType } from '@/components/Toast';
-import { AlertModal, AlertType } from '@/components/AlertModal';
+import { Toast, ToastType } from '@/src/components/Toast';
+import { AlertModal, AlertType } from '@/src/components/AlertModal';
 
 interface ToastContextType {
   toasts: Toast[];
