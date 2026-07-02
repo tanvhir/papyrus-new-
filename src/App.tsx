@@ -1,16 +1,18 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import Editor from '@/src/components/Editor';
+import { Editor } from '@/src/components/editor';
 import { StationeryBar } from '@/src/components/StationeryBar';
 import { FlashcardImport } from '@/src/components/FlashcardImport';
-import { StudySession } from '@/src/components/StudySession';
 import { FlashcardCreator } from '@/src/components/FlashcardCreator';
-import { SettingsModal } from '@/src/components/SettingsModal';
-import { HelpCenter } from '@/src/components/HelpCenter';
 import { useAuth } from '@/src/context/AuthContext';
 import { useToast } from '@/src/context/ToastContext';
 import { LoginScreen } from '@/src/components/LoginScreen';
 import { InstallerOverlay } from '@/src/components/InstallerOverlay';
+import { StickyNote, STICKY_COLORS, CurvedArrow, FloatingDivider, useAISettings, useNoteState, useFlashcardState, useUIState, useNoteContentState, useNoteHandlers, AppHeader, NoteCanvas } from '@/src/features/notes';
+
+const StudySession = lazy(() => import('@/src/components/study').then(m => ({ default: m.StudySession })));
+const SettingsModal = lazy(() => import('@/src/components/settings').then(m => ({ default: m.SettingsModal })));
+const HelpCenter = lazy(() => import('@/src/components/help').then(m => ({ default: m.HelpCenter })));
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { 
@@ -118,522 +120,6 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-const STICKY_COLORS = [
-  { id: 'yellow', bg: 'bg-yellow-200', dot: '#fef08a' },
-  { id: 'blue', bg: 'bg-blue-200', dot: '#bfdbfe' },
-  { id: 'pink', bg: 'bg-pink-300', dot: '#f9a8d4' },
-  { id: 'green', bg: 'bg-green-200', dot: '#bbf7d0' },
-  { id: 'orange', bg: 'bg-orange-200', dot: '#fed7aa' },
-  { id: 'purple', bg: 'bg-purple-200', dot: '#e9d5ff' },
-];
-
-const StickyNote = React.memo(({ 
-  id, 
-  content, 
-  color, 
-  position,
-  onRemove, 
-  onEdit, 
-  onTogglePin, 
-  onUpdate,
-  containerRef, 
-  isHandwriting, 
-  fontSize, 
-  isPinned 
-}: { 
-  id: string, 
-  content: string, 
-  color: string, 
-  position: Point,
-  onRemove: () => void, 
-  onEdit: (sticky: {id: string, text: string, color: string, fontSize?: number}) => void, 
-  onTogglePin: () => void, 
-  onUpdate: (updates: Partial<{ text: string, color: string, position: Point, isPinned: boolean }>) => void,
-  containerRef: React.RefObject<HTMLDivElement>, 
-  isHandwriting?: boolean, 
-  fontSize?: number, 
-  isPinned?: boolean 
-}) => {
-  const colorConfig = STICKY_COLORS.find(c => c.id === color) || STICKY_COLORS[0];
-  const bgClass = colorConfig.bg;
-  
-  const fontClass = isHandwriting ? "font-handwriting" : "font-bangla";
-  const proseFontClass = isHandwriting ? "[&_.ProseMirror]:font-handwriting [&_.ProseMirror_p]:font-handwriting [&_.ProseMirror_h1]:font-handwriting [&_.ProseMirror_h2]:font-handwriting [&_.ProseMirror_h3]:font-handwriting" : "[&_.ProseMirror]:font-bangla [&_.ProseMirror_p]:font-bangla [&_.ProseMirror_h1]:font-bangla [&_.ProseMirror_h2]:font-bangla [&_.ProseMirror_h3]:font-bangla";
-
-  return (
-    <motion.div 
-      drag={!isPinned}
-      dragConstraints={containerRef}
-      dragElastic={0}
-      dragMomentum={false}
-      initial={{ scale: 0.8, opacity: 0 }}
-      animate={{ 
-        scale: 1, 
-        rotate: isPinned ? 0 : 2, 
-        opacity: 1,
-        x: position.x,
-        y: position.y
-      }}
-      exit={{ scale: 0.5, opacity: 0, filter: "blur(4px)" }}
-      whileDrag={{ scale: 1.02, zIndex: 100, rotate: 0 }}
-      onDragEnd={(_, info) => {
-        onUpdate({ 
-          position: { 
-            x: position.x + info.offset.x, 
-            y: position.y + info.offset.y 
-          } 
-        });
-      }}
-      className={cn(
-        "absolute p-5 w-[280px] min-h-[240px] paper-shadow z-40 flex flex-col justify-between group overflow-visible select-none transition-shadow duration-300",
-        !isPinned && "cursor-grab active:cursor-grabbing hover:shadow-xl",
-        isPinned && "ring-2 ring-blue-400/30",
-        bgClass,
-        fontClass
-      )}
-      style={{ left: 0, top: 0 }}
-    >
-      <div className="flex-1 overflow-y-auto pr-1 overflow-x-hidden custom-scrollbar w-full text-stone-800">
-        <Editor 
-          content={content} 
-          editable={false} 
-          fontSize={fontSize || 14}
-          className="w-full pointer-events-none" 
-          editorClass={cn("prose prose-sm prose-stone max-w-none focus:outline-none leading-relaxed pt-2 break-words whitespace-pre-wrap text-stone-800",
-                         proseFontClass, fontClass,
-                         "[&_.katex-display]:my-2 [&_.katex]:text-base")}
-          isSimpleMode={true}
-        />
-      </div>
-      <div data-html2pdf-ignore="true" className="mt-4 flex justify-between items-center z-10 relative opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 ease-out">
-        <div className="flex gap-4">
-          <button 
-            onClick={() => onEdit({id, text: content, color, fontSize})} 
-            className="text-[10px] text-stone-500 hover:text-stone-900 uppercase tracking-[0.2em] font-mono font-bold transition-colors cursor-pointer pointer-events-auto flex items-center gap-1.5"
-          >
-            <Edit2 className="w-3 h-3" />
-            Edit
-          </button>
-          <button 
-            onClick={onTogglePin} 
-            className={cn(
-              "text-[10px] uppercase tracking-[0.2em] font-mono font-bold transition-all cursor-pointer pointer-events-auto flex items-center gap-1.5", 
-              isPinned ? "text-blue-600" : "text-stone-500 hover:text-stone-900"
-            )}
-          >
-            {isPinned ? <PinOff className="w-3 h-3" /> : <Pin className="w-3 h-3" />}
-            {isPinned ? 'Unpin' : 'Pin'}
-          </button>
-        </div>
-        <button 
-          onClick={onRemove} 
-          className="text-[10px] text-stone-300 hover:text-red-500 uppercase tracking-[0.2em] font-mono font-bold transition-colors cursor-pointer pointer-events-auto flex items-center gap-1.5"
-        >
-          <Trash2 className="w-3 h-3" />
-          Remove
-        </button>
-      </div>
-      <div className="absolute top-0 right-0 w-8 h-8 bg-black/5 rounded-bl-full pointer-events-none" />
-      {isPinned && (
-        <div data-html2pdf-ignore="true" className="absolute -top-3 left-1/2 -translate-x-1/2 z-50 text-blue-500 drop-shadow-sm flex flex-col items-center">
-          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mb-0.5 shadow-sm" />
-          <Pin className="w-4 h-4 fill-current" />
-        </div>
-      )}
-    </motion.div>
-  );
-});
-
-const CurvedArrow = React.memo(({ 
-  arrow, 
-  onUpdate, 
-  onRemove,
-  isCleanMode,
-  theme,
-  scale,
-  isSelected,
-  onSelect
-}: { 
-  arrow: ArrowData, 
-  onUpdate: (id: string, updates: Partial<ArrowData>) => void,
-  onRemove: (id: string) => void,
-  isCleanMode: boolean,
-  theme: NoteTheme,
-  scale: number,
-  isSelected: boolean,
-  onSelect: (id: string) => void
-}) => {
-  const [activeHandle, setActiveHandle] = useState<'start' | 'mid' | 'end' | 'move' | null>(null);
-
-  const dragInfo = useRef<{
-    active: 'start' | 'mid' | 'end' | 'move' | null;
-    startX: number;
-    startY: number;
-    initialStart: { x: number; y: number };
-    initialMid: { x: number; y: number };
-    initialEnd: { x: number; y: number };
-  }>({
-    active: null,
-    startX: 0,
-    startY: 0,
-    initialStart: { x: 0, y: 0 },
-    initialMid: { x: 0, y: 0 },
-    initialEnd: { x: 0, y: 0 }
-  });
-
-  const getPath = () => {
-    return `M ${arrow.start.x} ${arrow.start.y} Q ${arrow.mid.x} ${arrow.mid.y} ${arrow.end.x} ${arrow.end.y}`;
-  };
-
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>, handle: 'start' | 'mid' | 'end' | 'move') => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // Set pointer capture to ensure smooth tracking even if the cursor moves off the handle element
-    e.currentTarget.setPointerCapture(e.pointerId);
-
-    dragInfo.current = {
-      active: handle,
-      startX: e.clientX,
-      startY: e.clientY,
-      initialStart: { ...arrow.start },
-      initialMid: { ...arrow.mid },
-      initialEnd: { ...arrow.end }
-    };
-    setActiveHandle(handle);
-  };
-
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    const drag = dragInfo.current;
-    if (!drag.active) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    const clientDeltaX = e.clientX - drag.startX;
-    const clientDeltaY = e.clientY - drag.startY;
-
-    // Convert deltas based on current page scale factor to eliminate visual drift or offsets
-    const deltaX = clientDeltaX / scale;
-    const deltaY = clientDeltaY / scale;
-
-    if (drag.active === 'start') {
-      onUpdate(arrow.id, {
-        start: {
-          x: Math.round(drag.initialStart.x + deltaX),
-          y: Math.round(drag.initialStart.y + deltaY)
-        }
-      });
-    } else if (drag.active === 'mid') {
-      onUpdate(arrow.id, {
-        mid: {
-          x: Math.round(drag.initialMid.x + deltaX),
-          y: Math.round(drag.initialMid.y + deltaY)
-        }
-      });
-    } else if (drag.active === 'end') {
-      onUpdate(arrow.id, {
-        end: {
-          x: Math.round(drag.initialEnd.x + deltaX),
-          y: Math.round(drag.initialEnd.y + deltaY)
-        }
-      });
-    } else if (drag.active === 'move') {
-      onUpdate(arrow.id, {
-        start: {
-          x: Math.round(drag.initialStart.x + deltaX),
-          y: Math.round(drag.initialStart.y + deltaY)
-        },
-        mid: {
-          x: Math.round(drag.initialMid.x + deltaX),
-          y: Math.round(drag.initialMid.y + deltaY)
-        },
-        end: {
-          x: Math.round(drag.initialEnd.x + deltaX),
-          y: Math.round(drag.initialEnd.y + deltaY)
-        }
-      });
-    }
-  };
-
-  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    const drag = dragInfo.current;
-    if (!drag.active) return;
-
-    e.currentTarget.releasePointerCapture(e.pointerId);
-    dragInfo.current.active = null;
-    setActiveHandle(null);
-  };
-
-  const showControls = !isCleanMode && (isSelected || activeHandle);
-
-  // Calculate placement boundaries of the arrow to dynamically offset the controller bar
-  const minX = Math.min(arrow.start.x, arrow.end.x, arrow.mid.x);
-  const maxX = Math.max(arrow.start.x, arrow.end.x, arrow.mid.x);
-  const minY = Math.min(arrow.start.y, arrow.end.y, arrow.mid.y);
-  const maxY = Math.max(arrow.start.y, arrow.end.y, arrow.mid.y);
-
-  const centerX = (minX + maxX) / 2;
-
-  // Detect small arrow length - if small, shift toolbar more to prevent obstruction of center curve point
-  const arrowLength = Math.sqrt((arrow.end.x - arrow.start.x)**2 + (arrow.end.y - arrow.start.y)**2);
-  const isSmallArrow = arrowLength < 110;
-  const toolbarOffset = isSmallArrow ? 68 : 48;
-
-  // If the arrow is close to the top edge (Y < 50), float the toolbar cleanly below the arrow instead
-  const toolbarY = (minY - toolbarOffset) < 15 ? (maxY + toolbarOffset) : (minY - toolbarOffset);
-  // Keep the toolbar always within the page lateral margin bounds (850px page)
-  const toolbarX = Math.max(120, Math.min(850 - 120, centerX));
-
-  // Elegant collection of ink styles for paper theme
-  const arrowColors = [
-    { name: 'Contrast Ink', value: (theme.id === 'dark' || theme.id === 'premium-dark') ? '#f5f5f4' : '#1c1917' },
-    { name: 'Red Pen', value: '#ef4444' },
-    { name: 'Blue Pen', value: '#3b82f6' },
-    { name: 'Green Pen', value: '#10b981' },
-    { name: 'Purple Marker', value: '#8b5cf6' },
-    { name: 'Orange Marker', value: '#f97316' },
-  ];
-
-  return (
-    <div className={cn("absolute inset-0 pointer-events-none", isSelected ? "z-40" : "z-30")}>
-      <svg className="w-full h-full overflow-visible pointer-events-none">
-        <defs>
-          <marker
-            id={`arrowhead-${arrow.id}`}
-            viewBox="0 0 10 10"
-            refX="9"
-            refY="5"
-            markerWidth="6"
-            markerHeight="6"
-            orient="auto-start-reverse"
-          >
-            <path d="M 0 0 L 10 5 L 0 10 z" fill={arrow.color} />
-          </marker>
-        </defs>
-        
-        {/* Widest Hit Area for Selection */}
-        <path
-          d={getPath()}
-          stroke="transparent"
-          strokeWidth="48"
-          fill="none"
-          className="pointer-events-auto cursor-pointer"
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelect(arrow.id);
-          }}
-        />
-
-        {/* Visible Path */}
-        <path
-          d={getPath()}
-          stroke={arrow.color}
-          strokeWidth={isSelected ? "3.5" : "2"}
-          fill="none"
-          markerEnd={`url(#arrowhead-${arrow.id})`}
-          style={{ strokeLinecap: 'round' }}
-          className="transition-all duration-200 pointer-events-none"
-        />
-
-        {/* Halo Glow for selected */}
-        {isSelected && (
-          <path
-            d={getPath()}
-            stroke={arrow.color}
-            strokeWidth="10"
-            fill="none"
-            opacity="0.2"
-            className="pointer-events-none"
-          />
-        )}
-      </svg>
-
-      {showControls && (
-        <div data-html2pdf-ignore="true" className="contents">
-          {/* Start Point Handle */}
-          <div
-            onPointerDown={(e) => handlePointerDown(e, 'start')}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            className="absolute w-8 h-8 flex items-center justify-center cursor-crosshair pointer-events-auto z-45 group select-none"
-            style={{ 
-              left: arrow.start.x - 16, 
-              top: arrow.start.y - 16,
-              touchAction: 'none'
-            }}
-          >
-            <div className={cn(
-              "bg-white border-2 border-primary rounded-full shadow-lg transition-transform hover:scale-125",
-              isSmallArrow ? "w-3 h-3" : "w-4 h-4"
-            )} />
-          </div>
-
-          {/* End Point Handle */}
-          <div
-            onPointerDown={(e) => handlePointerDown(e, 'end')}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            className="absolute w-8 h-8 flex items-center justify-center cursor-crosshair pointer-events-auto z-45 group select-none"
-            style={{ 
-              left: arrow.end.x - 16, 
-              top: arrow.end.y - 16,
-              touchAction: 'none'
-            }}
-          >
-            <div className={cn(
-              "bg-white border-2 border-stone-800 rounded-full shadow-lg transition-transform hover:scale-125",
-              isSmallArrow ? "w-3 h-3" : "w-4 h-4"
-            )} />
-          </div>
-
-          {/* Curve Control Handle (Green) - Higher Z-Index than start/end handles to be always targets on small sizes */}
-          <div
-            onPointerDown={(e) => handlePointerDown(e, 'mid')}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            className="absolute w-8 h-8 flex items-center justify-center cursor-pointer pointer-events-auto z-[51] group select-none"
-            style={{ 
-              left: arrow.mid.x - 16, 
-              top: arrow.mid.y - 16,
-              touchAction: 'none'
-            }}
-          >
-            <div className="w-4 h-4 bg-emerald-500 border-2 border-white rounded-full shadow-xl group-hover:scale-125 group-focus:scale-125 transition-all flex items-center justify-center" />
-          </div>
-
-          {/* Premium Floating Action Toolbar detached from the arrow bodies to avoid overlapping clutter */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 5 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 5 }}
-            className="absolute pointer-events-auto z-50 flex items-center gap-2 px-2.5 py-1.5 bg-white/95 dark:bg-stone-900/95 border border-stone-200 dark:border-stone-800 shadow-xl rounded-full backdrop-blur-md select-none"
-            style={{ 
-              left: toolbarX, 
-              top: toolbarY,
-              transform: 'translate(-50%, -50%)'
-            }}
-          >
-            {/* Grab Grip handle to move the entire curved arrow */}
-            <div
-              onPointerDown={(e) => handlePointerDown(e, 'move')}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
-              className="flex items-center gap-1 px-2 py-0.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-300 rounded-full cursor-grab active:cursor-grabbing text-[11px] font-semibold border border-stone-200/50 dark:border-stone-700 transition select-none"
-              title="Drag to move arrow"
-              style={{ touchAction: 'none' }}
-            >
-              <Move className="w-3 h-3 text-primary" />
-              <span>Drag</span>
-            </div>
-
-            <div className="w-px h-3.5 bg-stone-200 dark:bg-stone-800 mx-0.5" />
-
-            {/* Micro color pallet select options */}
-            <div className="flex items-center gap-1 px-1">
-              {arrowColors.map(c => {
-                const isSelectedColor = arrow.color.toLowerCase() === c.value.toLowerCase();
-                return (
-                  <button
-                    key={c.value}
-                    onClick={() => onUpdate(arrow.id, { color: c.value })}
-                    className={cn(
-                      "w-3.5 h-3.5 rounded-full border shadow-sm transition-all hover:scale-125 focus:outline-none relative flex items-center justify-center",
-                      isSelectedColor ? "ring-2 ring-primary ring-offset-1 dark:ring-offset-stone-900 scale-110" : "border-stone-300 dark:border-stone-700"
-                    )}
-                    style={{ backgroundColor: c.value }}
-                    title={c.name}
-                  >
-                    {isSelectedColor && <Check className="w-2 h-2 text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]" />}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="w-px h-3.5 bg-stone-200 dark:bg-stone-800 mx-0.5" />
-
-            {/* Quick action delete */}
-            <button
-              onClick={() => onRemove(arrow.id)}
-              className="flex items-center justify-center p-1 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-full transition-colors border border-red-500/20"
-              title="Delete Arrow"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </motion.div>
-        </div>
-      )}
-    </div>
-  );
-});
-
-
-const FloatingDivider = React.memo(({ 
-  divider, 
-  onUpdate, 
-  onRemove,
-  isCleanMode,
-  containerRef,
-}: { 
-  divider: DividerData, 
-  onUpdate: (id: string, updates: Partial<DividerData>) => void,
-  onRemove: (id: string) => void,
-  isCleanMode: boolean,
-  containerRef: React.RefObject<HTMLDivElement>
-}) => {
-  const [isHovered, setIsHovered] = useState(false);
-
-  return (
-    <motion.div
-      drag
-      dragConstraints={containerRef}
-      dragElastic={0.05}
-      initial={{ scale: 0.8, opacity: 0, x: divider.position.x, y: divider.position.y }}
-      animate={{ scale: 1, opacity: 1, x: divider.position.x, y: divider.position.y }}
-      whileDrag={{ scale: 1.02, zIndex: 100 }}
-      onDragEnd={(_, info) => {
-        onUpdate(divider.id, { 
-          position: { 
-            x: divider.position.x + info.offset.x, 
-            y: divider.position.y + info.offset.y 
-          } 
-        });
-      }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className={cn(
-        "absolute cursor-move z-40 group flex items-center justify-center",
-        divider.orientation === 'horizontal' ? "min-w-[40px]" : "min-h-[40px]"
-      )}
-      style={{ 
-        left: 0, 
-        top: 0,
-        width: divider.orientation === 'horizontal' ? divider.length : 'auto',
-        height: divider.orientation === 'vertical' ? divider.length : 'auto'
-      }}
-    >
-      <DividerRender 
-        data={divider} 
-        className="transition-opacity duration-200 w-full h-full" 
-      />
-      
-      {!isCleanMode && isHovered && (
-        <button
-          data-html2pdf-ignore="true"
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove(divider.id);
-          }}
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-2 bg-red-500 text-white rounded-full shadow-xl opacity-0 group-hover:opacity-100 transition-all z-50 hover:bg-red-600 hover:scale-110 flex items-center justify-center border-2 border-white dark:border-stone-900 pointer-events-auto"
-          title="Remove Separator"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      )}
-    </motion.div>
-  );
-});
-
 export default function App() {
   const { loggedIn, installed, isLoading: authLoading, logout } = useAuth();
   const { showError, showWarning, showSuccess } = useToast();
@@ -661,50 +147,64 @@ export default function App() {
   }, [showWarning]);
   */
 
-  const [subjects, setSubjects] = useState<Subject[]>([
-    {
-      id: 'default-subject',
-      name: 'General Notes',
-      notes: [
-        {
-          id: 'default-note',
-          title: 'Chapter 1',
-          content: '',
-          stickies: [],
-          arrows: [],
-          dividers: [],
-          images: [],
-          texture: 'laid',
-          themeId: 'light',
-          isHandwriting: true,
-          fontSize: 18,
-          pageLayout: 'a4-portrait',
-        }
-      ]
-    }
-  ]);
-
-  const [activeNoteId, setActiveNoteId] = useState('default-note');
-  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
-  const [studyStats, setStudyStats] = useState<StudyStats>({
-    totalStudied: 0,
-    streak: 0,
-    lastStudyDate: new Date().toISOString(),
-    weakConceptIds: []
-  });
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasLoadedInitialData, setHasLoadedInitialData] = useState(false);
-  const [isImportOpen, setIsImportOpen] = useState(false);
-  const [isHelpOpen, setIsHelpOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [studyQueue, setStudyQueue] = useState<Flashcard[]>([]);
-  const [isStudySessionActive, setIsStudySessionActive] = useState(false);
-  const [creationCardData, setCreationCardData] = useState<{ front: string; back: string; type: FlashcardType } | null>(null);
-  const [isSelectingBackActive, setIsSelectingBackActive] = useState(false);
-  const [fileHandle, setFileHandle] = useState<any>(null);
-  const [activeHighlighterColor, setActiveHighlighterColor] = useState<string | null>(null);
-  
-  const [isCleanMode, setIsCleanMode] = useState(false);
+  const noteState = useNoteState();
+  const {
+    subjects,
+    setSubjects,
+    activeNoteId,
+    setActiveNoteId,
+    isLoading,
+    setIsLoading,
+    hasLoadedInitialData,
+    setHasLoadedInitialData,
+    getActiveSubject,
+    getActiveNote,
+    updateNote,
+  } = noteState;
+  const flashcardState = useFlashcardState();
+  const {
+    flashcards,
+    setFlashcards,
+    studyStats,
+    setStudyStats,
+    studyQueue,
+    setStudyQueue,
+    isStudySessionActive,
+    setIsStudySessionActive,
+    creationCardData,
+    setCreationCardData,
+    isSelectingBackActive,
+    setIsSelectingBackActive,
+  } = flashcardState;
+  const uiState = useUIState();
+  const {
+    isImportOpen,
+    setIsImportOpen,
+    isHelpOpen,
+    setIsHelpOpen,
+    isSettingsOpen,
+    setIsSettingsOpen,
+    fileHandle,
+    setFileHandle,
+    activeHighlighterColor,
+    setActiveHighlighterColor,
+    isCleanMode,
+    setIsCleanMode,
+    isExportingPDF,
+    setIsExportingPDF,
+    isDrawingArrowMode,
+    setIsDrawingArrowMode,
+    selectedArrowId,
+    setSelectedArrowId,
+    editingStickyId,
+    setEditingStickyId,
+    editingStickyText,
+    setEditingStickyText,
+    editingStickyColor,
+    setEditingStickyColor,
+    editingStickyFontSize,
+    setEditingStickyFontSize,
+  } = uiState;
   const mainAreaRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
@@ -713,92 +213,37 @@ export default function App() {
   const [pageLayout, setPageLayout] = useState<'pageless' | 'a4-portrait' | 'a4-landscape'>('a4-portrait');
   const [pageMargin, setPageMargin] = useState<'normal' | 'narrow' | 'none'>('normal');
   const [pageLayoutMode, setPageLayoutMode] = useState<'single' | 'book'>('single');
-  const [customApiKey, setCustomApiKey] = useState<string>(() => localStorage.getItem('academic_custom_api_key') || '');
-  const [customModel, setCustomModel] = useState<string>(() => localStorage.getItem('academic_custom_model') || 'gemma-4-31b-it');
-  const [highlightStyle, setHighlightStyle] = useState<'balanced' | 'generous' | 'none'>(() => (localStorage.getItem('academic_highlight_style') as 'balanced' | 'generous' | 'none') || 'balanced');
-  
-  // New toggles for disabling specific AI features as requested by the user
-  const [disableAIFlashcards, setDisableAIFlashcards] = useState<boolean>(() => localStorage.getItem('academic_disable_ai_flashcards') !== 'false');
-  const [disableAIArrows, setDisableAIArrows] = useState<boolean>(() => localStorage.getItem('academic_disable_ai_arrows') === 'true');
-  const [disableAIStickies, setDisableAIStickies] = useState<boolean>(() => localStorage.getItem('academic_disable_ai_stickies') !== 'false');
-  const [disableAIDividers, setDisableAIDividers] = useState<boolean>(() => localStorage.getItem('academic_disable_ai_dividers') === 'true');
-  const [disableAIImages, setDisableAIImages] = useState<boolean>(() => localStorage.getItem('academic_disable_ai_images') !== 'false');
-  const [disableAIColumns, setDisableAIColumns] = useState<boolean>(() => localStorage.getItem('academic_disable_ai_columns') === 'true');
-  const [allowNoteEnhancement, setAllowNoteEnhancement] = useState<boolean>(() => localStorage.getItem('academic_allow_note_enhancement') !== 'false');
-  const [enableCleaning, setEnableCleaning] = useState<boolean>(() => localStorage.getItem('academic_enable_cleaning') !== 'false');
-
-  const handleUpdateCustomApiKey = (key: string) => {
-    setCustomApiKey(key);
-    localStorage.setItem('academic_custom_api_key', key);
-  };
-
-  const handleUpdateCustomModel = (model: string) => {
-    setCustomModel(model);
-    localStorage.setItem('academic_custom_model', model);
-  };
-
-  const handleUpdateHighlightStyle = (style: 'balanced' | 'generous' | 'none') => {
-    setHighlightStyle(style);
-    localStorage.setItem('academic_highlight_style', style);
-  };
-
-  const handleUpdateDisableAIFlashcards = (disabled: boolean) => {
-    setDisableAIFlashcards(disabled);
-    localStorage.setItem('academic_disable_ai_flashcards', String(disabled));
-  };
-
-  const handleUpdateDisableAIArrows = (disabled: boolean) => {
-    setDisableAIArrows(disabled);
-    localStorage.setItem('academic_disable_ai_arrows', String(disabled));
-  };
-
-  const handleUpdateDisableAIStickies = (disabled: boolean) => {
-    setDisableAIStickies(disabled);
-    localStorage.setItem('academic_disable_ai_stickies', String(disabled));
-  };
-
-  const handleUpdateDisableAIDividers = (disabled: boolean) => {
-    setDisableAIDividers(disabled);
-    localStorage.setItem('academic_disable_ai_dividers', String(disabled));
-  };
-
-  const handleUpdateDisableAIImages = (disabled: boolean) => {
-    setDisableAIImages(disabled);
-    localStorage.setItem('academic_disable_ai_images', String(disabled));
-  };
-
-  const handleUpdateDisableAIColumns = (disabled: boolean) => {
-    setDisableAIColumns(disabled);
-    localStorage.setItem('academic_disable_ai_columns', String(disabled));
-  };
-
-  const handleUpdateAllowNoteEnhancement = (allowed: boolean) => {
-    setAllowNoteEnhancement(allowed);
-    localStorage.setItem('academic_allow_note_enhancement', String(allowed));
-  };
-
-  const handleUpdateEnableCleaning = (enabled: boolean) => {
-    setEnableCleaning(enabled);
-    localStorage.setItem('academic_enable_cleaning', String(enabled));
-  };
-
-  const BUILTIN_MODELS = [
-    'gemma-4-31b-it',
-    'gemini-2.5-flash',
-    'gemini-3.1-flash-lite',
-    'gemini-3.5-flash',
-  ];
-
-  const [isCustomModelActive, setIsCustomModelActive] = useState(() => {
-    const model = localStorage.getItem('academic_custom_model') || 'gemini-2.5-flash';
-    return !BUILTIN_MODELS.includes(model);
-  });
-  const [customModelInput, setCustomModelInput] = useState(() => {
-    const model = localStorage.getItem('academic_custom_model') || '';
-    return !BUILTIN_MODELS.includes(model) ? model : '';
-  });
   const [bookScrollWidth, setBookScrollWidth] = useState(820);
-  const [isExportingPDF, setIsExportingPDF] = useState(false);
+  
+  const aiSettings = useAISettings();
+  const {
+    customApiKey,
+    customModel,
+    highlightStyle,
+    disableAIFlashcards,
+    disableAIArrows,
+    disableAIStickies,
+    disableAIDividers,
+    disableAIImages,
+    disableAIColumns,
+    allowNoteEnhancement,
+    enableCleaning,
+    isCustomModelActive,
+    customModelInput,
+    setIsCustomModelActive,
+    setCustomModelInput,
+    handleUpdateCustomApiKey,
+    handleUpdateCustomModel,
+    handleUpdateHighlightStyle,
+    handleUpdateDisableAIFlashcards,
+    handleUpdateDisableAIArrows,
+    handleUpdateDisableAIStickies,
+    handleUpdateDisableAIDividers,
+    handleUpdateDisableAIImages,
+    handleUpdateDisableAIColumns,
+    handleUpdateAllowNoteEnhancement,
+    handleUpdateEnableCleaning,
+  } = aiSettings;
   const canvasWidth = pageLayout === 'a4-landscape' ? 1160 : pageLayout === 'a4-portrait' ? 820 : 850;
 
   const PAGE_GAP = 36;
@@ -1040,31 +485,78 @@ export default function App() {
     };
   }, [isCleanMode, canvasWidth]);
 
+  const [drawingPoints, setDrawingPoints] = useState<Point[]>([]);
+  const [isDraggingDraw, setIsDraggingDraw] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isAILoading, setIsAILoading] = useState(false);
 
-  // Volatile states for active note
-  const [content, setContent] = useState('');
-  const [texture, setTexture] = useState<PaperTexture>('laid');
-  const [theme, setTheme] = useState<NoteTheme>(THEMES[0]);
-  const [notebookStyle, setNotebookStyle] = useState<'classic' | 'spiral'>('spiral');
-  const [stickies, setStickies] = useState<{ id: string, text: string, color: string, position?: Point, fontSize?: number, isPinned?: boolean }[]>([]);
-  const [arrows, setArrows] = useState<ArrowData[]>([]);
-  const [dividers, setDividers] = useState<DividerData[]>([]);
-  const [images, setImages] = useState<ImageData[]>([]);
-  const [isHandwriting, setIsHandwriting] = useState(true);
-  const [fontSize, setFontSize] = useState(18);
-  const [selectedArrowId, setSelectedArrowId] = useState<string | null>(null);
-
-  // Pencil / Mouse Pen-to-Arrow Drawing Mode States
-  const [isDrawingArrowMode, setIsDrawingArrowMode] = useState(false);
-  const [drawingPoints, setDrawingPoints] = useState<Point[]>([]);
-  const [isDraggingDraw, setIsDraggingDraw] = useState(false);
+  const noteContentState = useNoteContentState();
+  const {
+    content,
+    setContent,
+    texture,
+    setTexture,
+    theme,
+    setTheme,
+    notebookStyle,
+    setNotebookStyle,
+    stickies,
+    setStickies,
+    arrows,
+    setArrows,
+    dividers,
+    setDividers,
+    images,
+    setImages,
+    isHandwriting,
+    setIsHandwriting,
+    fontSize,
+    setFontSize,
+  } = noteContentState;
 
   const [editor, setEditor] = useState<any>(null);
   const [stickyEditor, setStickyEditor] = useState<any>(null);
-  const [editingStickyId, setEditingStickyId] = useState<string | null>(null);
+
+  const noteHandlers = useNoteHandlers({
+    activeNoteId,
+    subjects,
+    content,
+    stickies,
+    arrows,
+    dividers,
+    images,
+    texture,
+    theme,
+    isHandwriting,
+    fontSize,
+    pageLayout,
+    setSubjects,
+    setContent,
+    setStickies,
+    setArrows,
+    setDividers,
+    setImages,
+    updateNote,
+    setLastSaved,
+    setIsSaving,
+    getActiveContext: () => getActiveContext(),
+  });
+  const {
+    handleSaveNote,
+    handleAddSticky,
+    handleUpdateSticky,
+    handleDeleteSticky,
+    handleAddArrow,
+    handleUpdateArrow,
+    handleDeleteArrow,
+    handleAddDivider,
+    handleUpdateDivider,
+    handleDeleteDivider,
+    handleAddImage,
+    handleUpdateImage,
+    handleDeleteImage,
+  } = noteHandlers;
 
   // Keep track of mainAreaRef's exact boundary height to adjust wrapper cleanly
   useEffect(() => {
@@ -1824,8 +1316,8 @@ export default function App() {
     dividers, 
     images,
     pageLayout, 
-    customApiKey,
-    customModel,
+    aiSettings.customApiKey,
+    aiSettings.customModel,
     highlightStyle,
     disableAIFlashcards,
     disableAIArrows,
@@ -1914,7 +1406,7 @@ export default function App() {
       showError('AI selection format error', 'Failed to format selection with AI. Please try again.');
       return null;
     }
-  }, [customApiKey, customModel, highlightStyle, disableAIFlashcards, disableAIArrows, disableAIStickies, disableAIDividers, disableAIImages, disableAIColumns, allowNoteEnhancement, enableCleaning]);
+  }, [aiSettings.customApiKey, aiSettings.customModel, highlightStyle, disableAIFlashcards, disableAIArrows, disableAIStickies, disableAIDividers, disableAIImages, disableAIColumns, allowNoteEnhancement, enableCleaning]);
 
   const updateArrow = useCallback((id: string, updates: Partial<ArrowData>) => {
     setArrows(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
@@ -2644,7 +2136,8 @@ export default function App() {
       </Dialog>
 
       {/* Settings Modal */}
-      <SettingsModal
+      <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+        <SettingsModal
         open={isSettingsOpen}
         onOpenChange={setIsSettingsOpen}
         customApiKey={customApiKey}
@@ -2688,354 +2181,74 @@ export default function App() {
         onFontSizeChange={setFontSize}
         onHandwritingToggle={setIsHandwriting}
       />
+      </Suspense>
 
       {/* Help Center */}
-      <HelpCenter open={isHelpOpen} onOpenChange={setIsHelpOpen} />
+      <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+        <HelpCenter open={isHelpOpen} onOpenChange={setIsHelpOpen} />
+      </Suspense>
 
       {/* Header */}
       <AnimatePresence>
         {!isCleanMode && (
-          <motion.header 
-            initial={{ y: -100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -100, opacity: 0 }}
-            className="w-full max-w-4xl flex justify-between items-center mb-12 shrink-0"
-          >
-            <div className="flex items-center gap-4">
-              {/* Logo */}
-              <div className="flex items-center gap-2 pr-4 border-r border-stone-200 dark:border-stone-800">
-                <img src="/papyruslogo.svg" alt="Papyrus Logo" className="w-9 h-11" />
-              </div>
-              
-              <div className="flex flex-col relative group">
-                <input
-                  type="text"
-                  placeholder="Subject Name"
-                  value={getActiveContext()?.subject.name || ''}
-                  onChange={(e) => {
-                    const context = getActiveContext();
-                    if (context) renameSubject(context.subject.id, e.target.value);
-                  }}
-                  className="text-[10px] font-sans font-bold tracking-[0.2em] opacity-40 uppercase bg-transparent border-none p-0 m-0 focus:outline-none focus:opacity-100 transition-opacity w-full max-w-[300px] placeholder:text-stone-300 dark:placeholder:text-stone-700"
-                />
-                <input
-                  type="text"
-                  placeholder="Chapter Title"
-                  value={getActiveContext()?.note.title || ''}
-                  onChange={(e) => {
-                    const context = getActiveContext();
-                    if (context) renameNote(context.note.id, e.target.value);
-                  }}
-                  className="text-2xl font-serif tracking-tighter opacity-80 uppercase bg-transparent border-none p-0 m-0 focus:outline-none focus:opacity-100 transition-opacity w-full max-w-[300px] placeholder:text-stone-300 dark:placeholder:text-stone-700"
-                />
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              {/* Flashcards Button */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        className={cn(
-                          "w-8 h-8 rounded-full relative transition-all duration-300",
-                          flashcards.filter(c => c.sourceNoteId === activeNoteId).length > 0 
-                            ? "bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 opacity-100 hover:scale-110" 
-                            : "opacity-60"
-                        )}
-                        onClick={() => handleStartStudy('note', activeNoteId)}
-                      >
-                        <Brain className="w-4 h-4" />
-                        {flashcards.filter(c => c.sourceNoteId === activeNoteId).length > 0 && (
-                          <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 rounded-full bg-amber-500 text-[#FFFCF5] text-[8px] font-mono font-bold flex items-center justify-center shadow-sm animate-bounce-slow">
-                            {flashcards.filter(c => c.sourceNoteId === activeNoteId).length}
-                          </span>
-                        )}
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {flashcards.filter(c => c.sourceNoteId === activeNoteId).length > 0 
-                      ? `Study Chapter Cards (${flashcards.filter(c => c.sourceNoteId === activeNoteId).length})` 
-                      : "No flashcards linked to this chapter"}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              {/* Help Button */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        className="w-8 h-8 rounded-full opacity-60 hover:opacity-100 transition-all hover:scale-105"
-                        onClick={() => setIsHelpOpen(true)}
-                      >
-                        <HelpCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>Help Center</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              {/* Settings Button */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        className="w-8 h-8 rounded-full opacity-60 hover:opacity-100 transition-all hover:scale-105"
-                        onClick={() => setIsSettingsOpen(true)}
-                      >
-                        <Settings className="w-4 h-4 text-stone-700 dark:text-stone-300" />
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>Settings</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <div className="w-px h-4 bg-stone-200 dark:bg-stone-800 mx-1" />
-    
-              {/* Search Button */}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="hidden md:flex items-center gap-2 px-3 py-1.5 h-auto text-xs font-medium border-stone-200 dark:border-stone-800 text-stone-500 hover:text-stone-900 dark:hover:text-stone-100 bg-white/50 dark:bg-stone-900/50 backdrop-blur-sm rounded-full transition-all"
-                onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', altKey: true }))}
-              >
-                <Search className="w-3.5 h-3.5" />
-                <span>Search notes</span>
-                <kbd className="ml-2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-                  <span className="text-xs">⌥</span>A
-                </kbd>
-              </Button>
-            </div>
-          </motion.header>
+          <AppHeader
+            isCleanMode={isCleanMode}
+            activeNoteId={activeNoteId}
+            subjects={subjects}
+            getActiveContext={getActiveContext}
+            onToggleCleanMode={() => setIsCleanMode(!isCleanMode)}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+            onOpenHelp={() => setIsHelpOpen(true)}
+            onExportPDF={handleExportPDF}
+            onDeleteNote={handleDeleteNote}
+            onAddNote={handleAddNote}
+          />
         )}
       </AnimatePresence>
 
       {/* Main Content Scroll Wrapper with Scaling */}
-      <div
-        className="relative transition-all duration-400 ease-smooth shrink-0 select-none flex items-start justify-center print-scale-container"
-        style={{
-          width: isExportingPDF ? `${displayWidth}px` : `${displayWidth * scale}px`,
-          height: isExportingPDF ? `${displayHeight}px` : `${displayHeight * scale}px`,
-          overflow: 'visible',
-          marginBottom: isCleanMode ? '0px' : '128px',
-        }}
-      >
-        <main 
-          className={cn(
-            "relative transition-all duration-400 ease-smooth shrink-0 print-main-canvas"
-          )} 
-          ref={mainAreaRef}
-          onClick={() => setSelectedArrowId(null)}
-          style={{
-            transform: isExportingPDF ? 'none' : `scale(${scale})`,
-            transformOrigin: 'top left',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: `${displayWidth}px`,
-            height: `${displayHeight}px`,
-          }}
-        >
-
-
-          <AnimatePresence>
-            {stickies.map(s => {
-              const visualPos = getVisualPosition(s.position || { x: 20, y: 100 });
-              return (
-                <StickyNote 
-                  key={s.id} 
-                  id={s.id}
-                  content={s.text} 
-                  color={s.color} 
-                  fontSize={s.fontSize}
-                  isPinned={s.isPinned}
-                  position={visualPos}
-                  containerRef={mainAreaRef}
-                  isHandwriting={isHandwriting}
-                  onEdit={openEditSticky}
-                  onTogglePin={() => togglePinSticky(s.id)}
-                  onUpdate={(updates) => {
-                    const canvasUpdates = { ...updates };
-                    if (updates.position) {
-                      const rawCanvasPos = getCanvasPosition(updates.position.x, updates.position.y);
-                      canvasUpdates.position = adjustStickyPos(rawCanvasPos);
-                    }
-                    setStickies(prev => prev.map(p => p.id === s.id ? { ...p, ...canvasUpdates } : p));
-                  }}
-                  onRemove={() => setStickies(prev => prev.filter(p => p.id !== s.id))} 
-                />
-              );
-            })}
-            {dividers.map(d => {
-              const visualPos = getVisualPosition(d.position);
-              const visualDivider = {
-                ...d,
-                position: visualPos
-              };
-              return (
-                <FloatingDivider
-                  key={d.id}
-                  divider={visualDivider}
-                  isCleanMode={isCleanMode}
-                  containerRef={mainAreaRef}
-                  onUpdate={(id, updates) => {
-                    const canvasUpdates = { ...updates };
-                    if (updates.position) {
-                      const rawCanvasPos = getCanvasPosition(updates.position.x, updates.position.y);
-                      const length = typeof d.length === 'number' ? d.length : (d.orientation === 'vertical' ? 240 : 20);
-                      canvasUpdates.position = adjustDividerPos(rawCanvasPos, d.orientation, length);
-                    }
-                    setDividers(prev => prev.map(div => div.id === id ? { ...div, ...canvasUpdates } : div));
-                  }}
-                  onRemove={(id) => setDividers(prev => prev.filter(div => div.id !== id))}
-                />
-              );
-            })}
-            {images.map(img => {
-              const visualPos = getVisualPosition(img.position);
-              const visualImage = {
-                ...img,
-                position: visualPos
-              };
-              return (
-                <DraggableImage
-                  key={img.id}
-                  image={visualImage}
-                  containerRef={mainAreaRef}
-                  onRemove={(id) => setImages(prev => prev.filter(i => i.id !== id))}
-                  onUpdate={(id, updates) => {
-                    const canvasUpdates = { ...updates };
-                    if (updates.position) {
-                      const rawCanvasPos = getCanvasPosition(updates.position.x, updates.position.y);
-                      canvasUpdates.position = rawCanvasPos;
-                    }
-                    setImages(prev => prev.map(i => i.id === id ? { ...i, ...canvasUpdates } : i));
-                  }}
-                />
-              );
-            })}
-            {arrows.map(a => {
-              const visualArrow = {
-                ...a,
-                start: getVisualPosition(a.start),
-                mid: getVisualPosition(a.mid),
-                end: getVisualPosition(a.end)
-              };
-              return (
-                <CurvedArrow
-                  key={a.id}
-                  arrow={visualArrow}
-                  theme={theme}
-                  isCleanMode={isCleanMode}
-                  scale={scale}
-                  onUpdate={updateArrow}
-                  onRemove={(id) => setArrows(prev => prev.filter(p => p.id !== id))}
-                  isSelected={selectedArrowId === a.id}
-                  onSelect={(id) => setSelectedArrowId(id)}
-                />
-              );
-            })}
-          </AnimatePresence>
-
-          {/* Real-time Pointer Drawing Stroke overlay */}
-          {isDrawingArrowMode && (
-            <div
-              className="absolute inset-x-0 top-0 bottom-0 select-none cursor-crosshair z-45 touch-none"
-              style={{ height: '100%', minHeight: `${displayHeight}px` }}
-              onPointerDown={handleDrawStart}
-              onPointerMove={handleDrawMove}
-              onPointerUp={handleDrawEnd}
-            >
-              {drawingPoints.length > 1 && (
-                <svg className="absolute inset-0 pointer-events-none w-full h-full overflow-visible">
-                  <path
-                    d={`M ${drawingPoints.map(p => `${p.x} ${p.y}`).join(' L ')}`}
-                    fill="none"
-                    stroke={(theme.id === 'dark' || theme.id === 'premium-dark') ? '#3B82F6' : '#1c1917'}
-                    strokeWidth={3.5}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="opacity-75 drop-shadow-sm"
-                  />
-                  {/* Glowing stylus end point */}
-                  <circle
-                    cx={drawingPoints[drawingPoints.length - 1].x}
-                    cy={drawingPoints[drawingPoints.length - 1].y}
-                    r={4}
-                    className="fill-cyan-500 animate-pulse"
-                  />
-                </svg>
-              )}
-            </div>
-          )}
-
-          {/* Spiral Notebook Wrapper */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className={cn(
-              "relative transition-all duration-400 ease-smooth print-paper-content z-10",
-              isHandwriting ? "font-handwriting" : "font-serif",
-              notebookStyle === 'spiral' && "notebook-spiral"
-            )}
-            style={{
-              backgroundColor: 'transparent',
-              width: `${canvasWidth}px`,
-              minHeight: '100%',
-              paddingBottom: '80px',
-            }}
-          >
-            {/* Premium Spiral Binding - SVG-based continuous metal wire */}
-            {notebookStyle === 'spiral' && spiralHeight > 0 && (
-              <SpiralBinding height={spiralHeight} pageHeight={pageHeight} pageGap={PAGE_GAP} />
-            )}
-
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-              className="relative z-10"
-            >
-              <Editor
-                content={content}
-                onChange={setContent}
-                onInit={setEditor}
-                onImagePaste={handleImagePaste}
-                activeHighlighterColor={activeHighlighterColor}
-                fontSize={fontSize}
-                onFormat={handleFormat}
-                isDrawingArrowMode={isDrawingArrowMode}
-                onToggleDrawingArrowMode={() => setIsDrawingArrowMode(!isDrawingArrowMode)}
-                pageLayout={pageLayout}
-                pageMargin={pageMargin}
-                theme={theme}
-                texture={texture}
-                onCreateFlashcard={handleCreateFlashcard}
-                onAISelectionFormat={handleAISelectionFormat}
-                className={cn(
-                  "min-h-[700px]",
-                  isHandwriting ? "[&_.ProseMirror]:font-handwriting [&_.ProseMirror_p]:font-handwriting [&_.ProseMirror_h1]:font-handwriting [&_.ProseMirror_h2]:font-handwriting [&_.ProseMirror_h3]:font-handwriting" : "[&_.ProseMirror]:font-bangla [&_.ProseMirror_p]:font-bangla [&_.ProseMirror_h1]:font-bangla [&_.ProseMirror_h2]:font-bangla [&_.ProseMirror_h3]:font-bangla",
-                  "[&_.ProseMirror]:whitespace-pre-wrap"
-                )}
-              />
-            </motion.div>
-          </motion.div>
-        </main>
-      </div>
+      <NoteCanvas
+        content={content}
+        setContent={setContent}
+        texture={texture}
+        theme={theme}
+        isHandwriting={isHandwriting}
+        fontSize={fontSize}
+        notebookStyle={notebookStyle}
+        pageLayout={pageLayout}
+        pageMargin={pageMargin}
+        pageLayoutMode={pageLayoutMode}
+        canvasWidth={canvasWidth}
+        mainHeight={mainHeight}
+        spiralHeight={spiralHeight}
+        stickies={stickies}
+        arrows={arrows}
+        dividers={dividers}
+        images={images}
+        selectedArrowId={selectedArrowId}
+        isDrawingArrowMode={isDrawingArrowMode}
+        drawingPoints={drawingPoints}
+        isDraggingDraw={isDraggingDraw}
+        editor={editor}
+        stickyEditor={stickyEditor}
+        setEditor={setEditor}
+        setStickyEditor={setStickyEditor}
+        onUpdateSticky={handleUpdateSticky}
+        onDeleteSticky={handleDeleteSticky}
+        onUpdateArrow={handleUpdateArrow}
+        onDeleteArrow={handleDeleteArrow}
+        onUpdateDivider={handleUpdateDivider}
+        onDeleteDivider={handleDeleteDivider}
+        onUpdateImage={handleUpdateImage}
+        onDeleteImage={handleDeleteImage}
+        onDrawStart={handleDrawStart}
+        onDrawMove={handleDrawMove}
+        onDrawEnd={handleDrawEnd}
+        onArrowClick={setSelectedArrowId}
+        onArrowDoubleClick={handleArrowDoubleClick}
+        mainAreaRef={mainAreaRef}
+        containerRef={containerRef}
+      />
 
       <AnimatePresence>
         {isImportOpen && (
@@ -3048,7 +2261,8 @@ export default function App() {
           />
         )}
         {isStudySessionActive && (
-          <StudySession 
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <StudySession 
             cards={studyQueue}
             theme={theme}
             texture={texture}
@@ -3060,6 +2274,7 @@ export default function App() {
             onRateCard={handleRateSingleCard}
             onDeleteCard={handleDeleteCardInSession}
           />
+          </Suspense>
         )}
         {creationCardData && !isSelectingBackActive && (
           <FlashcardCreator

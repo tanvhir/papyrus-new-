@@ -160,17 +160,24 @@ Navigate to `http://localhost:5173`
 ```
 papyrus/
 ├── src/
-│   ├── components/      # React components
-│   ├── lib/            # Utility functions
-│   ├── context/        # React context providers
-│   └── types.ts        # TypeScript definitions
+│   ├── components/         # React components (modularized)
+│   │   ├── editor/        # Editor components (EditorCore, EditorBubbleMenu, Editor)
+│   │   ├── settings/      # Settings modal components (AISettings, AppearanceSettings, PageSettings, EditorSettings, GeneralSettings, KeyboardSettings, AboutSettings, CommonSettings, SettingsModal)
+│   │   ├── study/         # Study session components (StudySession, StudySessionCard, StudySessionResults)
+│   │   ├── help/          # Help center components (HelpCenter, HelpNavigation, HelpContent, HelpComponents)
+│   │   └── ui/            # Reusable UI components
+│   ├── features/          # Feature-specific logic
+│   │   └── notes/         # Note management (StickyNoteManager, ArrowManager, DividerManager, ImageManager, NoteEditor, NoteToolbar, PDFExport, PageLayout, SubjectManager)
+│   ├── lib/               # Utility functions
+│   ├── context/           # React context providers
+│   └── types.ts          # TypeScript definitions
 ├── api/
-│   ├── ai/             # AI endpoints
-│   ├── auth/           # Authentication
-│   ├── notes/          # Note CRUD
-│   └── flashcards/     # Flashcard operations
+│   ├── ai/                # AI endpoints
+│   ├── auth/              # Authentication
+│   ├── notes/             # Note CRUD
+│   └── flashcards/        # Flashcard operations
 ├── install/
-│   └── schema.sql      # Database schema
+│   └── schema.sql         # Database schema
 └── public/
     └── papyruslogo.svg
 ```

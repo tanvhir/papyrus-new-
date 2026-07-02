@@ -18,6 +18,16 @@ export default defineConfig(({mode}) => {
     },
     build: {
       rollupOptions: {
+        output: {
+          manualChunks: {
+            'react-vendor': ['react', 'react-dom', 'motion/react'],
+            'ui-vendor': ['lucide-react', 'clsx', 'tailwind-merge'],
+            'editor-vendor': ['@tiptap/react', '@tiptap/starter-kit', '@tiptap/extension-placeholder'],
+            'features-study': ['./src/components/study/StudySession', './src/components/study/StudySessionCard', './src/components/study/StudySessionResults'],
+            'features-settings': ['./src/components/settings/SettingsModal', './src/components/settings/AISettings', './src/components/settings/AppearanceSettings', './src/components/settings/PageSettings', './src/components/settings/EditorSettings'],
+            'features-help': ['./src/components/help/HelpCenter', './src/components/help/HelpNavigation', './src/components/help/HelpContent'],
+          },
+        },
         onwarn(warning, warn) {
           // Ignore circular dependency warnings
           if (warning.code === 'CIRCULAR_DEPENDENCY') {
