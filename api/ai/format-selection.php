@@ -141,42 +141,9 @@ if (!$candidateJson) {
     errorResponse('Gemini did not return any content.', 500, 'GEMINI_EMPTY_RESPONSE');
 }
 
-// Log the raw response for debugging
-error_log("Raw Gemini response: " . substr($candidateJson, 0, 500));
-
-// Try to extract JSON from markdown code blocks if present
-$jsonToParse = $candidateJson;
-if (preg_match('/```(?:json)?\s*(.*?)\s*```/s', $candidateJson, $matches)) {
-    $jsonToParse = $matches[1];
-    error_log("Extracted JSON from markdown");
-}
-
-// Try parsing
-$formattedResult = json_decode(trim($jsonToParse), true);
+$formattedResult = json_decode(trim($candidateJson), true);
 if (!$formattedResult) {
-    // JSON parsing failed, try to return the raw HTML as fallback
-    error_log("JSON parsing failed, attempting fallback");
-    
-    // Check if response contains HTML
-    if (preg_match('/<[^>]+>/', $candidateJson)) {
-        // Return raw HTML as formattedHTML
-        $fallbackResult = [
-            'formattedHTML' => $candidateJson,
-            'stickies' => [],
-            'arrows' => [],
-            'dividers' => []
-        ];
-        successResponse($fallbackResult, 'Selection formatted (raw HTML fallback due to JSON parsing issue)!');
-    } else {
-        // Return as plain text in formattedHTML
-        $fallbackResult = [
-            'formattedHTML' => '<p>' . htmlspecialchars($candidateJson) . '</p>',
-            'stickies' => [],
-            'arrows' => [],
-            'dividers' => []
-        ];
-        successResponse($fallbackResult, 'Selection formatted (text fallback due to JSON parsing issue)!');
-    }
+    errorResponse('Failed to parse Gemini output as structured format JSON.', 500, 'PARSE_ERROR');
 }
 
 successResponse($formattedResult, 'Selection formatted successfully by Gemini AI!');
