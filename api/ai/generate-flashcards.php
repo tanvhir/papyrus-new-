@@ -162,15 +162,8 @@ if (!$candidateJson) {
     errorResponse('Gemini did not return any content.', 500, 'GEMINI_EMPTY_RESPONSE');
 }
 
-// Try to extract JSON from markdown if wrapped
-$candidateJson = trim($candidateJson);
-if (preg_match('/```(?:json)?\s*(.*?)\s*```/s', $candidateJson, $matches)) {
-    $candidateJson = $matches[1];
-}
-
-$formattedResult = json_decode($candidateJson, true);
+$formattedResult = json_decode(trim($candidateJson), true);
 if (!$formattedResult) {
-    error_log("Failed to parse JSON. Raw response: " . substr($candidateJson, 0, 1000));
     errorResponse('Failed to parse Gemini output as structured format JSON.', 500, 'PARSE_ERROR');
 }
 
