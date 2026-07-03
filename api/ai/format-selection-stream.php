@@ -162,17 +162,14 @@ curl_setopt($ch, CURLOPT_WRITEFUNCTION, function($ch, $data) use (&$fullResponse
         if ($chunkData && isset($chunkData['candidates'][0]['content']['parts'][0]['text'])) {
             $text = $chunkData['candidates'][0]['content']['parts'][0]['text'];
             
-            // Send chunk to frontend
-            echo "data: " . json_encode(['chunk' => $text]) . "\n\n";
+            // Send raw text chunk to frontend (ChatGPT-style)
+            echo "data: " . json_encode(['text' => $text]) . "\n\n";
             
             // Ensure output is sent immediately
             if (ob_get_level() > 0) {
                 ob_flush();
             }
             flush();
-        } elseif ($chunkData === null && json_last_error() !== JSON_ERROR_NONE) {
-            // Log parsing errors for debugging
-            error_log("Failed to parse streaming chunk: " . substr($line, 0, 200));
         }
     }
     
@@ -201,8 +198,22 @@ if ($httpCode !== 200 && empty($fullResponse)) {
     exit;
 }
 
-// Try to extract JSON from the full response
-$candidateJson = trim($fullResponse);
+// Send the full accumulated text for final parsing
+// Reconstruct the full text from all chunks
+$fullText = '';
+$lines = explode("\n", $fullResponse);
+foreach ($lines as $line) {
+    $line = trim($line);
+    if (empty($line)) continue;
+    
+    $chunkData = json_decode($line, true);
+    if ($chunkData && isset($chunkData['candidates'][0]['content']['parts'][0]['text'])) {
+        $fullText .= $chunkData['candidates'][0]['content']['parts'][0]['text'];
+    }
+}
+
+// Try to extract JSON from the full text
+$candidateJson = trim($fullText);
 
 // First, try to extract from markdown code blocks
 if (preg_match('/```(?:json)?\s*(.*?)\s*```/s', $candidateJson, $matches)) {
@@ -235,7 +246,14 @@ if ($formattedResult) {
         ];
         echo "data: " . json_encode(['done' => true, 'result' => $fallbackResult]) . "\n\n";
     } else {
-        echo "data: " . json_encode(['error' => 'Failed to parse JSON from response', 'raw' => substr($fullResponse, 0, 500)]) . "\n\n";
+        // Last resort: use the full text as formattedHTML
+        $fallbackResult = [
+            'formattedHTML' => trim($fullText),
+            'stickies' => [],
+            'arrows' => [],
+            'dividers' => []
+        ];
+        echo "data: " . json_encode(['done' => true, 'result' => $fallbackResult]) . "\n\n";
     }
 }
 

@@ -25,6 +25,7 @@ export const AIThinkingPanel = forwardRef<AIThinkingPanelRef, AIThinkingPanelPro
   const [thoughts, setThoughts] = useState<string[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [currentThought, setCurrentThought] = useState('');
+  const [accumulatedText, setAccumulatedText] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -50,6 +51,7 @@ export const AIThinkingPanel = forwardRef<AIThinkingPanelRef, AIThinkingPanelPro
     setIsStreaming(true);
     setThoughts([]);
     setCurrentThought('');
+    setAccumulatedText('');
     
     abortControllerRef.current = new AbortController();
 
@@ -102,27 +104,13 @@ export const AIThinkingPanel = forwardRef<AIThinkingPanelRef, AIThinkingPanelPro
                 return;
               }
 
-              if (parsed.chunk) {
-                setCurrentThought(prev => {
-                  const newThought = prev + parsed.chunk;
-                  
-                  // Split into thoughts on newlines for better display
-                  const lines = newThought.split('\n');
-                  if (lines.length > 1) {
-                    const completedThought = lines.slice(0, -1).join('\n');
-                    const remainingThought = lines[lines.length - 1];
-                    
-                    if (completedThought.trim()) {
-                      setThoughts(prevThoughts => [...prevThoughts, completedThought.trim()]);
-                    }
-                    
-                    return remainingThought;
-                  }
-                  
-                  return newThought;
-                });
+              // ChatGPT-style: Display text chunks in real-time
+              if (parsed.text) {
+                setAccumulatedText(prev => prev + parsed.text);
+                setCurrentThought(prev => prev + parsed.text);
               }
 
+              // Only parse JSON at the end
               if (parsed.done && parsed.result) {
                 onStreamComplete(parsed.result);
                 setIsStreaming(false);
