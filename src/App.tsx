@@ -714,7 +714,7 @@ export default function App() {
   const [pageMargin, setPageMargin] = useState<'normal' | 'narrow' | 'none'>('normal');
   const [pageLayoutMode, setPageLayoutMode] = useState<'single' | 'book'>('single');
   const [customApiKey, setCustomApiKey] = useState<string>(() => localStorage.getItem('academic_custom_api_key') || '');
-  const [customModel, setCustomModel] = useState<string>(() => localStorage.getItem('academic_custom_model') || 'gemini-2.5-flash');
+  const [customModel, setCustomModel] = useState<string>(() => localStorage.getItem('academic_custom_model') || 'gemma-4-31b-it');
   const [highlightStyle, setHighlightStyle] = useState<'balanced' | 'generous' | 'none'>(() => (localStorage.getItem('academic_highlight_style') as 'balanced' | 'generous' | 'none') || 'balanced');
   
   // New toggles for disabling specific AI features as requested by the user
@@ -783,10 +783,10 @@ export default function App() {
   };
 
   const BUILTIN_MODELS = [
-    'gemini-2.5-flash',
-    'gemini-3.5-flash',
-    'gemini-3.1-flash-lite',
     'gemma-4-31b-it',
+    'gemini-2.5-flash',
+    'gemini-3.1-flash-lite',
+    'gemini-3.5-flash',
   ];
 
   const [isCustomModelActive, setIsCustomModelActive] = useState(() => {
@@ -1809,7 +1809,7 @@ export default function App() {
           setDividers(data.dividers);
         }
       } else {
-        showError('AI formatting failed', data.message || 'AI formatting failed.');
+        showError('AI formatting failed', data.message || 'AI formatting failed.', undefined, data.debugInfo);
       }
     } catch (error: any) {
       console.error('Error during AI formatting:', error);
@@ -2478,7 +2478,7 @@ export default function App() {
         isCleanMode && "is-clean-mode"
       )}
       style={{ backgroundColor: theme.bgColor, color: theme.inkColor }}
-      data-theme={theme.id === 'premium-dark' ? 'premium-dark' : theme.id === 'dark' ? 'dark' : undefined}
+      data-theme={theme.id === 'premium-dark' ? 'premium-dark' : undefined}
     >
       <CommandPalette 
         subjects={subjects} 

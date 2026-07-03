@@ -106,7 +106,6 @@ class PromptBuilder {
             $rules .= "- CRITICAL: NEVER include `<div data-type=\"page\">` or any page wrapper tags in your formattedHTML output. Only return inline content (headings, paragraphs, lists, etc.) without page wrappers.\n";
         }
         
-        $rules .= "- STRICT SPARSITY RULE FOR STICKIES & ARROWS: Only generate stickies or arrows if they are absolutely necessary as highly relevant callouts (e.g. key summaries, formulas, or mnemonic definitions). If not absolutely essential, the \"stickies\" and \"arrows\" arrays MUST be empty ([]). Limit stickies to a maximum of 1 or 2.\n";
         $rules .= "- CRITICAL: Only use multi-column layouts when the user EXPLICITLY requests columns, side-by-side layout, comparison tables, or mnemonic layouts. DO NOT use columns for simple formatting requests like centering, highlighting, or basic text styling.\n";
         $rules .= "- When using multi-column elements, ensure valid structure: Each column MUST contain complete block-level elements (p, h1-h6, ul, ol, etc.). Never put inline text directly inside a column without a block wrapper.\n";
         $rules .= "- IMPORTANT DISTINCTION: When users say \"use an arrow to mark\" or \"point to\" something, they usually want you to generate a sticky note with an arrow annotation (in the \"stickies\" and \"arrows\" arrays), NOT create column layouts with inline SVG arrows. Only use the column+SVG arrow pattern for explicit mnemonic layouts.\n";

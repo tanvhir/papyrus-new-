@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, AlertTriangle, CheckCircle, Info, Copy, Check } from 'lucide-react';
+import { AlertCircle, AlertTriangle, CheckCircle, Info, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export type AlertType = 'error' | 'warning' | 'success' | 'info';
@@ -14,7 +14,7 @@ interface AlertModalProps {
   message?: string;
   onConfirm?: () => void;
   confirmText?: string;
-  debugInfo?: string;
+  debugInfo?: any;
 }
 
 const alertIcons = {
@@ -41,16 +41,6 @@ export const AlertModal: React.FC<AlertModalProps> = ({
   confirmText = 'OK',
   debugInfo
 }) => {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async () => {
-    if (debugInfo) {
-      await navigator.clipboard.writeText(debugInfo);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
   const handleConfirm = () => {
     if (onConfirm) {
       onConfirm();
@@ -58,9 +48,18 @@ export const AlertModal: React.FC<AlertModalProps> = ({
     onOpenChange(false);
   };
 
+  const handleCopyDebugInfo = () => {
+    if (debugInfo) {
+      const debugText = JSON.stringify(debugInfo, null, 2);
+      navigator.clipboard.writeText(debugText);
+    }
+  };
+
+  const debugString = debugInfo ? JSON.stringify(debugInfo, null, 2) : '';
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-3">
             <div className="flex-shrink-0">{alertIcons[type]}</div>
@@ -72,26 +71,27 @@ export const AlertModal: React.FC<AlertModalProps> = ({
             </DialogDescription>
           )}
         </DialogHeader>
+        
         {debugInfo && (
           <div className="mt-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider">Debug Info</span>
+              <h4 className="text-sm font-semibold text-stone-700 dark:text-stone-300">Debug Information</h4>
               <Button
-                type="button"
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                onClick={handleCopy}
-                className="h-6 text-xs"
+                onClick={handleCopyDebugInfo}
+                className="text-xs"
               >
-                {copied ? <Check className="w-3 h-3 mr-1" /> : <Copy className="w-3 h-3 mr-1" />}
-                {copied ? 'Copied!' : 'Copy'}
+                <Copy className="w-3 h-3 mr-1" />
+                Copy Debug Info
               </Button>
             </div>
-            <pre className="bg-stone-100 dark:bg-stone-900 p-3 rounded text-xs text-stone-700 dark:text-stone-300 overflow-auto max-h-48 whitespace-pre-wrap break-all">
-              {debugInfo}
+            <pre className="bg-stone-100 dark:bg-stone-900 p-3 rounded text-xs overflow-auto max-h-60 text-stone-800 dark:text-stone-200 font-mono">
+              {debugString}
             </pre>
           </div>
         )}
+        
         <DialogFooter>
           <Button onClick={handleConfirm}>
             {confirmText}

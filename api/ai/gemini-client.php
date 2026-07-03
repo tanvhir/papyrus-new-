@@ -67,8 +67,7 @@ class GeminiClient {
                 'temperature' => 0.7,
                 'topK' => 40,
                 'topP' => 0.95,
-                'maxOutputTokens' => 8192,
-                'responseMimeType' => 'application/json'
+                'maxOutputTokens' => 8192
             ]
         ]));
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
@@ -122,38 +121,7 @@ class GeminiClient {
             ];
         }
         
-        // Handle both text response and structured JSON response
-        $text = null;
-        $parts = $data['candidates'][0]['content']['parts'] ?? [];
-        
-        // Gemma 4 models may return multiple parts: thought + actual response
-        // We need to find the part that is NOT marked as "thought"
-        foreach ($parts as $part) {
-            if (isset($part['text']) && !($part['thought'] ?? false)) {
-                $text = $part['text'];
-                break;
-            }
-        }
-        
-        // Fallback to first part if no non-thought part found
-        if (!$text && isset($parts[0]['text'])) {
-            $text = $parts[0]['text'];
-        }
-        
-        // Check for structured JSON response (when responseMimeType is application/json)
-        if (!$text && isset($parts[0]) && is_array($parts[0]) && !isset($parts[0]['text'])) {
-            $structuredData = $parts[0];
-            // The structured data is already the parsed JSON
-            return [
-                'success' => true,
-                'data' => $data,
-                'structured' => $structuredData,
-                'text' => json_encode($structuredData),
-                'httpCode' => $httpCode
-            ];
-        }
-        
-        if (!$text) {
+        if (!isset($data['candidates'][0]['content']['parts'][0]['text'])) {
             return [
                 'success' => false,
                 'message' => 'Invalid response format from API',
@@ -165,7 +133,7 @@ class GeminiClient {
         return [
             'success' => true,
             'data' => $data,
-            'text' => $text,
+            'text' => $data['candidates'][0]['content']['parts'][0]['text'],
             'httpCode' => $httpCode
         ];
     }

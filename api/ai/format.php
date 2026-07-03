@@ -133,7 +133,7 @@ if ($isChunked) {
         $prompt .= "Arrow format: { \"id\": \"string\", \"start\": { \"x\": number, \"y\": number }, \"end\": { \"x\": number, \"y\": number }, \"mid\": { \"x\": number, \"y\": number }, \"color\": \"string\" }\n";
         $prompt .= "Divider format: { \"id\": \"string\", \"type\": \"solid|dashed|dotted|zigzag|wave\", \"orientation\": \"horizontal|vertical\", \"size\": number, \"length\": string, \"color\": string, \"position\": { \"x\": number, \"y\": number } }\n";
         $prompt .= "\nPlacement: Stickies on right margin (x: 850-920), stagger y by 250px starting from 150. Arrows from text (x: 600) to sticky.\n";
-        $prompt .= "Do not wrap JSON output in markdown backticks. Return ONLY valid JSON without any markdown formatting.";
+        $prompt .= "Do not wrap JSON output in markdown backticks.";
         
         // Call Gemini API
         $result = GeminiClient::call($prompt, $apiKey, $modelName);
@@ -152,48 +152,29 @@ if ($isChunked) {
         }
         
         // Parse response
-        $candidateJson = null;
-        
-        // Check if we got a structured JSON response directly
-        if (isset($result['structured']) && is_array($result['structured'])) {
-            $formattedResult = $result['structured'];
-        } else {
-            // Traditional text response
-            $candidateJson = $result['text'] ?? null;
-            if (!$candidateJson) {
-                errorResponse('Gemini did not return content for chunk ' . ($i + 1), 500, 'GEMINI_EMPTY_RESPONSE');
-            }
-            
-            // Try to extract JSON from markdown if wrapped
-            $candidateJson = trim($candidateJson);
-            if (preg_match('/```(?:json)?\s*(.*?)\s*```/s', $candidateJson, $matches)) {
-                $candidateJson = $matches[1];
-            }
-            
-            $formattedResult = json_decode($candidateJson, true);
+        $candidateJson = $result['text'] ?? null;
+        if (!$candidateJson) {
+            errorResponse('Gemini did not return content for chunk ' . ($i + 1), 500, 'GEMINI_EMPTY_RESPONSE');
         }
         
+        // Try to extract JSON from markdown if wrapped
+        $candidateJson = trim($candidateJson);
+        if (preg_match('/```(?:json)?\s*(.*?)\s*```/s', $candidateJson, $matches)) {
+            $candidateJson = $matches[1];
+        }
+        
+        $formattedResult = json_decode($candidateJson, true);
         if (!$formattedResult) {
+            error_log("Failed to parse JSON for chunk {$i}. Raw response: " . substr($candidateJson, 0, 1000));
             $debugInfo = [
-                'timestamp' => date('Y-m-d H:i:s'),
+                'rawResponse' => $candidateJson,
                 'model' => $modelName,
-                'chunk' => $i + 1,
-                'total_chunks' => $totalChunks,
-                'prompt_length' => strlen($prompt),
-                'prompt_preview' => substr($prompt, 0, 1000),
-                'raw_candidate_json' => $candidateJson ?? 'no text',
-                'raw_candidate_json_length' => strlen($candidateJson ?? ''),
-                'api_response' => $result,
-                'json_decode_error' => json_last_error_msg(),
-                'json_error_code' => json_last_error()
+                'timestamp' => date('Y-m-d H:i:s'),
+                'jsonError' => json_last_error_msg(),
+                'chunkIndex' => $i + 1,
+                'totalChunks' => $totalChunks
             ];
-            error_log("DEBUG INFO (Chunk {$i}): " . json_encode($debugInfo, JSON_PRETTY_PRINT));
-            
-            // Also save to a file for easy access
-            $debugFile = __DIR__ . '/debug_full_format_chunk_' . $i . '_' . time() . '.json';
-            file_put_contents($debugFile, json_encode($debugInfo, JSON_PRETTY_PRINT));
-            
-            errorResponse('Failed to parse Gemini output for chunk ' . ($i + 1) . '. Debug info saved to: ' . basename($debugFile), 500, 'PARSE_ERROR');
+            errorResponse('Failed to parse Gemini output for chunk ' . ($i + 1), 500, 'PARSE_ERROR', $debugInfo);
         }
         
         $formattedChunks[] = $formattedResult['content'] ?? '';
@@ -277,7 +258,13 @@ if ($isChunked) {
     $formattedResult = json_decode($candidateJson, true);
     if (!$formattedResult) {
         error_log("Failed to parse JSON. Raw response: " . substr($candidateJson, 0, 1000));
-        errorResponse('Failed to parse Gemini output as structured format JSON.', 500, 'PARSE_ERROR');
+        $debugInfo = [
+            'rawResponse' => $candidateJson,
+            'model' => $modelName,
+            'timestamp' => date('Y-m-d H:i:s'),
+            'jsonError' => json_last_error_msg()
+        ];
+        errorResponse('Failed to parse Gemini output as structured format JSON.', 500, 'PARSE_ERROR', $debugInfo);
     }
     
     successResponse($formattedResult, 'Note formatted successfully by Gemini AI!');

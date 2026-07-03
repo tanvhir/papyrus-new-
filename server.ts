@@ -280,7 +280,7 @@ CRITICAL INSTRUCTIONS FOR HIGH-QUALITY FORMATTING:
 1. STRICT SPARSITY RULE FOR STICKIES & ARROWS:
    - Only generate stickies or arrows if they are absolutely necessary as highly relevant callouts (e.g. key summaries, formulas, or mnemonic definitions).
    - If not absolutely essential, the "stickies" and "arrows" arrays MUST be empty ([]). Do not generate random definitions in stickies unless specifically requested or highly valuable! Limit stickies to a maximum of 1 or 2.
-2. ${highlightInstruction}
+${highlightInstruction}
 ${strictDisableInstructions}
 3. STICKY PLACEMENT ALGORITHM:
    - Place all generated stickies in the right-hand margin area.
@@ -484,14 +484,6 @@ Always keep the response as valid, pure JSON according to the requested schema. 
       
       const prompt = `You are an expert academic content designer. Your task is to format a SPECIFIC portion of a note based on the user's instructions.
 
-CRITICAL INSTRUCTIONS FOR HIGH-QUALITY FORMATTING:
-1. STRICT SPARSITY RULE FOR STICKIES & ARROWS:
-   - Only generate stickies or arrows if they are absolutely necessary as highly relevant callouts (e.g. key summaries, formulas, or mnemonic definitions).
-   - If not absolutely essential, the "stickies" and "arrows" arrays MUST be empty ([]). Limit stickies to a maximum of 1 or 2.
-2. ${highlightInstruction}
-${strictDisableInstructions}
-3. CRITICAL: Only use multi-column layouts when the user EXPLICITLY requests columns, side-by-side layout, comparison tables, or mnemonic layouts. DO NOT use columns for simple formatting requests like centering, highlighting, or basic text styling.
-
 User's custom formatting instruction: "${instruction}"
 
 Selected text to format:
@@ -506,6 +498,7 @@ Your response MUST be a single structured JSON object with the following fields:
 1. "formattedHTML": The beautifully formatted HTML representing ONLY the replacement for the selected portion.
    - You should restructure the HTML inline.
    - Use headings (h1, h2, h3), paragraphs (p), list items (li), and inline styles like strong, em, u as needed.
+   ${highlightInstruction}
    - If requested or suitable, use multi-column elements:
      <div data-type="columns"><div data-type="column"><h3>Left Column</h3><p>...</p></div><div data-type="column"><h3>Right Column</h3><p>...</p></div></div>
    - CRITICAL VISUAL MNEMONIC / DOWNWARD ARROW RESTRUCTURING PATTERN:
@@ -525,6 +518,8 @@ Your response MUST be a single structured JSON object with the following fields:
    - Format: { "id": "string", "start": { "x": number, "y": number }, "end": { "x": number, "y": number }, "mid": { "x": number, "y": number }, "color": "string" }
    - Alignment: Arrow should start around x: 600, y: centerY. It should end at the sticky note's position (e.g. x: 840, y: centerY). The 'mid' coordinate must have a slight curved bend (e.g., mid.x = (start.x + end.x) / 2, mid.y = (start.y + end.y) / 2 - 30).
 4. "dividers": An array of background dividers if relevant (usually empty [] unless explicitly requested).
+
+${strictDisableInstructions}
 
 Keep the content highly polished, academic, and extremely accurate to the user's instruction. Do not wrap the JSON output in markdown backticks.`;
 

@@ -422,37 +422,6 @@ function Editor({
           tempDiv.querySelectorAll(tag).forEach(el => el.remove());
         });
         
-        // Remove inline styles that force colors to allow theme inheritance
-        const allElements = tempDiv.querySelectorAll('*');
-        allElements.forEach(el => {
-          if (el instanceof HTMLElement) {
-            // Remove color-related inline styles to let theme colors apply
-            el.style.removeProperty('color');
-            el.style.removeProperty('background-color');
-            el.style.removeProperty('background');
-            el.style.removeProperty('font-family');
-            
-            // Remove color attributes
-            el.removeAttribute('color');
-            el.removeAttribute('bgcolor');
-            
-            // Remove style attributes that contain color properties
-            const style = el.getAttribute('style');
-            if (style) {
-              const colorProps = ['color', 'background-color', 'background', 'font-family'];
-              const styleParts = style.split(';').filter(s => {
-                const prop = s.trim().split(':')[0]?.toLowerCase();
-                return !colorProps.includes(prop);
-              });
-              if (styleParts.length > 0) {
-                el.setAttribute('style', styleParts.join(';'));
-              } else {
-                el.removeAttribute('style');
-              }
-            }
-          }
-        });
-        
         return tempDiv.innerHTML;
       },
       handleDOMEvents: {
