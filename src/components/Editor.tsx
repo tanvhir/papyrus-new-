@@ -22,6 +22,7 @@ import { Columns, Column } from '@/src/lib/MultiColumn';
 import { DOMSerializer } from '@tiptap/pm/model';
 import { cn, preserveSpaces } from '@/lib/utils';
 import { useToast } from '@/src/context/ToastContext';
+import { AIThinkingPanel } from '@/src/components/AIThinkingPanel';
 import {
   Bold,
   Italic,
@@ -233,6 +234,21 @@ function Editor({
   const [isAISelectionLoading, setIsAISelectionLoading] = React.useState(false);
   const [headingLevel, setHeadingLevel] = React.useState<3 | 2 | 1>(3);
   const [textAlign, setTextAlign] = React.useState<'left' | 'center' | 'right'>('left');
+  const [isThinkingPanelOpen, setIsThinkingPanelOpen] = React.useState(false);
+  const [thinkingRequestData, setThinkingRequestData] = React.useState<any>(null);
+
+  // Get AI settings from localStorage (same as App.tsx)
+  const customApiKey = localStorage.getItem('academic_custom_api_key') || '';
+  const customModel = localStorage.getItem('academic_custom_model') || 'gemma-4-31b-it';
+  const highlightStyle = (localStorage.getItem('academic_highlight_style') as 'balanced' | 'generous' | 'none') || 'balanced';
+  const disableAIFlashcards = localStorage.getItem('academic_disable_ai_flashcards') !== 'false';
+  const disableAIArrows = localStorage.getItem('academic_disable_ai_arrows') === 'true';
+  const disableAIStickies = localStorage.getItem('academic_disable_ai_stickies') !== 'false';
+  const disableAIDividers = localStorage.getItem('academic_disable_ai_dividers') === 'true';
+  const disableAIImages = localStorage.getItem('academic_disable_ai_images') !== 'false';
+  const disableAIColumns = localStorage.getItem('academic_disable_ai_columns') === 'true';
+  const allowNoteEnhancement = localStorage.getItem('academic_allow_note_enhancement') !== 'false';
+  const enableCleaning = localStorage.getItem('academic_enable_cleaning') !== 'false';
 
   const handleAISelectionSubmit = async () => {
     if (!editor || !onAISelectionFormat || !aiPromptText.trim()) return;
@@ -259,6 +275,26 @@ function Editor({
       tempDiv.appendChild(serializer.serializeFragment(fragment));
       const selectionHTML = tempDiv.innerHTML;
 
+      // Open thinking panel with streaming
+      setThinkingRequestData({
+        selectionText,
+        selectionHTML,
+        instruction: aiPromptText,
+        customApiKey,
+        customModel,
+        highlightStyle,
+        disableAIFlashcards,
+        disableAIArrows,
+        disableAIStickies,
+        disableAIDividers,
+        disableAIImages,
+        disableAIColumns,
+        allowNoteEnhancement,
+        enableCleaning,
+        centerY: 300 // Default center Y for selection
+      });
+      setIsThinkingPanelOpen(true);
+
       const result = await onAISelectionFormat(selectionText, selectionHTML, aiPromptText);
       if (result && result.formattedHTML) {
         editor.chain().focus().insertContentAt({ from, to }, result.formattedHTML).run();
@@ -270,7 +306,25 @@ function Editor({
       showError('Error formatting selection', e.message || String(e));
     } finally {
       setIsAISelectionLoading(false);
+      setIsThinkingPanelOpen(false);
     }
+  };
+
+  const handleStreamComplete = (result: any) => {
+    if (result && result.formattedHTML && editor) {
+      const { from, to } = editor.state.selection;
+      editor.chain().focus().insertContentAt({ from, to }, result.formattedHTML).run();
+      setAiPromptText('');
+      setActiveSubMenu('main');
+    }
+    setIsThinkingPanelOpen(false);
+    setIsAISelectionLoading(false);
+  };
+
+  const handleStreamError = (error: string) => {
+    showError('AI streaming error', error);
+    setIsThinkingPanelOpen(false);
+    setIsAISelectionLoading(false);
   };
 
   const isPaintingRef = React.useRef(false);
@@ -1279,6 +1333,14 @@ function Editor({
           </div>
         </DialogContent>
       </Dialog>
+
+      <AIThinkingPanel
+        isOpen={isThinkingPanelOpen}
+        onClose={() => setIsThinkingPanelOpen(false)}
+        onStreamComplete={handleStreamComplete}
+        onError={handleStreamError}
+        requestData={thinkingRequestData}
+      />
     </div>
   );
 };

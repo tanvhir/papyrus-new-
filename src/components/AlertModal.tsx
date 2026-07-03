@@ -86,7 +86,7 @@ export const AlertModal: React.FC<AlertModalProps> = ({
                 Copy Debug Info
               </Button>
             </div>
-            <pre className="bg-stone-100 dark:bg-stone-900 p-3 rounded text-xs overflow-auto max-h-60 text-stone-800 dark:text-stone-200 font-mono">
+            <pre className="bg-stone-100 dark:bg-stone-900 p-3 rounded text-xs overflow-auto max-h-60 text-stone-800 dark:text-stone-200 font-mono whitespace-pre-wrap break-words">
               {debugString}
             </pre>
           </div>
