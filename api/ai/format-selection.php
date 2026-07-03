@@ -184,7 +184,9 @@ if (!$formattedResult) {
     $debugFile = __DIR__ . '/debug_selection_format_' . time() . '.json';
     file_put_contents($debugFile, json_encode($debugInfo, JSON_PRETTY_PRINT));
     
-    errorResponse('Failed to parse Gemini output as structured format JSON. Debug info saved to: ' . basename($debugFile), 500, 'PARSE_ERROR');
+    // Return debug info in response for frontend display
+    $debugJson = json_encode($debugInfo, JSON_PRETTY_PRINT);
+    errorResponse('Failed to parse Gemini output as structured format JSON.', 500, 'PARSE_ERROR', $debugJson);
 }
 
 successResponse($formattedResult, 'Selection formatted successfully by Gemini AI!');

@@ -10,12 +10,16 @@ function jsonResponse($data, $statusCode = 200) {
     exit;
 }
 
-function errorResponse($message, $statusCode = 400, $code = 'ERROR') {
-    jsonResponse([
+function errorResponse($message, $statusCode = 400, $code = 'ERROR', $debugInfo = null) {
+    $response = [
         'success' => false,
         'message' => $message,
         'code' => $code
-    ], $statusCode);
+    ];
+    if ($debugInfo !== null) {
+        $response['debugInfo'] = $debugInfo;
+    }
+    jsonResponse($response, $statusCode);
 }
 
 function successResponse($data = [], $message = 'Success') {

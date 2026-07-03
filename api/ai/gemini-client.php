@@ -124,22 +124,33 @@ class GeminiClient {
         
         // Handle both text response and structured JSON response
         $text = null;
-        if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
-            // Text response (traditional format)
-            $text = $data['candidates'][0]['content']['parts'][0]['text'];
-        } elseif (isset($data['candidates'][0]['content']['parts'][0])) {
-            // Structured JSON response (when responseMimeType is application/json)
-            $structuredData = $data['candidates'][0]['content']['parts'][0];
-            if (is_array($structuredData)) {
-                // The structured data is already the parsed JSON
-                return [
-                    'success' => true,
-                    'data' => $data,
-                    'structured' => $structuredData,
-                    'text' => json_encode($structuredData),
-                    'httpCode' => $httpCode
-                ];
+        $parts = $data['candidates'][0]['content']['parts'] ?? [];
+        
+        // Gemma 4 models may return multiple parts: thought + actual response
+        // We need to find the part that is NOT marked as "thought"
+        foreach ($parts as $part) {
+            if (isset($part['text']) && !($part['thought'] ?? false)) {
+                $text = $part['text'];
+                break;
             }
+        }
+        
+        // Fallback to first part if no non-thought part found
+        if (!$text && isset($parts[0]['text'])) {
+            $text = $parts[0]['text'];
+        }
+        
+        // Check for structured JSON response (when responseMimeType is application/json)
+        if (!$text && isset($parts[0]) && is_array($parts[0]) && !isset($parts[0]['text'])) {
+            $structuredData = $parts[0];
+            // The structured data is already the parsed JSON
+            return [
+                'success' => true,
+                'data' => $data,
+                'structured' => $structuredData,
+                'text' => json_encode($structuredData),
+                'httpCode' => $httpCode
+            ];
         }
         
         if (!$text) {

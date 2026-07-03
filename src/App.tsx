@@ -1907,7 +1907,7 @@ export default function App() {
         }
         return { formattedHTML: data.formattedHTML };
       } else {
-        showError('AI selection formatting failed', data.message || 'AI selection formatting failed.');
+        showError('AI selection formatting failed', data.message || 'AI selection formatting failed.', undefined, data.debugInfo);
       }
     } catch (error: any) {
       console.error('AI selection format error:', error);

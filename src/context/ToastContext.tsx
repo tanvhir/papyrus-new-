@@ -4,11 +4,11 @@ import { AlertModal, AlertType } from '@/src/components/AlertModal';
 
 interface ToastContextType {
   toasts: Toast[];
-  showToast: (type: ToastType, title: string, message?: string, duration?: number) => void;
+  showToast: (type: ToastType, title: string, message?: string, duration?: number, debugInfo?: string) => void;
   removeToast: (id: string) => void;
   showSuccess: (title: string, message?: string, duration?: number) => void;
-  showError: (title: string, message?: string, duration?: number) => void;
-  showWarning: (title: string, message?: string, duration?: number) => void;
+  showError: (title: string, message?: string, duration?: number, debugInfo?: string) => void;
+  showWarning: (title: string, message?: string, duration?: number, debugInfo?: string) => void;
   showInfo: (title: string, message?: string, duration?: number) => void;
 }
 
@@ -29,25 +29,28 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     type: AlertType;
     title: string;
     message?: string;
+    debugInfo?: string;
   }>({
     open: false,
     type: 'info',
     title: '',
-    message: ''
+    message: '',
+    debugInfo: undefined
   });
 
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
-  const showToast = useCallback((type: ToastType, title: string, message?: string, duration?: number) => {
+  const showToast = useCallback((type: ToastType, title: string, message?: string, duration?: number, debugInfo?: string) => {
     // Use modal for errors and warnings, toast for success and info
     if (type === 'error' || type === 'warning') {
       setAlertModal({
         open: true,
         type: type as AlertType,
         title,
-        message
+        message,
+        debugInfo
       });
     } else {
       const id = Math.random().toString(36).substr(2, 9);
@@ -59,12 +62,12 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     showToast('success', title, message, duration);
   }, [showToast]);
 
-  const showError = useCallback((title: string, message?: string, duration?: number) => {
-    showToast('error', title, message, duration);
+  const showError = useCallback((title: string, message?: string, duration?: number, debugInfo?: string) => {
+    showToast('error', title, message, duration, debugInfo);
   }, [showToast]);
 
-  const showWarning = useCallback((title: string, message?: string, duration?: number) => {
-    showToast('warning', title, message, duration);
+  const showWarning = useCallback((title: string, message?: string, duration?: number, debugInfo?: string) => {
+    showToast('warning', title, message, duration, debugInfo);
   }, [showToast]);
 
   const showInfo = useCallback((title: string, message?: string, duration?: number) => {
@@ -91,6 +94,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         type={alertModal.type}
         title={alertModal.title}
         message={alertModal.message}
+        debugInfo={alertModal.debugInfo}
       />
     </ToastContext.Provider>
   );
