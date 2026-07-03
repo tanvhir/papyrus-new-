@@ -145,7 +145,16 @@ if (isset($result['structured']) && is_array($result['structured'])) {
     $candidateJson = $result['text'] ?? null;
     
     if (!$candidateJson) {
-        errorResponse('Gemini did not return any content.', 500, 'GEMINI_EMPTY_RESPONSE');
+        $debugInfo = [
+            'timestamp' => date('Y-m-d H:i:s'),
+            'model' => $modelName,
+            'prompt_length' => strlen($prompt),
+            'prompt_preview' => substr($prompt, 0, 500),
+            'api_response' => $result,
+            'error' => 'No content returned from Gemini'
+        ];
+        error_log("DEBUG INFO: " . json_encode($debugInfo, JSON_PRETTY_PRINT));
+        errorResponse('Gemini did not return any content. Debug info logged.', 500, 'GEMINI_EMPTY_RESPONSE');
     }
     
     // Try to extract JSON from markdown if wrapped
@@ -158,8 +167,24 @@ if (isset($result['structured']) && is_array($result['structured'])) {
 }
 
 if (!$formattedResult) {
-    error_log("Failed to parse JSON. Raw response: " . substr($candidateJson ?? 'no text', 0, 1000));
-    errorResponse('Failed to parse Gemini output as structured format JSON.', 500, 'PARSE_ERROR');
+    $debugInfo = [
+        'timestamp' => date('Y-m-d H:i:s'),
+        'model' => $modelName,
+        'prompt_length' => strlen($prompt),
+        'prompt_preview' => substr($prompt, 0, 1000),
+        'raw_candidate_json' => $candidateJson ?? 'no text',
+        'raw_candidate_json_length' => strlen($candidateJson ?? ''),
+        'api_response' => $result,
+        'json_decode_error' => json_last_error_msg(),
+        'json_error_code' => json_last_error()
+    ];
+    error_log("DEBUG INFO: " . json_encode($debugInfo, JSON_PRETTY_PRINT));
+    
+    // Also save to a file for easy access
+    $debugFile = __DIR__ . '/debug_selection_format_' . time() . '.json';
+    file_put_contents($debugFile, json_encode($debugInfo, JSON_PRETTY_PRINT));
+    
+    errorResponse('Failed to parse Gemini output as structured format JSON. Debug info saved to: ' . basename($debugFile), 500, 'PARSE_ERROR');
 }
 
 successResponse($formattedResult, 'Selection formatted successfully by Gemini AI!');

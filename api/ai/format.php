@@ -174,8 +174,26 @@ if ($isChunked) {
         }
         
         if (!$formattedResult) {
-            error_log("Failed to parse JSON for chunk {$i}. Raw response: " . substr($candidateJson ?? 'no text', 0, 1000));
-            errorResponse('Failed to parse Gemini output for chunk ' . ($i + 1), 500, 'PARSE_ERROR');
+            $debugInfo = [
+                'timestamp' => date('Y-m-d H:i:s'),
+                'model' => $modelName,
+                'chunk' => $i + 1,
+                'total_chunks' => $totalChunks,
+                'prompt_length' => strlen($prompt),
+                'prompt_preview' => substr($prompt, 0, 1000),
+                'raw_candidate_json' => $candidateJson ?? 'no text',
+                'raw_candidate_json_length' => strlen($candidateJson ?? ''),
+                'api_response' => $result,
+                'json_decode_error' => json_last_error_msg(),
+                'json_error_code' => json_last_error()
+            ];
+            error_log("DEBUG INFO (Chunk {$i}): " . json_encode($debugInfo, JSON_PRETTY_PRINT));
+            
+            // Also save to a file for easy access
+            $debugFile = __DIR__ . '/debug_full_format_chunk_' . $i . '_' . time() . '.json';
+            file_put_contents($debugFile, json_encode($debugInfo, JSON_PRETTY_PRINT));
+            
+            errorResponse('Failed to parse Gemini output for chunk ' . ($i + 1) . '. Debug info saved to: ' . basename($debugFile), 500, 'PARSE_ERROR');
         }
         
         $formattedChunks[] = $formattedResult['content'] ?? '';
