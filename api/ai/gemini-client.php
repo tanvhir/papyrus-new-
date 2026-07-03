@@ -67,7 +67,8 @@ class GeminiClient {
                 'temperature' => 0.7,
                 'topK' => 40,
                 'topP' => 0.95,
-                'maxOutputTokens' => 8192
+                'maxOutputTokens' => 8192,
+                'responseMimeType' => 'application/json'
             ]
         ]));
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
@@ -121,7 +122,27 @@ class GeminiClient {
             ];
         }
         
-        if (!isset($data['candidates'][0]['content']['parts'][0]['text'])) {
+        // Handle both text response and structured JSON response
+        $text = null;
+        if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
+            // Text response (traditional format)
+            $text = $data['candidates'][0]['content']['parts'][0]['text'];
+        } elseif (isset($data['candidates'][0]['content']['parts'][0])) {
+            // Structured JSON response (when responseMimeType is application/json)
+            $structuredData = $data['candidates'][0]['content']['parts'][0];
+            if (is_array($structuredData)) {
+                // The structured data is already the parsed JSON
+                return [
+                    'success' => true,
+                    'data' => $data,
+                    'structured' => $structuredData,
+                    'text' => json_encode($structuredData),
+                    'httpCode' => $httpCode
+                ];
+            }
+        }
+        
+        if (!$text) {
             return [
                 'success' => false,
                 'message' => 'Invalid response format from API',
@@ -133,7 +154,7 @@ class GeminiClient {
         return [
             'success' => true,
             'data' => $data,
-            'text' => $data['candidates'][0]['content']['parts'][0]['text'],
+            'text' => $text,
             'httpCode' => $httpCode
         ];
     }
