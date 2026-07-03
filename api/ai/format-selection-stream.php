@@ -178,6 +178,8 @@ if ($error) {
 
 // Try to extract JSON from the full response
 $candidateJson = trim($fullResponse);
+
+// First, try to extract from markdown code blocks
 if (preg_match('/```(?:json)?\s*(.*?)\s*```/s', $candidateJson, $matches)) {
     $candidateJson = $matches[1];
 }
@@ -191,7 +193,25 @@ $formattedResult = json_decode($candidateJson, true);
 if ($formattedResult) {
     echo "data: " . json_encode(['done' => true, 'result' => $formattedResult]) . "\n\n";
 } else {
-    echo "data: " . json_encode(['error' => 'Failed to parse JSON from response', 'raw' => substr($fullResponse, 0, 500)]) . "\n\n";
+    // If JSON parsing failed, check if it's direct HTML
+    // Remove "html" prefix if present
+    $htmlContent = $candidateJson;
+    if (preg_match('/^html\s*\n/i', $htmlContent)) {
+        $htmlContent = preg_replace('/^html\s*\n/i', '', $htmlContent);
+    }
+    
+    // If it looks like HTML (starts with <), wrap it in JSON structure
+    if (preg_match('/^\s*</', $htmlContent)) {
+        $fallbackResult = [
+            'formattedHTML' => trim($htmlContent),
+            'stickies' => [],
+            'arrows' => [],
+            'dividers' => []
+        ];
+        echo "data: " . json_encode(['done' => true, 'result' => $fallbackResult]) . "\n\n";
+    } else {
+        echo "data: " . json_encode(['error' => 'Failed to parse JSON from response', 'raw' => substr($fullResponse, 0, 500)]) . "\n\n";
+    }
 }
 
 echo "data: [DONE]\n\n";

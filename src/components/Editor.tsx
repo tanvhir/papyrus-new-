@@ -79,7 +79,6 @@ interface EditorProps {
   texture?: 'plain' | 'laid' | 'grid' | 'linen';
   onCreateFlashcard?: (text: string) => void;
   isSimpleMode?: boolean;
-  onAISelectionFormat?: (selectionText: string, selectionHTML: string, instruction: string) => Promise<{ formattedHTML: string; stickies?: any[]; arrows?: any[]; dividers?: any[] }>;
 }
 
 const CustomDocument = Document.extend({
@@ -223,8 +222,7 @@ function Editor({
   theme,
   texture = 'plain',
   onCreateFlashcard,
-  isSimpleMode = false,
-  onAISelectionFormat
+  isSimpleMode = false
 }: EditorProps) {
   const { showError } = useToast();
   const [activeSubMenu, setActiveSubMenu] = React.useState<SubMenu>('main');
@@ -251,7 +249,7 @@ function Editor({
   const enableCleaning = localStorage.getItem('academic_enable_cleaning') !== 'false';
 
   const handleAISelectionSubmit = async () => {
-    if (!editor || !onAISelectionFormat || !aiPromptText.trim()) return;
+    if (!editor || !aiPromptText.trim()) return;
     setIsAISelectionLoading(true);
 
     try {
@@ -275,7 +273,7 @@ function Editor({
       tempDiv.appendChild(serializer.serializeFragment(fragment));
       const selectionHTML = tempDiv.innerHTML;
 
-      // Open thinking panel with streaming
+      // Open thinking panel with streaming ONLY
       setThinkingRequestData({
         selectionText,
         selectionHTML,
@@ -291,31 +289,32 @@ function Editor({
         disableAIColumns,
         allowNoteEnhancement,
         enableCleaning,
-        centerY: 300 // Default center Y for selection
+        centerY: 300,
+        selectionRange: { from, to }
       });
       setIsThinkingPanelOpen(true);
-
-      const result = await onAISelectionFormat(selectionText, selectionHTML, aiPromptText);
-      if (result && result.formattedHTML) {
-        editor.chain().focus().insertContentAt({ from, to }, result.formattedHTML).run();
-        setAiPromptText('');
-        setActiveSubMenu('main');
-      }
     } catch (e: any) {
       console.error(e);
       showError('Error formatting selection', e.message || String(e));
-    } finally {
       setIsAISelectionLoading(false);
-      setIsThinkingPanelOpen(false);
     }
   };
 
   const handleStreamComplete = (result: any) => {
-    if (result && result.formattedHTML && editor) {
-      const { from, to } = editor.state.selection;
-      editor.chain().focus().insertContentAt({ from, to }, result.formattedHTML).run();
-      setAiPromptText('');
-      setActiveSubMenu('main');
+    if (result && editor) {
+      // Use the saved selection range from when the request was made
+      const selectionRange = thinkingRequestData?.selectionRange;
+      if (selectionRange) {
+        const { from, to } = selectionRange;
+        
+        // Handle both JSON response (with formattedHTML) and direct HTML response
+        const htmlToInsert = result.formattedHTML || result;
+        if (htmlToInsert && typeof htmlToInsert === 'string') {
+          editor.chain().focus().insertContentAt({ from, to }, htmlToInsert).run();
+          setAiPromptText('');
+          setActiveSubMenu('main');
+        }
+      }
     }
     setIsThinkingPanelOpen(false);
     setIsAISelectionLoading(false);
