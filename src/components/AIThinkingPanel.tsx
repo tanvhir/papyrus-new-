@@ -103,17 +103,24 @@ export const AIThinkingPanel = forwardRef<AIThinkingPanelRef, AIThinkingPanelPro
               }
 
               if (parsed.chunk) {
-                setCurrentThought(prev => prev + parsed.chunk);
-                
-                // Split into thoughts on newlines for better display
-                const lines = currentThought.split('\n');
-                if (lines.length > 1) {
-                  const newThought = lines.slice(0, -1).join('\n');
-                  if (newThought && !thoughts.includes(newThought)) {
-                    setThoughts(prev => [...prev, newThought]);
-                    setCurrentThought(lines[lines.length - 1]);
+                setCurrentThought(prev => {
+                  const newThought = prev + parsed.chunk;
+                  
+                  // Split into thoughts on newlines for better display
+                  const lines = newThought.split('\n');
+                  if (lines.length > 1) {
+                    const completedThought = lines.slice(0, -1).join('\n');
+                    const remainingThought = lines[lines.length - 1];
+                    
+                    if (completedThought.trim()) {
+                      setThoughts(prevThoughts => [...prevThoughts, completedThought.trim()]);
+                    }
+                    
+                    return remainingThought;
                   }
-                }
+                  
+                  return newThought;
+                });
               }
 
               if (parsed.done && parsed.result) {

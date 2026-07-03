@@ -14,7 +14,12 @@ require_once __DIR__ . '/gemini-client.php';
 header('Content-Type: text/event-stream');
 header('Cache-Control: no-cache');
 header('Connection: keep-alive');
-header('X-Accel-Buffering: no'); // Disable nginx buffering
+header('X-Accel-Buffering: no');
+// Disable output buffering
+ini_set('output_buffering', 'off');
+ini_set('zlib.output_compression', false);
+while (@ob_end_flush());
+ob_implicit_flush(true); // Disable nginx buffering
 
 // Safe authentication
 startSecureSession();
@@ -140,26 +145,34 @@ curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
     ]
 ]));
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+curl_setopt($ch, CURLOPT_TIMEOUT, 300);
+curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
 curl_setopt($ch, CURLOPT_WRITEFUNCTION, function($ch, $data) use (&$fullResponse) {
     $fullResponse .= $data;
     
-    // Parse streaming chunks
+    // Parse streaming chunks - Gemini sends JSON objects separated by newlines
     $lines = explode("\n", $data);
     foreach ($lines as $line) {
         $line = trim($line);
-        if (empty($line) || $line === 'data: [DONE]') continue;
+        if (empty($line)) continue;
         
-        if (strpos($line, 'data: ') === 0) {
-            $jsonStr = substr($line, 6);
-            $chunkData = json_decode($jsonStr, true);
+        // Try to parse as JSON (Gemini streaming format)
+        $chunkData = json_decode($line, true);
+        
+        if ($chunkData && isset($chunkData['candidates'][0]['content']['parts'][0]['text'])) {
+            $text = $chunkData['candidates'][0]['content']['parts'][0]['text'];
             
-            if ($chunkData && isset($chunkData['candidates'][0]['content']['parts'][0]['text'])) {
-                $text = $chunkData['candidates'][0]['content']['parts'][0]['text'];
-                echo "data: " . json_encode(['chunk' => $text]) . "\n\n";
+            // Send chunk to frontend
+            echo "data: " . json_encode(['chunk' => $text]) . "\n\n";
+            
+            // Ensure output is sent immediately
+            if (ob_get_level() > 0) {
                 ob_flush();
-                flush();
             }
+            flush();
+        } elseif ($chunkData === null && json_last_error() !== JSON_ERROR_NONE) {
+            // Log parsing errors for debugging
+            error_log("Failed to parse streaming chunk: " . substr($line, 0, 200));
         }
     }
     
@@ -171,8 +184,20 @@ $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $error = curl_error($ch);
 curl_close($ch);
 
+// If there was an error but we received some data, try to process it
 if ($error) {
-    echo "data: " . json_encode(['error' => 'cURL error: ' . $error]) . "\n\n";
+    // If we have accumulated data, try to process it as partial response
+    if (!empty($fullResponse)) {
+        error_log("cURL error but received data: " . strlen($fullResponse) . " bytes");
+        // Continue to processing below
+    } else {
+        echo "data: " . json_encode(['error' => 'cURL error: ' . $error, 'bytesReceived' => strlen($fullResponse)]) . "\n\n";
+        exit;
+    }
+}
+
+if ($httpCode !== 200 && empty($fullResponse)) {
+    echo "data: " . json_encode(['error' => 'HTTP error: ' . $httpCode, 'response' => substr($fullResponse, 0, 500)]) . "\n\n";
     exit;
 }
 
