@@ -1,6 +1,0 @@
-{
-  "name": "Papyrus",
-  "description": "Papyrus is a premium, cloud-synced study platform combining paper-like writing, mathematical formulas, and custom flashcards with a professional PHP+MySQL database sync for cPanel and shared hosting.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
