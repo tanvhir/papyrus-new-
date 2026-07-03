@@ -1,0 +1,791 @@
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans+Text:wght@400;500;700&family=Atma:wght@300;400;500;600&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Hind+Siliguri:wght@300;400;600&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --font-sans: "Google Sans Text", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Google Sans Text", Georgia, serif;
+  --font-mono: "Google Sans Text", ui-monospace, SFMono-Regular, monospace;
+  --font-bangla: "Google Sans Text", sans-serif;
+  --font-handwriting: "Google Sans Text", cursive;
+
+  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  body {
+    @apply bg-[#F4F1EA] text-[#1A1A1A] antialiased;
+    font-family: "Google Sans Text", ui-sans-serif, system-ui, sans-serif !important;
+  }
+
+  * {
+    font-family: inherit !important;
+  }
+
+  /* Force Google Sans on all text elements */
+  h1, h2, h3, h4, h5, h6, p, span, div, button, input, textarea, label, a, li, td, th {
+    font-family: "Google Sans Text", ui-sans-serif, system-ui, sans-serif !important;
+  }
+}
+
+/* Paper Textures */
+.paper-laid {
+  background-image: linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px);
+  background-size: 100% 2.5rem;
+}
+
+.paper-grid {
+  background-image:
+    linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+  background-size: 2rem 2rem;
+}
+
+.paper-linen {
+  background:
+    linear-gradient(rgba(0,0,0,0.02) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(0,0,0,0.02) 2px, transparent 2px);
+  background-size: 4px 4px;
+}
+
+/* ========================================
+   Premium Spiral Notebook Styles
+   Apple-quality aesthetic with subtle realism
+   ======================================== */
+
+/* CSS Variables for customization */
+:root {
+  --spiral-paper-color: #FCFBF8;
+  --spiral-paper-texture-opacity: 0.03;
+  --spiral-line-color: rgba(180, 180, 180, 0.4);
+  --spiral-line-spacing: 28px;
+  --spiral-margin-color: rgba(239, 68, 68, 0.35);
+  --spiral-margin-offset: 36px;
+  --spiral-binding-width: 36px;
+  --spiral-binding-margin: 40px;
+  --spiral-paper-radius: 10px;
+  --spiral-shadow-opacity: 0.08;
+}
+
+/* Premium paper container */
+.notebook-spiral .page-container-node {
+  position: relative;
+  padding-left: calc(var(--page-margin-x, 64px) + var(--spiral-binding-margin)) !important;
+  background-color: var(--spiral-paper-color);
+  background-image:
+    /* Subtle natural paper texture */
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paperNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paperNoise)' opacity='0.03'/%3E%3C/svg%3E"),
+    /* Horizontal ruled lines - very subtle gray */
+    repeating-linear-gradient(
+      transparent,
+      transparent calc(var(--spiral-line-spacing) - 1px),
+      var(--spiral-line-color) calc(var(--spiral-line-spacing) - 1px),
+      var(--spiral-line-color) var(--spiral-line-spacing)
+    );
+  background-size: 100% 100%, 100% var(--spiral-line-spacing);
+  border-radius: var(--spiral-paper-radius);
+  box-shadow:
+    /* Subtle ambient shadow */
+    0 2px 8px rgba(0, 0, 0, var(--spiral-shadow-opacity)),
+    0 8px 24px rgba(0, 0, 0, calc(var(--spiral-shadow-opacity) * 0.6)),
+    /* Inner shadow for paper edge depth */
+    inset 0 0 0 1px rgba(0, 0, 0, 0.02),
+    inset 1px 0 2px rgba(0, 0, 0, 0.015);
+  transition: all 0.3s ease;
+}
+
+/* Red margin line - positioned at 36px from left edge */
+.notebook-spiral .page-container-node::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: calc(var(--page-margin-x, 64px) + var(--spiral-margin-offset));
+  width: 1px;
+  height: 100%;
+  background-color: var(--spiral-margin-color);
+  pointer-events: none;
+  z-index: 10;
+  transition: opacity 0.3s ease;
+}
+
+/* Binding edge shadow - subtle gradient where paper meets binding */
+.notebook-spiral .page-container-node::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--spiral-binding-width);
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.06) 0%,
+    rgba(0, 0, 0, 0.02) 60%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 5;
+  border-radius: var(--spiral-paper-radius) 0 0 var(--spiral-paper-radius);
+}
+
+/* Dark mode adjustments */
+.dark .notebook-spiral .page-container-node {
+  --spiral-paper-color: #1a1a1a;
+  --spiral-line-color: rgba(120, 120, 140, 0.25);
+  --spiral-margin-color: rgba(248, 113, 113, 0.3);
+  --spiral-shadow-opacity: 0.12;
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paperNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paperNoise)' opacity='0.04'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(
+      transparent,
+      transparent calc(var(--spiral-line-spacing) - 1px),
+      var(--spiral-line-color) calc(var(--spiral-line-spacing) - 1px),
+      var(--spiral-line-color) var(--spiral-line-spacing)
+    );
+}
+
+.dark .notebook-spiral .page-container-node::after {
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.3) 0%,
+    rgba(0, 0, 0, 0.1) 60%,
+    transparent 100%
+  );
+}
+
+/* ========================================
+   Premium Black + Dark Green Theme
+   ======================================== */
+
+/* Apply premium dark theme when element has data-theme="premium-dark" */
+[data-theme="premium-dark"] {
+  background-color: #0A0A0A;
+  color: #E8E8E8;
+}
+
+[data-theme="premium-dark"] * {
+  border-color: rgba(30, 58, 42, 0.3) !important;
+}
+
+/* Premium dark notebook styles */
+[data-theme="premium-dark"] .notebook-spiral .page-container-node {
+  --spiral-paper-color: #121212;
+  --spiral-line-color: rgba(30, 58, 42, 0.3);
+  --spiral-margin-color: rgba(30, 58, 42, 0.5);
+  --spiral-shadow-opacity: 0.15;
+  background-color: var(--spiral-paper-color);
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paperNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paperNoise)' opacity='0.05'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(
+      transparent,
+      transparent calc(var(--spiral-line-spacing) - 1px),
+      var(--spiral-line-color) calc(var(--spiral-line-spacing) - 1px),
+      var(--spiral-line-color) var(--spiral-line-spacing)
+    );
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.5),
+    0 8px 24px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 1px rgba(30, 58, 42, 0.2),
+    inset 1px 0 2px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="premium-dark"] .notebook-spiral .page-container-node::before {
+  background-color: var(--spiral-margin-color);
+}
+
+[data-theme="premium-dark"] .notebook-spiral .page-container-node::after {
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.5) 0%,
+    rgba(30, 58, 42, 0.2) 60%,
+    transparent 100%
+  );
+}
+
+/* Premium dark UI components */
+[data-theme="premium-dark"] button {
+  background-color: rgba(30, 58, 42, 0.3);
+  color: #E8E8E8;
+  border-color: rgba(30, 58, 42, 0.5);
+}
+
+[data-theme="premium-dark"] button:hover {
+  background-color: rgba(30, 58, 42, 0.5);
+}
+
+[data-theme="premium-dark"] .bg-white {
+  background-color: #121212 !important;
+  color: #E8E8E8 !important;
+}
+
+[data-theme="premium-dark"] .bg-stone-50,
+[data-theme="premium-dark"] .bg-stone-100 {
+  background-color: #1A1A1A !important;
+  color: #E8E8E8 !important;
+}
+
+[data-theme="premium-dark"] .text-stone-900,
+[data-theme="premium-dark"] .text-stone-800 {
+  color: #E8E8E8 !important;
+}
+
+[data-theme="premium-dark"] .text-stone-500,
+[data-theme="premium-dark"] .text-stone-400 {
+  color: rgba(232, 232, 232, 0.6) !important;
+}
+
+[data-theme="premium-dark"] .border-stone-200,
+[data-theme="premium-dark"] .border-stone-300 {
+  border-color: rgba(30, 58, 42, 0.3) !important;
+}
+
+[data-theme="premium-dark"] input,
+[data-theme="premium-dark"] textarea {
+  background-color: #121212 !important;
+  color: #E8E8E8 !important;
+  border-color: rgba(30, 58, 42, 0.5) !important;
+}
+
+[data-theme="premium-dark"] .ProseMirror {
+  background-color: #121212;
+  color: #E8E8E8;
+}
+
+[data-theme="premium-dark"] .ProseMirror p {
+  color: #E8E8E8;
+}
+
+/* Dialog/Modal styles for premium dark */
+[data-theme="premium-dark"] [role="dialog"] {
+  background-color: #121212 !important;
+  border-color: rgba(30, 58, 42, 0.5) !important;
+}
+
+[data-theme="premium-dark"] .bg-popover {
+  background-color: #121212 !important;
+}
+
+/* ========================================
+   Midnight Ink Dark Theme
+   ======================================== */
+
+/* Apply midnight ink dark theme when element has data-theme="dark" */
+[data-theme="dark"] {
+  background-color: #1A1A1A;
+  color: #E4E4E4;
+}
+
+[data-theme="dark"] * {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Midnight ink dark UI components */
+[data-theme="dark"] button {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #E4E4E4;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="dark"] button:hover {
+  background-color: rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="dark"] .bg-white {
+  background-color: #262626 !important;
+  color: #E4E4E4 !important;
+}
+
+[data-theme="dark"] .bg-stone-50,
+[data-theme="dark"] .bg-stone-100 {
+  background-color: #2A2A2A !important;
+  color: #E4E4E4 !important;
+}
+
+[data-theme="dark"] .text-stone-900,
+[data-theme="dark"] .text-stone-800 {
+  color: #E4E4E4 !important;
+}
+
+[data-theme="dark"] .text-stone-500,
+[data-theme="dark"] .text-stone-400 {
+  color: rgba(228, 228, 228, 0.6) !important;
+}
+
+[data-theme="dark"] .border-stone-200,
+[data-theme="dark"] .border-stone-300 {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] textarea {
+  background-color: #262626 !important;
+  color: #E4E4E4 !important;
+  border-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+[data-theme="dark"] .ProseMirror {
+  background-color: #262626;
+  color: #E4E4E4;
+}
+
+[data-theme="dark"] .ProseMirror p {
+  color: #E4E4E4;
+}
+
+/* Dialog/Modal styles for midnight ink dark */
+[data-theme="dark"] [role="dialog"] {
+  background-color: #262626 !important;
+  border-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+[data-theme="dark"] .bg-popover {
+  background-color: #262626 !important;
+}
+
+/* Custom Utilities */
+.paper-shadow {
+  box-shadow: 
+    0 1px 1px rgba(0,0,0,0.11), 
+    0 2px 2px rgba(0,0,0,0.11), 
+    0 4px 4px rgba(0,0,0,0.11), 
+    0 8px 8px rgba(0,0,0,0.11), 
+    0 16px 16px rgba(0,0,0,0.11);
+}
+
+/* Tiptap specific styles */
+.ProseMirror {
+  outline: none;
+  white-space: pre-wrap;
+}
+
+.page-container-node {
+  width: var(--page-width, 820px);
+  height: var(--page-height, 1160px) !important;
+  background-color: var(--page-bg, #ffffff);
+  color: var(--page-ink, #000000);
+  box-shadow: 
+    0 1px 1px rgba(0,0,0,0.06), 
+    0 2px 2px rgba(0,0,0,0.06), 
+    0 4px 4px rgba(0,0,0,0.06), 
+    0 8px 8px rgba(0,0,0,0.06), 
+    0 16px 16px rgba(0,0,0,0.06);
+  margin-top: var(--page-margin-top, 1.5rem);
+  margin-bottom: var(--page-margin-bottom, 2.5rem);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--page-margin-x, 64px);
+  padding-right: var(--page-margin-x, 64px);
+  padding-top: var(--page-margin-y, 64px);
+  padding-bottom: var(--page-margin-y, 64px);
+  box-sizing: border-box;
+  position: relative;
+  border-radius: 0;
+  transition: all 400ms var(--ease-smooth);
+  overflow: hidden !important;
+  will-change: transform, width, height, padding, margin;
+}
+
+/* Margin line matching pageless style exactly */
+.page-container-node::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background-color: #f87171; /* red-400 */
+  opacity: 0.2;
+  pointer-events: none;
+  z-index: 10;
+  transition: opacity 0.3s var(--ease-smooth);
+}
+
+/* Clean Mode hide logic */
+.is-clean-mode .page-container-node::before {
+  opacity: 0 !important;
+}
+
+.is-clean-mode .page-container-node {
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Pageless mode structural continuity */
+.ProseMirror[style*="--page-height: auto"] .page-container-node,
+.ProseMirror[style*="--page-height:auto"] .page-container-node {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+.dark .page-container-node,
+:is(.dark *) .page-container-node {
+  box-shadow: 
+    0 1px 1px rgba(0,0,0,0.3), 
+    0 4px 10px rgba(0,0,0,0.4);
+  border: none !important;
+}
+
+/* Page Textures inside individual structural pages */
+.texture-laid .page-container-node {
+  background-image: linear-gradient(var(--page-texture-color, rgba(0, 0, 0, 0.03)) 1px, transparent 1px);
+  background-size: 100% 2.5rem;
+  background-position: 0 0;
+}
+
+.texture-grid .page-container-node {
+  background-image: 
+    linear-gradient(var(--page-texture-color, rgba(0, 0, 0, 0.035)) 1px, transparent 1px),
+    linear-gradient(90deg, var(--page-texture-color, rgba(0, 0, 0, 0.035)) 1px, transparent 1px);
+  background-size: 2rem 2rem;
+  background-position: 0 0;
+}
+
+.texture-linen .page-container-node {
+  background: 
+    linear-gradient(var(--page-texture-color, rgba(0, 0, 0, 0.02)) 2px, transparent 2px),
+    linear-gradient(90deg, var(--page-texture-color, rgba(0, 0, 0, 0.02)) 2px, transparent 2px);
+  background-size: 4px 4px;
+}
+
+.ProseMirror p {
+  margin: 0.75em 0;
+}
+
+.ProseMirror [lang="bn"],
+.font-bangla {
+  line-height: 1.5;
+  font-family: var(--font-bangla);
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #adb5bd;
+  pointer-events: none;
+  height: 0;
+}
+
+.math-node {
+  display: inline-block;
+  vertical-align: middle;
+  padding: 0 4px;
+  background: rgba(0,0,0,0.03);
+  border-radius: 4px;
+  line-height: 1;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.math-node .katex {
+  font-size: 1.1em;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.1);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.2);
+}
+
+/* Multi-Column Layouts */
+.multi-column-layout-base {
+  display: flex !important;
+  gap: 1.5rem !important;
+  width: 100% !important;
+}
+.multi-column-layout-base > div {
+  flex: 1 1 0px !important;
+  min-width: 0 !important;
+}
+.layout-two-column > div { flex-basis: 50% !important; }
+.layout-three-column > div { flex-basis: 33.333% !important; }
+.layout-left-sidebar > div:first-child { flex: 0 0 33.333% !important; }
+.layout-left-sidebar > div:last-child { flex: 0 0 66.666% !important; }
+.layout-right-sidebar > div:first-child { flex: 0 0 66.666% !important; }
+.layout-right-sidebar > div:last-child { flex: 0 0 33.333% !important; }
+
+.ProseMirror strong,
+.ProseMirror b,
+.ProseMirror em,
+.ProseMirror i,
+.ProseMirror u {
+  color: inherit !important;
+}
+
+.ProseMirror strong,
+.ProseMirror b {
+  font-weight: 700;
+}
+
+/* Heading Improvements */
+.ProseMirror h1 { @apply text-4xl font-bold mt-12 mb-6 tracking-tight; }
+.ProseMirror h2 { @apply text-3xl font-semibold mt-10 mb-5 tracking-tight; }
+.ProseMirror h3 { @apply text-2xl font-medium mt-8 mb-4; }
+
+/* Image Wrapper */
+.resizable-image-wrapper {
+  transition: all 0.2s ease;
+}
+.resizable-image-wrapper:hover {
+  @apply scale-[1.01];
+}
+
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-heading: var(--font-sans);
+    --font-sans: "Google Sans Text", ui-sans-serif, system-ui, sans-serif;
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --radius: 0.625rem;
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.922 0 0);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.556 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    }
+  body {
+    @apply bg-background text-foreground;
+    }
+  html {
+    @apply font-sans;
+    }
+}
+
+/* Custom print styles to support printing A4 pages nicely */
+@media print {
+  /* Hide all unnecessary UI elements */
+  header,
+  nav,
+  aside,
+  footer,
+  .no-print,
+  button,
+  .stationery-bar,
+  .command-palette,
+  [role="dialog"],
+  .fixed,
+  /* Hide interactive arrow/marker handles to avoid messy prints */
+  .absolute.z-45,
+  .absolute.z-\[51\],
+  .absolute.z-\[100\] {
+    display: none !important;
+  }
+
+  /* Reset global layout */
+  body, html, * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+  body, html {
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Reset layout structure for printing */
+  .h-screen {
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  /* Target the content scroll wrappers */
+  .custom-scrollbar,
+  .flex-1 {
+    overflow: visible !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+  }
+
+  /* Scaling wrappers */
+  .print-scale-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    transform: none !important;
+    position: relative !important;
+    display: block !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .print-main-canvas {
+    transform: none !important;
+    position: relative !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  /* Style main paper component specifically for neat margins and breaks */
+  .print-paper-content {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Ensure lines/blocks don't break in middle of paragraphs during multi-page print */
+  .ProseMirror p,
+  .ProseMirror h1,
+  .ProseMirror h2,
+  .ProseMirror h3,
+  .ProseMirror li,
+  .sticky-note-element {
+    page-break-inside: avoid !important;
+    break-inside: avoid-page !important;
+  }
+
+  /* Page break rules for custom content height */
+  .print-page-break {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  /* Strict A4 page printing configurations */
+  .page-container-node {
+    height: var(--page-height, 1160px) !important;
+    width: var(--page-width, 820px) !important;
+    overflow: hidden !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin: 0 auto !important;
+    box-shadow: none !important;
+    border: none !important;
+    background-color: var(--page-bg, #ffffff) !important;
+    color: var(--page-ink, #000000) !important;
+  }
+}
