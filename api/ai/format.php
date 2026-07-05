@@ -9,6 +9,7 @@ require_once __DIR__ . '/../helpers/auth.php';
 require_once __DIR__ . '/tool-registry.php';
 require_once __DIR__ . '/prompt-builder.php';
 require_once __DIR__ . '/gemini-client.php';
+require_once __DIR__ . '/json-parser.php';
 require_once __DIR__ . '/content-chunker.php';
 
 // Safe authentication (optional or required depending on session)
@@ -151,150 +152,35 @@ if ($isChunked) {
             }
         }
         
-        // Parse response with smart JSON extraction
-        $candidateJson = $result['text'] ?? null;
-        if (!$candidateJson) {
-            errorResponse('Gemini did not return content for chunk ' . ($i + 1), 500, 'GEMINI_EMPTY_RESPONSE');
+        // Parse response with production-grade JsonParser
+        $parser = new JsonParser();
+        $parseResult = $parser->parse($result['text'], 'full-note');
+
+        if (!$parseResult['success']) {
+            // Try automatic AI repair
+            error_log("Primary parse failed for chunk {$i}, attempting AI repair");
+            $repaired = $parser->attemptAutoRepair($result['text'], $apiKey, $modelName);
+            
+            if ($repaired !== null) {
+                $parseResult = [
+                    'success' => true,
+                    'data' => $repaired
+                ];
+            } else {
+                $debugInfo = [
+                    'rawResponse' => $result['text'],
+                    'parserLogs' => $parser->getLogs(),
+                    'model' => $modelName,
+                    'timestamp' => date('Y-m-d H:i:s'),
+                    'error' => $parseResult['error'],
+                    'chunkIndex' => $i + 1,
+                    'totalChunks' => $totalChunks
+                ];
+                errorResponse('Failed to parse Gemini output for chunk ' . ($i + 1) . ' after multiple repair attempts.', 500, 'PARSE_ERROR', $debugInfo);
+            }
         }
-        
-        // Smart JSON extraction function with delimiter-based separation
-        function extractJsonChunked($text) {
-            $text = trim($text);
-            
-            // Strategy 0: Delimiter-based extraction (PRIMARY)
-            if (strpos($text, '===JSON_OUTPUT===') !== false) {
-                $parts = explode('===JSON_OUTPUT===', $text, 2);
-                if (count($parts) === 2) {
-                    $jsonCandidate = trim($parts[1]);
-                    $parsed = json_decode($jsonCandidate, true);
-                    if ($parsed !== null) {
-                        return $jsonCandidate;
-                    }
-                }
-            }
-            
-            // Strategy 1: Try XML delimiters
-            if (preg_match('/<output>(.*?)<\/output>/s', $text, $matches)) {
-                $jsonCandidate = trim($matches[1]);
-                $parsed = json_decode($jsonCandidate, true);
-                if ($parsed !== null) {
-                    return $jsonCandidate;
-                }
-            }
-            
-            // Strategy 2: Try markdown code blocks
-            if (preg_match('/```(?:json)?\s*(.*?)\s*```/s', $text, $matches)) {
-                $jsonCandidate = trim($matches[1]);
-                $parsed = json_decode($jsonCandidate, true);
-                if ($parsed !== null) {
-                    return $jsonCandidate;
-                }
-            }
-            
-            // Strategy 3: Extract from field assignments (Gemma-4 reasoning format)
-            $lines = explode("\n", $text);
-            $jsonFields = [];
-            $inJsonSection = false;
-            
-            foreach ($lines as $line) {
-                $line = trim($line);
-                
-                if (preg_match('/(?:\*?\s+)?["\']?([a-zA-Z_]+)["\']?\s*:\s*(.+)/', $line, $matches)) {
-                    $field = $matches[1];
-                    $value = $matches[2];
-                    $value = trim($value, ' "\'*');
-                    
-                    if (in_array($field, ['formattedHTML', 'stickies', 'arrows', 'dividers', 'title', 'content'])) {
-                        $jsonFields[$field] = $value;
-                        $inJsonSection = true;
-                    }
-                }
-            }
-            
-            if (!empty($jsonFields) && $inJsonSection) {
-                $jsonString = json_encode($jsonFields, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-                $parsed = json_decode($jsonString, true);
-                if ($parsed !== null) {
-                    return $jsonString;
-                }
-            }
-            
-            // Strategy 4: Find JSON between first { and last }
-            $firstBrace = strpos($text, '{');
-            $lastBrace = strrpos($text, '}');
-            
-            if ($firstBrace !== false && $lastBrace !== false && $lastBrace > $firstBrace) {
-                $jsonCandidate = substr($text, $firstBrace, $lastBrace - $firstBrace + 1);
-                $parsed = json_decode($jsonCandidate, true);
-                if ($parsed !== null) {
-                    return $jsonCandidate;
-                }
-            }
-            
-            // Strategy 5: Try to find any valid JSON object in the text
-            preg_match_all('/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/s', $text, $matches);
-            foreach ($matches[0] as $candidate) {
-                $parsed = json_decode($candidate, true);
-                if ($parsed !== null) {
-                    return $candidate;
-                }
-            }
-            
-            // Strategy 6: Extract HTML from planned structure and construct fallback JSON
-            $htmlContent = extractHtmlFromReasoning($text);
-            if ($htmlContent) {
-                $fallbackJson = json_encode(['content' => $htmlContent], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-                $parsed = json_decode($fallbackJson, true);
-                if ($parsed !== null) {
-                    return $fallbackJson;
-                }
-            }
-            
-            // Strategy 7: Return original if nothing worked
-            return $text;
-        }
-        
-        // Helper function to extract HTML from reasoning content
-        function extractHtmlFromReasoning($text) {
-            $lines = explode("\n", $text);
-            $htmlLines = [];
-            $inHtmlSection = false;
-            
-            foreach ($lines as $line) {
-                $line = trim($line);
-                
-                if (preg_match('/<[a-z][a-z0-9]*[^>]*>/', $line)) {
-                    $inHtmlSection = true;
-                    $htmlLines[] = $line;
-                } elseif ($inHtmlSection && !empty($line)) {
-                    $htmlLines[] = $line;
-                }
-            }
-            
-            if (!empty($htmlLines)) {
-                return implode("\n", $htmlLines);
-            }
-            
-            return null;
-        }
-        
-        $candidateJson = extractJsonChunked($candidateJson);
-        
-        $formattedResult = json_decode($candidateJson, true);
-        if (!$formattedResult) {
-            error_log("Failed to parse JSON for chunk {$i}. Raw response: " . substr($candidateJson, 0, 1000));
-            $debugInfo = [
-                'rawResponse' => $result['text'],
-                'extractedJson' => $candidateJson,
-                'model' => $modelName,
-                'timestamp' => date('Y-m-d H:i:s'),
-                'jsonError' => json_last_error_msg(),
-                'chunkIndex' => $i + 1,
-                'totalChunks' => $totalChunks
-            ];
-            errorResponse('Failed to parse Gemini output for chunk ' . ($i + 1), 500, 'PARSE_ERROR', $debugInfo);
-        }
-        
+
+        $formattedResult = $parseResult['data'];
         $formattedChunks[] = $formattedResult['content'] ?? '';
         
         // Small delay between chunks
@@ -360,148 +246,32 @@ if ($isChunked) {
         }
     }
     
-    // Parse response with smart JSON extraction
-    $candidateJson = $result['text'] ?? null;
-    
-    if (!$candidateJson) {
-        errorResponse('Gemini did not return any content.', 500, 'GEMINI_EMPTY_RESPONSE');
+    // Parse response with production-grade JsonParser
+    $parser = new JsonParser();
+    $parseResult = $parser->parse($result['text'], 'full-note');
+
+    if (!$parseResult['success']) {
+        // Try automatic AI repair
+        error_log("Primary parse failed, attempting AI repair");
+        $repaired = $parser->attemptAutoRepair($result['text'], $apiKey, $modelName);
+        
+        if ($repaired !== null) {
+            $parseResult = [
+                'success' => true,
+                'data' => $repaired
+            ];
+        } else {
+            $debugInfo = [
+                'rawResponse' => $result['text'],
+                'parserLogs' => $parser->getLogs(),
+                'model' => $modelName,
+                'timestamp' => date('Y-m-d H:i:s'),
+                'error' => $parseResult['error']
+            ];
+            errorResponse('Failed to parse Gemini output as structured format JSON after multiple repair attempts.', 500, 'PARSE_ERROR', $debugInfo);
+        }
     }
-    
-    // Smart JSON extraction function with delimiter-based separation
-    function extractJsonSingle($text) {
-        $text = trim($text);
-        
-        // Strategy 0: Delimiter-based extraction (PRIMARY)
-        if (strpos($text, '===JSON_OUTPUT===') !== false) {
-            $parts = explode('===JSON_OUTPUT===', $text, 2);
-            if (count($parts) === 2) {
-                $jsonCandidate = trim($parts[1]);
-                $parsed = json_decode($jsonCandidate, true);
-                if ($parsed !== null) {
-                    return $jsonCandidate;
-                }
-            }
-        }
-        
-        // Strategy 1: Try XML delimiters
-        if (preg_match('/<output>(.*?)<\/output>/s', $text, $matches)) {
-            $jsonCandidate = trim($matches[1]);
-            $parsed = json_decode($jsonCandidate, true);
-            if ($parsed !== null) {
-                return $jsonCandidate;
-            }
-        }
-        
-        // Strategy 2: Try markdown code blocks
-        if (preg_match('/```(?:json)?\s*(.*?)\s*```/s', $text, $matches)) {
-            $jsonCandidate = trim($matches[1]);
-            $parsed = json_decode($jsonCandidate, true);
-            if ($parsed !== null) {
-                return $jsonCandidate;
-            }
-        }
-        
-        // Strategy 3: Extract from field assignments (Gemma-4 reasoning format)
-        $lines = explode("\n", $text);
-        $jsonFields = [];
-        $inJsonSection = false;
-        
-        foreach ($lines as $line) {
-            $line = trim($line);
-            
-            if (preg_match('/(?:\*?\s+)?["\']?([a-zA-Z_]+)["\']?\s*:\s*(.+)/', $line, $matches)) {
-                $field = $matches[1];
-                $value = $matches[2];
-                $value = trim($value, ' "\'*');
-                
-                if (in_array($field, ['formattedHTML', 'stickies', 'arrows', 'dividers', 'title', 'content'])) {
-                    $jsonFields[$field] = $value;
-                    $inJsonSection = true;
-                }
-            }
-        }
-        
-        if (!empty($jsonFields) && $inJsonSection) {
-            $jsonString = json_encode($jsonFields, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            $parsed = json_decode($jsonString, true);
-            if ($parsed !== null) {
-                return $jsonString;
-            }
-        }
-        
-        // Strategy 4: Find JSON between first { and last }
-        $firstBrace = strpos($text, '{');
-        $lastBrace = strrpos($text, '}');
-        
-        if ($firstBrace !== false && $lastBrace !== false && $lastBrace > $firstBrace) {
-            $jsonCandidate = substr($text, $firstBrace, $lastBrace - $firstBrace + 1);
-            $parsed = json_decode($jsonCandidate, true);
-            if ($parsed !== null) {
-                return $jsonCandidate;
-            }
-        }
-        
-        // Strategy 5: Try to find any valid JSON object in the text
-        preg_match_all('/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/s', $text, $matches);
-        foreach ($matches[0] as $candidate) {
-            $parsed = json_decode($candidate, true);
-            if ($parsed !== null) {
-                return $candidate;
-            }
-        }
-        
-        // Strategy 6: Extract HTML from planned structure and construct fallback JSON
-        $htmlContent = extractHtmlFromReasoning($text);
-        if ($htmlContent) {
-            $fallbackJson = json_encode(['content' => $htmlContent], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            $parsed = json_decode($fallbackJson, true);
-            if ($parsed !== null) {
-                return $fallbackJson;
-            }
-        }
-        
-        // Strategy 7: Return original if nothing worked
-        return $text;
-    }
-    
-    // Helper function to extract HTML from reasoning content
-    function extractHtmlFromReasoning($text) {
-        $lines = explode("\n", $text);
-        $htmlLines = [];
-        $inHtmlSection = false;
-        
-        foreach ($lines as $line) {
-            $line = trim($line);
-            
-            if (preg_match('/<[a-z][a-z0-9]*[^>]*>/', $line)) {
-                $inHtmlSection = true;
-                $htmlLines[] = $line;
-            } elseif ($inHtmlSection && !empty($line)) {
-                $htmlLines[] = $line;
-            }
-        }
-        
-        if (!empty($htmlLines)) {
-            return implode("\n", $htmlLines);
-        }
-        
-        return null;
-    }
-    
-    $candidateJson = extractJsonSingle($candidateJson);
-    
-    $formattedResult = json_decode($candidateJson, true);
-    if (!$formattedResult) {
-        error_log("Failed to parse JSON. Raw response: " . substr($candidateJson, 0, 1000));
-        $debugInfo = [
-            'rawResponse' => $result['text'],
-            'extractedJson' => $candidateJson,
-            'model' => $modelName,
-            'timestamp' => date('Y-m-d H:i:s'),
-            'jsonError' => json_last_error_msg()
-        ];
-        errorResponse('Failed to parse Gemini output as structured format JSON.', 500, 'PARSE_ERROR', $debugInfo);
-    }
-    
+
+    $formattedResult = $parseResult['data'];
     successResponse($formattedResult, 'Note formatted successfully by Gemini AI!');
 }
