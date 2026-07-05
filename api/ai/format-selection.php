@@ -114,8 +114,22 @@ $prompt .= "Divider format: { \"id\": \"string\", \"type\": \"solid|dashed|dotte
 $prompt .= "\nPlacement: Stickies on right margin (x: 850-920), y near centerY. Arrows from text (x: 600) to sticky.\n";
 $prompt .= "Wrap your JSON response in <output> tags like this: <output>{\"formattedHTML\": \"...\", ...}</output>.\n";
 
+// DEBUG: Print exact prompt
+error_log("===== PAPYRUS PROMPT START =====");
+error_log($prompt);
+error_log("===== PAPYRUS PROMPT END =====");
+error_log("Prompt length (characters): " . strlen($prompt));
+error_log("Prompt length (estimated tokens): " . round(strlen($prompt) / 4));
+error_log("First 300 characters: " . substr($prompt, 0, 300));
+error_log("Last 300 characters: " . substr($prompt, -300));
+
 // Call Gemini API with retry logic
 $result = GeminiClient::call($prompt, $apiKey, $modelName);
+
+// DEBUG: Print raw API response
+error_log("===== PAPYRUS RAW API RESPONSE START =====");
+error_log(json_encode($result, JSON_PRETTY_PRINT));
+error_log("===== PAPYRUS RAW API RESPONSE END =====");
 
 if (!$result['success']) {
     // Try fallback with simplified prompt
@@ -137,6 +151,12 @@ if (!$result['success']) {
 
 // Parse response with production-grade JsonParser
 $parser = new JsonParser();
+
+// DEBUG: Print extracted text before JsonParser
+error_log("===== PAPYRUS EXTRACTED TEXT START =====");
+error_log($result['text']);
+error_log("===== PAPYRUS EXTRACTED TEXT END =====");
+
 $parseResult = $parser->parse($result['text'], 'selection');
 
 if (!$parseResult['success']) {
