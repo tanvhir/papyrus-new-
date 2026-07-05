@@ -58,13 +58,16 @@ class GeminiClient {
         $model = $model ?: self::DEFAULT_MODEL;
         $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . $model . ':generateContent?key=' . $apiKey;
         
+        $systemInstruction = "You are a JSON output specialist. Always respond with valid JSON only. Never include explanations, reasoning, or markdown code blocks. If you need to think, do so internally and only output the final JSON result.";
+        
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
             'contents' => [['parts' => [['text' => $prompt]]]],
+            'systemInstruction' => ['parts' => [['text' => $systemInstruction]]],
             'generationConfig' => [
-                'temperature' => 0.7,
+                'temperature' => 0.3,
                 'topK' => 40,
                 'topP' => 0.95,
                 'maxOutputTokens' => 8192

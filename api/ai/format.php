@@ -133,8 +133,7 @@ if ($isChunked) {
         $prompt .= "Arrow format: { \"id\": \"string\", \"start\": { \"x\": number, \"y\": number }, \"end\": { \"x\": number, \"y\": number }, \"mid\": { \"x\": number, \"y\": number }, \"color\": \"string\" }\n";
         $prompt .= "Divider format: { \"id\": \"string\", \"type\": \"solid|dashed|dotted|zigzag|wave\", \"orientation\": \"horizontal|vertical\", \"size\": number, \"length\": string, \"color\": string, \"position\": { \"x\": number, \"y\": number } }\n";
         $prompt .= "\nPlacement: Stickies on right margin (x: 850-920), stagger y by 250px starting from 150. Arrows from text (x: 600) to sticky.\n";
-        $prompt .= "Do not wrap JSON output in markdown backticks.";
-        $prompt .= "\n\nCRITICAL: Your response must be ONLY the JSON object. No markdown code blocks, no reasoning, no explanations. Start with { and end with }.\n";
+        $prompt .= "Wrap your JSON response in <output> tags like this: <output>{\"title\": \"...\", \"content\": \"...\", ...}</output>.\n";
         
         // Call Gemini API
         $result = GeminiClient::call($prompt, $apiKey, $modelName);
@@ -152,23 +151,61 @@ if ($isChunked) {
             }
         }
         
-        // Parse response
+        // Parse response with smart JSON extraction
         $candidateJson = $result['text'] ?? null;
         if (!$candidateJson) {
             errorResponse('Gemini did not return content for chunk ' . ($i + 1), 500, 'GEMINI_EMPTY_RESPONSE');
         }
         
-        // Try to extract JSON from markdown if wrapped
-        $candidateJson = trim($candidateJson);
-        if (preg_match('/```(?:json)?\s*(.*?)\s*```/s', $candidateJson, $matches)) {
-            $candidateJson = $matches[1];
+        // Smart JSON extraction function
+        function extractJsonChunked($text) {
+            $text = trim($text);
+            
+            // Strategy 1: Try XML delimiters first
+            if (preg_match('/<output>(.*?)<\/output>/s', $text, $matches)) {
+                return trim($matches[1]);
+            }
+            
+            // Strategy 2: Try markdown code blocks
+            if (preg_match('/```(?:json)?\s*(.*?)\s*```/s', $text, $matches)) {
+                return trim($matches[1]);
+            }
+            
+            // Strategy 3: Find JSON between first { and last }
+            $firstBrace = strpos($text, '{');
+            $lastBrace = strrpos($text, '}');
+            
+            if ($firstBrace !== false && $lastBrace !== false && $lastBrace > $firstBrace) {
+                $jsonCandidate = substr($text, $firstBrace, $lastBrace - $firstBrace + 1);
+                
+                // Try to parse it
+                $parsed = json_decode($jsonCandidate, true);
+                if ($parsed !== null) {
+                    return $jsonCandidate;
+                }
+            }
+            
+            // Strategy 4: Try to find any valid JSON object in the text
+            preg_match_all('/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/s', $text, $matches);
+            foreach ($matches[0] as $candidate) {
+                $parsed = json_decode($candidate, true);
+                if ($parsed !== null) {
+                    return $candidate;
+                }
+            }
+            
+            // Strategy 5: Return original if nothing worked
+            return $text;
         }
+        
+        $candidateJson = extractJsonChunked($candidateJson);
         
         $formattedResult = json_decode($candidateJson, true);
         if (!$formattedResult) {
             error_log("Failed to parse JSON for chunk {$i}. Raw response: " . substr($candidateJson, 0, 1000));
             $debugInfo = [
-                'rawResponse' => $candidateJson,
+                'rawResponse' => $result['text'],
+                'extractedJson' => $candidateJson,
                 'model' => $modelName,
                 'timestamp' => date('Y-m-d H:i:s'),
                 'jsonError' => json_last_error_msg(),
@@ -220,8 +257,7 @@ if ($isChunked) {
     $prompt .= "Arrow format: { \"id\": \"string\", \"start\": { \"x\": number, \"y\": number }, \"end\": { \"x\": number, \"y\": number }, \"mid\": { \"x\": number, \"y\": number }, \"color\": \"string\" }\n";
     $prompt .= "Divider format: { \"id\": \"string\", \"type\": \"solid|dashed|dotted|zigzag|wave\", \"orientation\": \"horizontal|vertical\", \"size\": number, \"length\": string, \"color\": string, \"position\": { \"x\": number, \"y\": number } }\n";
     $prompt .= "\nPlacement: Stickies on right margin (x: 850-920), stagger y by 250px starting from 150. Arrows from text (x: 600) to sticky.\n";
-    $prompt .= "Do not wrap JSON output in markdown backticks.";
-    $prompt .= "\n\nCRITICAL: Your response must be ONLY the JSON object. No markdown code blocks, no reasoning, no explanations. Start with { and end with }.\n";
+    $prompt .= "Wrap your JSON response in <output> tags like this: <output>{\"title\": \"...\", \"content\": \"...\", ...}</output>.\n";
     
     // Call Gemini API with retry logic
     $result = GeminiClient::call($prompt, $apiKey, $modelName);
@@ -244,24 +280,62 @@ if ($isChunked) {
         }
     }
     
-    // Parse response
+    // Parse response with smart JSON extraction
     $candidateJson = $result['text'] ?? null;
     
     if (!$candidateJson) {
         errorResponse('Gemini did not return any content.', 500, 'GEMINI_EMPTY_RESPONSE');
     }
     
-    // Try to extract JSON from markdown if wrapped
-    $candidateJson = trim($candidateJson);
-    if (preg_match('/```(?:json)?\s*(.*?)\s*```/s', $candidateJson, $matches)) {
-        $candidateJson = $matches[1];
+    // Smart JSON extraction function
+    function extractJsonSingle($text) {
+        $text = trim($text);
+        
+        // Strategy 1: Try XML delimiters first
+        if (preg_match('/<output>(.*?)<\/output>/s', $text, $matches)) {
+            return trim($matches[1]);
+        }
+        
+        // Strategy 2: Try markdown code blocks
+        if (preg_match('/```(?:json)?\s*(.*?)\s*```/s', $text, $matches)) {
+            return trim($matches[1]);
+        }
+        
+        // Strategy 3: Find JSON between first { and last }
+        $firstBrace = strpos($text, '{');
+        $lastBrace = strrpos($text, '}');
+        
+        if ($firstBrace !== false && $lastBrace !== false && $lastBrace > $firstBrace) {
+            $jsonCandidate = substr($text, $firstBrace, $lastBrace - $firstBrace + 1);
+            
+            // Try to parse it
+            $parsed = json_decode($jsonCandidate, true);
+            if ($parsed !== null) {
+                return $jsonCandidate;
+            }
+        }
+        
+        // Strategy 4: Try to find any valid JSON object in the text
+        preg_match_all('/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/s', $text, $matches);
+        foreach ($matches[0] as $candidate) {
+            $parsed = json_decode($candidate, true);
+            if ($parsed !== null) {
+                return $candidate;
+            }
+        }
+        
+        // Strategy 5: Return original if nothing worked
+        return $text;
     }
+    
+    $candidateJson = extractJsonSingle($candidateJson);
     
     $formattedResult = json_decode($candidateJson, true);
     if (!$formattedResult) {
         error_log("Failed to parse JSON. Raw response: " . substr($candidateJson, 0, 1000));
         $debugInfo = [
-            'rawResponse' => $candidateJson,
+            'rawResponse' => $result['text'],
+            'extractedJson' => $candidateJson,
             'model' => $modelName,
             'timestamp' => date('Y-m-d H:i:s'),
             'jsonError' => json_last_error_msg()

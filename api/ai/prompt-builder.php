@@ -140,7 +140,7 @@ class PromptBuilder {
             $section .= "3. \"arrows\": An array of optional curved connection or callout arrows pointing from main concepts in the text block to relevant stickies.\n";
             $section .= "4. \"dividers\": An array of optional decorative background canvas dividers (keep empty unless requested).\n";
             
-            $section .= "\n\nFINAL INSTRUCTION: Output ONLY the JSON object. Do not include any reasoning, explanations, or markdown code blocks. Start your response immediately with { and end with }.\n";
+            $section .= "\n\nFINAL INSTRUCTION: Wrap your JSON response in <output> tags like this: <output>{\"formattedHTML\": \"...\", ...}</output>. Do not include any reasoning or explanations outside the tags.\n";
             
             return $section;
         } else {
@@ -158,7 +158,7 @@ class PromptBuilder {
             $section .= "4. \"arrows\": An array of curved connection or callout arrows pointing from main concepts in the text block to relevant stickies.\n";
             $section .= "5. \"dividers\": An array of decorative background canvas dividers (keep empty unless requested).\n";
             
-            $section .= "\n\nFINAL INSTRUCTION: Output ONLY the JSON object. Do not include any reasoning, explanations, or markdown code blocks. Start your response immediately with { and end with }.\n";
+            $section .= "\n\nFINAL INSTRUCTION: Wrap your JSON response in <output> tags like this: <output>{\"title\": \"...\", \"content\": \"...\", ...}</output>. Do not include any reasoning or explanations outside the tags.\n";
             
             return $section;
         }
