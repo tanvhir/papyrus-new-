@@ -23,8 +23,6 @@ class PromptBuilder {
         $prompt .= $this->getModeSpecificInstructions();
         $prompt .= $this->getHighlightInstruction();
         $prompt .= $toolInstructions;
-        $prompt .= $this->getDynamicDisableInstructions();
-        $prompt .= $this->getDynamicEnableInstructions();
         $prompt .= $this->getCriticalFormattingRules();
         $prompt .= $this->getContentSection();
         
@@ -49,7 +47,7 @@ class PromptBuilder {
     }
     
     private function getBasePrompt() {
-        return "You are an expert academic content designer. Your task is to format content based on user instructions.\n\nCRITICAL: Do NOT include any internal reasoning, thought process, or step-by-step planning in your response. Output ONLY the final JSON object with no explanatory text before or after it.\n\n";
+        return "You are an expert academic content designer. Your task is to format content based on user instructions.\n\n";
     }
     
     private function getModeSpecificInstructions() {
@@ -69,36 +67,6 @@ class PromptBuilder {
             return "\nHIGHLIGHT STYLE: Use highlights SPARINGLY with `<mark data-color=\"#ffff00\" style=\"background-color: rgb(255, 255, 0); color: inherit;\">text</mark>` ONLY for the most critical definitions, formulas, or key terms (maximum of 3-5 highlights per page). Be very selective. Use appropriate colors: Yellow for general, Blue for definitions, Deep green for formulas, Pink for examples, Orange for warnings.\n";
         }
     }
-    
-    private function getDynamicDisableInstructions() {
-        $instructions = "\nDISABLED FEATURES (DO NOT USE):\n";
-        $hasDisabled = false;
-        
-        foreach ($this->settings as $key => $value) {
-            if ($value === true && strpos($key, 'disable') === 0) {
-                $feature = str_replace('disableAI', '', $key);
-                $feature = str_replace('disable', '', $feature);
-                $instructions .= "- DO NOT use {$feature}\n";
-                $hasDisabled = true;
-            }
-        }
-        
-        return $hasDisabled ? $instructions : '';
-    }
-    
-    private function getDynamicEnableInstructions() {
-        $instructions = "\nENABLED FEATURES (YOU MAY USE):\n";
-        $enabledTools = ToolRegistry::getEnabledTools($this->settings);
-        
-        foreach ($enabledTools as $key => $tool) {
-            if ($tool['category'] === 'annotation' || $tool['category'] === 'educational') {
-                $instructions .= "- You MAY use {$key} ({$tool['description']}) when appropriate\n";
-            }
-        }
-        
-        return $instructions;
-    }
-    
     private function getCriticalFormattingRules() {
         $rules = "\n\nCRITICAL FORMATTING RULES:\n";
         
@@ -139,8 +107,7 @@ class PromptBuilder {
             $section .= "2. \"stickies\": An array of optional staggered callout sticky notes ONLY if requested by the user's prompt or highly necessary (limit to 1 or 2 max).\n";
             $section .= "3. \"arrows\": An array of optional curved connection or callout arrows pointing from main concepts in the text block to relevant stickies.\n";
             $section .= "4. \"dividers\": An array of optional decorative background canvas dividers (keep empty unless requested).\n";
-            
-            $section .= "\n\nFINAL INSTRUCTION: Wrap your JSON response in <output> tags like this: <output>{\"formattedHTML\": \"...\", ...}</output>. Do not include any reasoning or explanations outside the tags.\n";
+            $section .= "\nCRITICAL: Start your final JSON response with exactly: ===JSON_OUTPUT===\n";
             
             return $section;
         } else {
@@ -157,8 +124,7 @@ class PromptBuilder {
             $section .= "3. \"stickies\": An array of sticky notes for key Callouts, Reminders, definitions, or Quick Flashcards.\n";
             $section .= "4. \"arrows\": An array of curved connection or callout arrows pointing from main concepts in the text block to relevant stickies.\n";
             $section .= "5. \"dividers\": An array of decorative background canvas dividers (keep empty unless requested).\n";
-            
-            $section .= "\n\nFINAL INSTRUCTION: Wrap your JSON response in <output> tags like this: <output>{\"title\": \"...\", \"content\": \"...\", ...}</output>. Do not include any reasoning or explanations outside the tags.\n";
+            $section .= "\nCRITICAL: Start your final JSON response with exactly: ===JSON_OUTPUT===\n";
             
             return $section;
         }

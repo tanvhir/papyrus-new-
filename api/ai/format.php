@@ -157,35 +157,81 @@ if ($isChunked) {
             errorResponse('Gemini did not return content for chunk ' . ($i + 1), 500, 'GEMINI_EMPTY_RESPONSE');
         }
         
-        // Smart JSON extraction function
+        // Smart JSON extraction function with delimiter-based separation
         function extractJsonChunked($text) {
             $text = trim($text);
             
-            // Strategy 1: Try XML delimiters first
+            // Strategy 0: Delimiter-based extraction (PRIMARY)
+            if (strpos($text, '===JSON_OUTPUT===') !== false) {
+                $parts = explode('===JSON_OUTPUT===', $text, 2);
+                if (count($parts) === 2) {
+                    $jsonCandidate = trim($parts[1]);
+                    $parsed = json_decode($jsonCandidate, true);
+                    if ($parsed !== null) {
+                        return $jsonCandidate;
+                    }
+                }
+            }
+            
+            // Strategy 1: Try XML delimiters
             if (preg_match('/<output>(.*?)<\/output>/s', $text, $matches)) {
-                return trim($matches[1]);
-            }
-            
-            // Strategy 2: Try markdown code blocks
-            if (preg_match('/```(?:json)?\s*(.*?)\s*```/s', $text, $matches)) {
-                return trim($matches[1]);
-            }
-            
-            // Strategy 3: Find JSON between first { and last }
-            $firstBrace = strpos($text, '{');
-            $lastBrace = strrpos($text, '}');
-            
-            if ($firstBrace !== false && $lastBrace !== false && $lastBrace > $firstBrace) {
-                $jsonCandidate = substr($text, $firstBrace, $lastBrace - $firstBrace + 1);
-                
-                // Try to parse it
+                $jsonCandidate = trim($matches[1]);
                 $parsed = json_decode($jsonCandidate, true);
                 if ($parsed !== null) {
                     return $jsonCandidate;
                 }
             }
             
-            // Strategy 4: Try to find any valid JSON object in the text
+            // Strategy 2: Try markdown code blocks
+            if (preg_match('/```(?:json)?\s*(.*?)\s*```/s', $text, $matches)) {
+                $jsonCandidate = trim($matches[1]);
+                $parsed = json_decode($jsonCandidate, true);
+                if ($parsed !== null) {
+                    return $jsonCandidate;
+                }
+            }
+            
+            // Strategy 3: Extract from field assignments (Gemma-4 reasoning format)
+            $lines = explode("\n", $text);
+            $jsonFields = [];
+            $inJsonSection = false;
+            
+            foreach ($lines as $line) {
+                $line = trim($line);
+                
+                if (preg_match('/(?:\*?\s+)?["\']?([a-zA-Z_]+)["\']?\s*:\s*(.+)/', $line, $matches)) {
+                    $field = $matches[1];
+                    $value = $matches[2];
+                    $value = trim($value, ' "\'*');
+                    
+                    if (in_array($field, ['formattedHTML', 'stickies', 'arrows', 'dividers', 'title', 'content'])) {
+                        $jsonFields[$field] = $value;
+                        $inJsonSection = true;
+                    }
+                }
+            }
+            
+            if (!empty($jsonFields) && $inJsonSection) {
+                $jsonString = json_encode($jsonFields, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                $parsed = json_decode($jsonString, true);
+                if ($parsed !== null) {
+                    return $jsonString;
+                }
+            }
+            
+            // Strategy 4: Find JSON between first { and last }
+            $firstBrace = strpos($text, '{');
+            $lastBrace = strrpos($text, '}');
+            
+            if ($firstBrace !== false && $lastBrace !== false && $lastBrace > $firstBrace) {
+                $jsonCandidate = substr($text, $firstBrace, $lastBrace - $firstBrace + 1);
+                $parsed = json_decode($jsonCandidate, true);
+                if ($parsed !== null) {
+                    return $jsonCandidate;
+                }
+            }
+            
+            // Strategy 5: Try to find any valid JSON object in the text
             preg_match_all('/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/s', $text, $matches);
             foreach ($matches[0] as $candidate) {
                 $parsed = json_decode($candidate, true);
@@ -194,8 +240,42 @@ if ($isChunked) {
                 }
             }
             
-            // Strategy 5: Return original if nothing worked
+            // Strategy 6: Extract HTML from planned structure and construct fallback JSON
+            $htmlContent = extractHtmlFromReasoning($text);
+            if ($htmlContent) {
+                $fallbackJson = json_encode(['content' => $htmlContent], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                $parsed = json_decode($fallbackJson, true);
+                if ($parsed !== null) {
+                    return $fallbackJson;
+                }
+            }
+            
+            // Strategy 7: Return original if nothing worked
             return $text;
+        }
+        
+        // Helper function to extract HTML from reasoning content
+        function extractHtmlFromReasoning($text) {
+            $lines = explode("\n", $text);
+            $htmlLines = [];
+            $inHtmlSection = false;
+            
+            foreach ($lines as $line) {
+                $line = trim($line);
+                
+                if (preg_match('/<[a-z][a-z0-9]*[^>]*>/', $line)) {
+                    $inHtmlSection = true;
+                    $htmlLines[] = $line;
+                } elseif ($inHtmlSection && !empty($line)) {
+                    $htmlLines[] = $line;
+                }
+            }
+            
+            if (!empty($htmlLines)) {
+                return implode("\n", $htmlLines);
+            }
+            
+            return null;
         }
         
         $candidateJson = extractJsonChunked($candidateJson);
@@ -287,35 +367,81 @@ if ($isChunked) {
         errorResponse('Gemini did not return any content.', 500, 'GEMINI_EMPTY_RESPONSE');
     }
     
-    // Smart JSON extraction function
+    // Smart JSON extraction function with delimiter-based separation
     function extractJsonSingle($text) {
         $text = trim($text);
         
-        // Strategy 1: Try XML delimiters first
+        // Strategy 0: Delimiter-based extraction (PRIMARY)
+        if (strpos($text, '===JSON_OUTPUT===') !== false) {
+            $parts = explode('===JSON_OUTPUT===', $text, 2);
+            if (count($parts) === 2) {
+                $jsonCandidate = trim($parts[1]);
+                $parsed = json_decode($jsonCandidate, true);
+                if ($parsed !== null) {
+                    return $jsonCandidate;
+                }
+            }
+        }
+        
+        // Strategy 1: Try XML delimiters
         if (preg_match('/<output>(.*?)<\/output>/s', $text, $matches)) {
-            return trim($matches[1]);
-        }
-        
-        // Strategy 2: Try markdown code blocks
-        if (preg_match('/```(?:json)?\s*(.*?)\s*```/s', $text, $matches)) {
-            return trim($matches[1]);
-        }
-        
-        // Strategy 3: Find JSON between first { and last }
-        $firstBrace = strpos($text, '{');
-        $lastBrace = strrpos($text, '}');
-        
-        if ($firstBrace !== false && $lastBrace !== false && $lastBrace > $firstBrace) {
-            $jsonCandidate = substr($text, $firstBrace, $lastBrace - $firstBrace + 1);
-            
-            // Try to parse it
+            $jsonCandidate = trim($matches[1]);
             $parsed = json_decode($jsonCandidate, true);
             if ($parsed !== null) {
                 return $jsonCandidate;
             }
         }
         
-        // Strategy 4: Try to find any valid JSON object in the text
+        // Strategy 2: Try markdown code blocks
+        if (preg_match('/```(?:json)?\s*(.*?)\s*```/s', $text, $matches)) {
+            $jsonCandidate = trim($matches[1]);
+            $parsed = json_decode($jsonCandidate, true);
+            if ($parsed !== null) {
+                return $jsonCandidate;
+            }
+        }
+        
+        // Strategy 3: Extract from field assignments (Gemma-4 reasoning format)
+        $lines = explode("\n", $text);
+        $jsonFields = [];
+        $inJsonSection = false;
+        
+        foreach ($lines as $line) {
+            $line = trim($line);
+            
+            if (preg_match('/(?:\*?\s+)?["\']?([a-zA-Z_]+)["\']?\s*:\s*(.+)/', $line, $matches)) {
+                $field = $matches[1];
+                $value = $matches[2];
+                $value = trim($value, ' "\'*');
+                
+                if (in_array($field, ['formattedHTML', 'stickies', 'arrows', 'dividers', 'title', 'content'])) {
+                    $jsonFields[$field] = $value;
+                    $inJsonSection = true;
+                }
+            }
+        }
+        
+        if (!empty($jsonFields) && $inJsonSection) {
+            $jsonString = json_encode($jsonFields, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $parsed = json_decode($jsonString, true);
+            if ($parsed !== null) {
+                return $jsonString;
+            }
+        }
+        
+        // Strategy 4: Find JSON between first { and last }
+        $firstBrace = strpos($text, '{');
+        $lastBrace = strrpos($text, '}');
+        
+        if ($firstBrace !== false && $lastBrace !== false && $lastBrace > $firstBrace) {
+            $jsonCandidate = substr($text, $firstBrace, $lastBrace - $firstBrace + 1);
+            $parsed = json_decode($jsonCandidate, true);
+            if ($parsed !== null) {
+                return $jsonCandidate;
+            }
+        }
+        
+        // Strategy 5: Try to find any valid JSON object in the text
         preg_match_all('/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/s', $text, $matches);
         foreach ($matches[0] as $candidate) {
             $parsed = json_decode($candidate, true);
@@ -324,8 +450,42 @@ if ($isChunked) {
             }
         }
         
-        // Strategy 5: Return original if nothing worked
+        // Strategy 6: Extract HTML from planned structure and construct fallback JSON
+        $htmlContent = extractHtmlFromReasoning($text);
+        if ($htmlContent) {
+            $fallbackJson = json_encode(['content' => $htmlContent], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $parsed = json_decode($fallbackJson, true);
+            if ($parsed !== null) {
+                return $fallbackJson;
+            }
+        }
+        
+        // Strategy 7: Return original if nothing worked
         return $text;
+    }
+    
+    // Helper function to extract HTML from reasoning content
+    function extractHtmlFromReasoning($text) {
+        $lines = explode("\n", $text);
+        $htmlLines = [];
+        $inHtmlSection = false;
+        
+        foreach ($lines as $line) {
+            $line = trim($line);
+            
+            if (preg_match('/<[a-z][a-z0-9]*[^>]*>/', $line)) {
+                $inHtmlSection = true;
+                $htmlLines[] = $line;
+            } elseif ($inHtmlSection && !empty($line)) {
+                $htmlLines[] = $line;
+            }
+        }
+        
+        if (!empty($htmlLines)) {
+            return implode("\n", $htmlLines);
+        }
+        
+        return null;
     }
     
     $candidateJson = extractJsonSingle($candidateJson);

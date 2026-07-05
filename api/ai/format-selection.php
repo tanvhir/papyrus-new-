@@ -99,19 +99,8 @@ $content = [
 $promptBuilder = new PromptBuilder($settings, 'selection', $content, $highlightStyle);
 $prompt = $promptBuilder->build();
 
-// Add JSON schema instructions to prompt
-$prompt .= "\n\nYour response MUST follow this JSON schema:\n";
-$prompt .= "{\n";
-$prompt .= "  \"formattedHTML\": \"string (required)\",\n";
-$prompt .= "  \"stickies\": \"array of sticky note objects (optional)\",\n";
-$prompt .= "  \"arrows\": \"array of arrow objects (optional)\",\n";
-$prompt .= "  \"dividers\": \"array of divider objects (optional)\"\n";
-$prompt .= "}\n\n";
-$prompt .= "Sticky note format: { \"id\": \"string\", \"text\": \"string\", \"color\": \"#ffff99|#ffccff|#ccffff|#ffcc99\", \"position\": { \"x\": number, \"y\": number }, \"fontSize\": number }\n";
-$prompt .= "Arrow format: { \"id\": \"string\", \"start\": { \"x\": number, \"y\": number }, \"end\": { \"x\": number, \"y\": number }, \"mid\": { \"x\": number, \"y\": number }, \"color\": \"string\" }\n";
-$prompt .= "Divider format: { \"id\": \"string\", \"type\": \"solid|dashed|dotted|zigzag|wave\", \"orientation\": \"horizontal|vertical\", \"size\": number, \"length\": string, \"color\": string, \"position\": { \"x\": number, \"y\": number } }\n";
-$prompt .= "\nPlacement: Stickies on right margin (x: 850-920), y near centerY. Arrows from text (x: 600) to sticky.\n";
-$prompt .= "Wrap your JSON response in <output> tags like this: <output>{\"formattedHTML\": \"...\", ...}</output>.\n";
+// Add simple JSON instruction
+$prompt .= "\n\nOUTPUT: Return JSON with fields: formattedHTML, stickies, arrows, dividers. No other text. Start with { end with }.\n";
 
 // Call Gemini API with retry logic
 $result = GeminiClient::call($prompt, $apiKey, $modelName);
@@ -141,21 +130,81 @@ if (!$candidateJson) {
     errorResponse('Gemini did not return any content.', 500, 'GEMINI_EMPTY_RESPONSE');
 }
 
-// Smart JSON extraction function
+// Smart JSON extraction function with delimiter-based separation
 function extractJson($text) {
     $text = trim($text);
+    $extractionStrategy = 'unknown';
     
-    // Strategy 1: Try XML delimiters first
+    // Strategy 0: Delimiter-based extraction (PRIMARY)
+    if (strpos($text, '===JSON_OUTPUT===') !== false) {
+        $parts = explode('===JSON_OUTPUT===', $text, 2);
+        if (count($parts) === 2) {
+            $jsonCandidate = trim($parts[1]);
+            $parsed = json_decode($jsonCandidate, true);
+            if ($parsed !== null) {
+                $extractionStrategy = 'delimiter';
+                return $jsonCandidate;
+            }
+        }
+    }
+    
+    // Strategy 1: Try XML delimiters
     if (preg_match('/<output>(.*?)<\/output>/s', $text, $matches)) {
-        return trim($matches[1]);
+        $jsonCandidate = trim($matches[1]);
+        $parsed = json_decode($jsonCandidate, true);
+        if ($parsed !== null) {
+            $extractionStrategy = 'xml_delimiter';
+            return $jsonCandidate;
+        }
     }
     
     // Strategy 2: Try markdown code blocks
     if (preg_match('/```(?:json)?\s*(.*?)\s*```/s', $text, $matches)) {
-        return trim($matches[1]);
+        $jsonCandidate = trim($matches[1]);
+        $parsed = json_decode($jsonCandidate, true);
+        if ($parsed !== null) {
+            $extractionStrategy = 'markdown_code_block';
+            return $jsonCandidate;
+        }
     }
     
-    // Strategy 3: Find JSON between first { and last }
+    // Strategy 3: Extract from field assignments (Gemma-4 reasoning format)
+    $lines = explode("\n", $text);
+    $jsonFields = [];
+    $inJsonSection = false;
+    
+    foreach ($lines as $line) {
+        $line = trim($line);
+        
+        // Look for patterns like "formattedHTML": "..." or *   "formattedHTML": "..."
+        if (preg_match('/(?:\*?\s+)?["\']?([a-zA-Z_]+)["\']?\s*:\s*(.+)/', $line, $matches)) {
+            $field = $matches[1];
+            $value = $matches[2];
+            
+            // Clean up the value
+            $value = trim($value, ' "\'*');
+            
+            // Only include valid JSON fields
+            if (in_array($field, ['formattedHTML', 'stickies', 'arrows', 'dividers', 'title', 'content'])) {
+                $jsonFields[$field] = $value;
+                $inJsonSection = true;
+            }
+        }
+    }
+    
+    // If we found JSON fields, construct a JSON object
+    if (!empty($jsonFields) && $inJsonSection) {
+        $jsonString = json_encode($jsonFields, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        
+        // Try to parse it to ensure it's valid
+        $parsed = json_decode($jsonString, true);
+        if ($parsed !== null) {
+            $extractionStrategy = 'field_assignments';
+            return $jsonString;
+        }
+    }
+    
+    // Strategy 4: Find JSON between first { and last }
     $firstBrace = strpos($text, '{');
     $lastBrace = strrpos($text, '}');
     
@@ -165,21 +214,61 @@ function extractJson($text) {
         // Try to parse it
         $parsed = json_decode($jsonCandidate, true);
         if ($parsed !== null) {
+            $extractionStrategy = 'brace_matching';
             return $jsonCandidate;
         }
     }
     
-    // Strategy 4: Try to find any valid JSON object in the text
+    // Strategy 5: Try to find any valid JSON object in the text
     preg_match_all('/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/s', $text, $matches);
     foreach ($matches[0] as $candidate) {
         $parsed = json_decode($candidate, true);
         if ($parsed !== null) {
+            $extractionStrategy = 'json_object_search';
             return $candidate;
         }
     }
     
-    // Strategy 5: Return original if nothing worked
+    // Strategy 6: Extract HTML from planned structure and construct fallback JSON
+    $htmlContent = extractHtmlFromReasoning($text);
+    if ($htmlContent) {
+        $fallbackJson = json_encode(['formattedHTML' => $htmlContent], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $parsed = json_decode($fallbackJson, true);
+        if ($parsed !== null) {
+            $extractionStrategy = 'html_extraction_fallback';
+            return $fallbackJson;
+        }
+    }
+    
+    // Strategy 7: Return original if nothing worked
+    $extractionStrategy = 'original';
     return $text;
+}
+
+// Helper function to extract HTML from reasoning content
+function extractHtmlFromReasoning($text) {
+    $lines = explode("\n", $text);
+    $htmlLines = [];
+    $inHtmlSection = false;
+    
+    foreach ($lines as $line) {
+        $line = trim($line);
+        
+        // Look for lines with actual HTML tags
+        if (preg_match('/<[a-z][a-z0-9]*[^>]*>/', $line)) {
+            $inHtmlSection = true;
+            $htmlLines[] = $line;
+        } elseif ($inHtmlSection && !empty($line)) {
+            // Continue collecting if we're in an HTML section
+            $htmlLines[] = $line;
+        }
+    }
+    
+    if (!empty($htmlLines)) {
+        return implode("\n", $htmlLines);
+    }
+    
+    return null;
 }
 
 $candidateJson = extractJson($candidateJson);
