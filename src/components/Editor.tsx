@@ -22,7 +22,6 @@ import { Columns, Column } from '@/src/lib/MultiColumn';
 import { DOMSerializer } from '@tiptap/pm/model';
 import { cn, preserveSpaces } from '@/lib/utils';
 import { useToast } from '@/src/context/ToastContext';
-import { AIThinkingPanel } from '@/src/components/AIThinkingPanel';
 import {
   Bold,
   Italic,
@@ -79,6 +78,7 @@ interface EditorProps {
   texture?: 'plain' | 'laid' | 'grid' | 'linen';
   onCreateFlashcard?: (text: string) => void;
   isSimpleMode?: boolean;
+  onAISelectionFormat?: (selectionText: string, selectionHTML: string, instruction: string) => Promise<{ formattedHTML: string; stickies?: any[]; arrows?: any[]; dividers?: any[] }>;
 }
 
 const CustomDocument = Document.extend({
@@ -222,7 +222,8 @@ function Editor({
   theme,
   texture = 'plain',
   onCreateFlashcard,
-  isSimpleMode = false
+  isSimpleMode = false,
+  onAISelectionFormat
 }: EditorProps) {
   const { showError } = useToast();
   const [activeSubMenu, setActiveSubMenu] = React.useState<SubMenu>('main');
@@ -232,24 +233,9 @@ function Editor({
   const [isAISelectionLoading, setIsAISelectionLoading] = React.useState(false);
   const [headingLevel, setHeadingLevel] = React.useState<3 | 2 | 1>(3);
   const [textAlign, setTextAlign] = React.useState<'left' | 'center' | 'right'>('left');
-  const [isThinkingPanelOpen, setIsThinkingPanelOpen] = React.useState(false);
-  const [thinkingRequestData, setThinkingRequestData] = React.useState<any>(null);
-
-  // Get AI settings from localStorage (same as App.tsx)
-  const customApiKey = localStorage.getItem('academic_custom_api_key') || '';
-  const customModel = localStorage.getItem('academic_custom_model') || 'gemma-4-31b-it';
-  const highlightStyle = (localStorage.getItem('academic_highlight_style') as 'balanced' | 'generous' | 'none') || 'balanced';
-  const disableAIFlashcards = localStorage.getItem('academic_disable_ai_flashcards') !== 'false';
-  const disableAIArrows = localStorage.getItem('academic_disable_ai_arrows') === 'true';
-  const disableAIStickies = localStorage.getItem('academic_disable_ai_stickies') !== 'false';
-  const disableAIDividers = localStorage.getItem('academic_disable_ai_dividers') === 'true';
-  const disableAIImages = localStorage.getItem('academic_disable_ai_images') !== 'false';
-  const disableAIColumns = localStorage.getItem('academic_disable_ai_columns') === 'true';
-  const allowNoteEnhancement = localStorage.getItem('academic_allow_note_enhancement') !== 'false';
-  const enableCleaning = localStorage.getItem('academic_enable_cleaning') !== 'false';
 
   const handleAISelectionSubmit = async () => {
-    if (!editor || !aiPromptText.trim()) return;
+    if (!editor || !onAISelectionFormat || !aiPromptText.trim()) return;
     setIsAISelectionLoading(true);
 
     try {
@@ -273,57 +259,18 @@ function Editor({
       tempDiv.appendChild(serializer.serializeFragment(fragment));
       const selectionHTML = tempDiv.innerHTML;
 
-      // Open thinking panel with streaming ONLY
-      setThinkingRequestData({
-        selectionText,
-        selectionHTML,
-        instruction: aiPromptText,
-        customApiKey,
-        customModel,
-        highlightStyle,
-        disableAIFlashcards,
-        disableAIArrows,
-        disableAIStickies,
-        disableAIDividers,
-        disableAIImages,
-        disableAIColumns,
-        allowNoteEnhancement,
-        enableCleaning,
-        centerY: 300,
-        selectionRange: { from, to }
-      });
-      setIsThinkingPanelOpen(true);
+      const result = await onAISelectionFormat(selectionText, selectionHTML, aiPromptText);
+      if (result && result.formattedHTML) {
+        editor.chain().focus().insertContentAt({ from, to }, result.formattedHTML).run();
+        setAiPromptText('');
+        setActiveSubMenu('main');
+      }
     } catch (e: any) {
       console.error(e);
       showError('Error formatting selection', e.message || String(e));
+    } finally {
       setIsAISelectionLoading(false);
     }
-  };
-
-  const handleStreamComplete = (result: any) => {
-    if (result && editor) {
-      // Use the saved selection range from when the request was made
-      const selectionRange = thinkingRequestData?.selectionRange;
-      if (selectionRange) {
-        const { from, to } = selectionRange;
-        
-        // Handle both JSON response (with formattedHTML) and direct HTML response
-        const htmlToInsert = result.formattedHTML || result;
-        if (htmlToInsert && typeof htmlToInsert === 'string') {
-          editor.chain().focus().insertContentAt({ from, to }, htmlToInsert).run();
-          setAiPromptText('');
-          setActiveSubMenu('main');
-        }
-      }
-    }
-    setIsThinkingPanelOpen(false);
-    setIsAISelectionLoading(false);
-  };
-
-  const handleStreamError = (error: string) => {
-    showError('AI streaming error', error);
-    setIsThinkingPanelOpen(false);
-    setIsAISelectionLoading(false);
   };
 
   const isPaintingRef = React.useRef(false);
@@ -1332,14 +1279,6 @@ function Editor({
           </div>
         </DialogContent>
       </Dialog>
-
-      <AIThinkingPanel
-        isOpen={isThinkingPanelOpen}
-        onClose={() => setIsThinkingPanelOpen(false)}
-        onStreamComplete={handleStreamComplete}
-        onError={handleStreamError}
-        requestData={thinkingRequestData}
-      />
     </div>
   );
 };

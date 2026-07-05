@@ -112,6 +112,7 @@ $prompt .= "Arrow format: { \"id\": \"string\", \"start\": { \"x\": number, \"y\
 $prompt .= "Divider format: { \"id\": \"string\", \"type\": \"solid|dashed|dotted|zigzag|wave\", \"orientation\": \"horizontal|vertical\", \"size\": number, \"length\": string, \"color\": string, \"position\": { \"x\": number, \"y\": number } }\n";
 $prompt .= "\nPlacement: Stickies on right margin (x: 850-920), y near centerY. Arrows from text (x: 600) to sticky.\n";
 $prompt .= "Do not wrap JSON output in markdown backticks.";
+$prompt .= "\n\nCRITICAL: Your response must be ONLY the JSON object. No markdown code blocks, no reasoning, no explanations. Start with { and end with }.\n";
 
 // Call Gemini API with retry logic
 $result = GeminiClient::call($prompt, $apiKey, $modelName);

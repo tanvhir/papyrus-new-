@@ -134,6 +134,7 @@ if ($isChunked) {
         $prompt .= "Divider format: { \"id\": \"string\", \"type\": \"solid|dashed|dotted|zigzag|wave\", \"orientation\": \"horizontal|vertical\", \"size\": number, \"length\": string, \"color\": string, \"position\": { \"x\": number, \"y\": number } }\n";
         $prompt .= "\nPlacement: Stickies on right margin (x: 850-920), stagger y by 250px starting from 150. Arrows from text (x: 600) to sticky.\n";
         $prompt .= "Do not wrap JSON output in markdown backticks.";
+        $prompt .= "\n\nCRITICAL: Your response must be ONLY the JSON object. No markdown code blocks, no reasoning, no explanations. Start with { and end with }.\n";
         
         // Call Gemini API
         $result = GeminiClient::call($prompt, $apiKey, $modelName);
@@ -220,6 +221,7 @@ if ($isChunked) {
     $prompt .= "Divider format: { \"id\": \"string\", \"type\": \"solid|dashed|dotted|zigzag|wave\", \"orientation\": \"horizontal|vertical\", \"size\": number, \"length\": string, \"color\": string, \"position\": { \"x\": number, \"y\": number } }\n";
     $prompt .= "\nPlacement: Stickies on right margin (x: 850-920), stagger y by 250px starting from 150. Arrows from text (x: 600) to sticky.\n";
     $prompt .= "Do not wrap JSON output in markdown backticks.";
+    $prompt .= "\n\nCRITICAL: Your response must be ONLY the JSON object. No markdown code blocks, no reasoning, no explanations. Start with { and end with }.\n";
     
     // Call Gemini API with retry logic
     $result = GeminiClient::call($prompt, $apiKey, $modelName);

@@ -1863,6 +1863,58 @@ export default function App() {
     img.src = src;
   };
 
+  const handleAISelectionFormat = useCallback(async (selectionText: string, selectionHTML: string, instruction: string) => {
+    const centerY = getViewportCenterY();
+
+    try {
+      const response = await fetch('/api/ai/format-selection.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(customApiKey ? { 'X-Gemini-API-Key': customApiKey } : {}),
+          ...(customModel ? { 'X-Gemini-Model': customModel } : {}),
+        },
+        body: JSON.stringify({
+          selectionText,
+          selectionHTML,
+          instruction,
+          centerY,
+          customApiKey,
+          customModel,
+          highlightStyle,
+          disableAIFlashcards,
+          disableAIArrows,
+          disableAIStickies,
+          disableAIDividers,
+          disableAIImages,
+          disableAIColumns,
+          allowNoteEnhancement,
+          enableCleaning,
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        // Map returned stickies, arrows, and dividers safely
+        if (data.stickies && data.stickies.length > 0 && !disableAIStickies) {
+          setStickies(prev => [...prev, ...data.stickies]);
+        }
+        if (data.arrows && data.arrows.length > 0 && !disableAIArrows) {
+          setArrows(prev => [...prev, ...data.arrows]);
+        }
+        if (data.dividers && data.dividers.length > 0 && !disableAIDividers) {
+          setDividers(prev => [...prev, ...data.dividers]);
+        }
+        return { formattedHTML: data.formattedHTML };
+      } else {
+        showError('AI selection formatting failed', data.message || 'AI selection formatting failed.', undefined, data.debugInfo);
+      }
+    } catch (error: any) {
+      console.error('AI selection format error:', error);
+      showError('AI selection format error', 'Failed to format selection with AI. Please try again.');
+      return null;
+    }
+  }, [customApiKey, customModel, highlightStyle, disableAIFlashcards, disableAIArrows, disableAIStickies, disableAIDividers, disableAIImages, disableAIColumns, allowNoteEnhancement, enableCleaning]);
 
   const updateArrow = useCallback((id: string, updates: Partial<ArrowData>) => {
     setArrows(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
@@ -2973,6 +3025,7 @@ export default function App() {
                 theme={theme}
                 texture={texture}
                 onCreateFlashcard={handleCreateFlashcard}
+                onAISelectionFormat={handleAISelectionFormat}
                 className={cn(
                   "min-h-[700px]",
                   isHandwriting ? "[&_.ProseMirror]:font-handwriting [&_.ProseMirror_p]:font-handwriting [&_.ProseMirror_h1]:font-handwriting [&_.ProseMirror_h2]:font-handwriting [&_.ProseMirror_h3]:font-handwriting" : "[&_.ProseMirror]:font-bangla [&_.ProseMirror_p]:font-bangla [&_.ProseMirror_h1]:font-bangla [&_.ProseMirror_h2]:font-bangla [&_.ProseMirror_h3]:font-bangla",

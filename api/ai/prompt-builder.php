@@ -49,7 +49,7 @@ class PromptBuilder {
     }
     
     private function getBasePrompt() {
-        return "You are an expert academic content designer. Your task is to format content based on user instructions.\n\n";
+        return "You are an expert academic content designer. Your task is to format content based on user instructions.\n\nCRITICAL: Do NOT include any internal reasoning, thought process, or step-by-step planning in your response. Output ONLY the final JSON object with no explanatory text before or after it.\n\n";
     }
     
     private function getModeSpecificInstructions() {
@@ -140,6 +140,8 @@ class PromptBuilder {
             $section .= "3. \"arrows\": An array of optional curved connection or callout arrows pointing from main concepts in the text block to relevant stickies.\n";
             $section .= "4. \"dividers\": An array of optional decorative background canvas dividers (keep empty unless requested).\n";
             
+            $section .= "\n\nFINAL INSTRUCTION: Output ONLY the JSON object. Do not include any reasoning, explanations, or markdown code blocks. Start your response immediately with { and end with }.\n";
+            
             return $section;
         } else {
             $title = $this->content['title'] ?? '';
@@ -155,6 +157,8 @@ class PromptBuilder {
             $section .= "3. \"stickies\": An array of sticky notes for key Callouts, Reminders, definitions, or Quick Flashcards.\n";
             $section .= "4. \"arrows\": An array of curved connection or callout arrows pointing from main concepts in the text block to relevant stickies.\n";
             $section .= "5. \"dividers\": An array of decorative background canvas dividers (keep empty unless requested).\n";
+            
+            $section .= "\n\nFINAL INSTRUCTION: Output ONLY the JSON object. Do not include any reasoning, explanations, or markdown code blocks. Start your response immediately with { and end with }.\n";
             
             return $section;
         }
