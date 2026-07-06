@@ -184,6 +184,10 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
   };
 
   const getIndentWidth = (level: number) => {
+    // Right-aligned indentation - hierarchy grows toward notebook (right side)
+    // Level 1: furthest from rail (most left)
+    // Level 2: closer to rail
+    // Level 3: closest to rail (most right)
     switch (level) {
       case 1: return 0;
       case 2: return 16;
@@ -241,11 +245,14 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
     // Navigation rail position - fixed distance from right edge, anchored to spiral
     const railPosition = 10; // px from right edge
     
-    // Calculate connector width to extend fully to rail from text position
-    // Text starts at 10px + indent, rail is at railPosition from right
-    // TOC width is 215px, so rail is at 215 - railPosition = 205px from left
-    // Connector should extend from text end to rail
-    const connectorWidth = 215 - railPosition - (10 + indent);
+    // TOC width is 215px, rail is at 215 - railPosition = 205px from left
+    // Right-aligned indentation: text starts at different positions based on level
+    // Level 1: 10px from left (furthest from rail)
+    // Level 2: 10 + 16 = 26px from left (closer to rail)
+    // Level 3: 10 + 32 = 42px from left (closest to rail)
+    const textStart = 10 + indent;
+    const railFromLeft = 215 - railPosition;
+    const connectorWidth = railFromLeft - textStart;
     
     return (
       <div key={item.id} className="relative">
@@ -256,7 +263,7 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
             isActive ? "bg-stone-400 dark:bg-stone-500" : "bg-stone-300/12 dark:bg-stone-700/12"
           )}
           style={{
-            left: `${10 + indent}px`,
+            left: `${textStart}px`,
             width: `${connectorWidth}px`,
             height: '1px',
             opacity: isActive ? 0.5 : 0.15
@@ -278,7 +285,7 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
             verticalSpacing,
             rowHeight
           )}
-          style={{ paddingLeft: `${10 + indent}px`, paddingRight: `${railPosition + 12}px` }}
+          style={{ paddingLeft: `${textStart}px`, paddingRight: `${railPosition + 12}px` }}
         >
           {/* Expand/collapse indicator on navigation rail */}
           {hasChildren && (
@@ -350,7 +357,7 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
       style={{
         scrollbarWidth: 'none',
         msOverflowStyle: 'none',
-        paddingTop: 'calc(6rem + 40px)', // Align with notebook's first content area
+        paddingTop: 'calc(6rem + 8px)', // Align Contents with notebook's first content area (header 6rem + pt-2 8px)
         // Position TOC to hug the notebook with 7px before spiral binding
         // Canvas width is 820px (a4-portrait), half is 410px
         // Spiral binding is 36px wide at left edge of notebook
@@ -370,9 +377,6 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
           scrollbar-width: none;
         }
       `}</style>
-      
-      {/* Fade effect at top only - very subtle */}
-      <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-stone-50/30 dark:from-stone-950/30 to-transparent pointer-events-none" />
       
       {/* TOC Content - minimal padding to feel like printed margin */}
       <div className="px-2 pb-4">
