@@ -209,14 +209,14 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
   };
 
   const getIndentWidth = (level: number) => {
-    // Right-aligned indentation - hierarchy grows toward notebook (right side)
-    // Level 1: furthest from rail (most left)
-    // Level 2: closer to rail
-    // Level 3: closest to rail (most right)
+    // Left-aligned tree indentation
+    // Level 1: no indent (root)
+    // Level 2: 20px indent
+    // Level 3: 40px indent
     switch (level) {
       case 1: return 0;
-      case 2: return 16;
-      case 3: return 32;
+      case 2: return 20;
+      case 3: return 40;
       default: return 0;
     }
   };
@@ -259,7 +259,7 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
     }
   };
 
-  const renderTreeItem = (item: HeadingItem, depth: number = 0): React.ReactNode => {
+  const renderTreeItem = (item: HeadingItem, depth: number = 0, parentHasSiblings: boolean = false, isLastChild: boolean = false): React.ReactNode => {
     const hasChildren = item.children && item.children.length > 0;
     const isExpanded = expandedItems.has(item.id);
     const isActive = activeHeading === item.id;
@@ -267,33 +267,53 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
     const verticalSpacing = getVerticalSpacing(item.level);
     const rowHeight = getRowHeight(item.level);
     
-    // Navigation rail position - fixed distance from right edge, anchored to spiral
-    const railPosition = 10; // px from right edge
+    // Tree connector line styling
+    const getLineStyle = (depth: number) => {
+      switch (depth) {
+        case 0: return { width: '1.5px', opacity: isActive ? 0.5 : 0.3 };
+        case 1: return { width: '1px', opacity: isActive ? 0.4 : 0.25 };
+        default: return { width: '0.75px', opacity: isActive ? 0.3 : 0.2 };
+      }
+    };
     
-    // TOC width is 215px, rail is at 215 - railPosition = 205px from left
-    // Right-aligned indentation: text starts at different positions based on level
-    // Level 1: 10px from left (furthest from rail)
-    // Level 2: 10 + 16 = 26px from left (closer to rail)
-    // Level 3: 10 + 32 = 42px from left (closest to rail)
-    const textStart = 10 + indent;
-    const railFromLeft = 215 - railPosition;
-    const connectorWidth = railFromLeft - textStart;
+    const lineStyle = getLineStyle(depth);
+    const textStart = 12 + indent; // Base padding + indent
     
     return (
       <div key={item.id} className="relative">
-        {/* Connector line from text to navigation rail - extends fully to rail */}
-        <div 
-          className={cn(
-            "absolute top-1/2 -translate-y-1/2 transition-all duration-180",
-            isActive ? "bg-stone-400 dark:bg-stone-500" : "bg-stone-300/12 dark:bg-stone-700/12"
-          )}
-          style={{
-            left: `${textStart}px`,
-            width: `${connectorWidth}px`,
-            height: '1px',
-            opacity: isActive ? 0.5 : 0.15
-          }}
-        />
+        {/* Tree connector lines for nested items */}
+        {depth > 0 && (
+          <>
+            {/* Vertical line from parent */}
+            <div 
+              className={cn(
+                "absolute transition-all duration-180",
+                isActive ? "bg-stone-400 dark:bg-stone-500" : "bg-stone-300 dark:bg-stone-700"
+              )}
+              style={{
+                left: `${12 + (depth - 1) * 20}px`,
+                top: '0',
+                width: lineStyle.width,
+                height: isLastChild ? '50%' : '100%',
+                opacity: lineStyle.opacity
+              }}
+            />
+            {/* Horizontal branch line to this item */}
+            <div 
+              className={cn(
+                "absolute top-1/2 transition-all duration-180",
+                isActive ? "bg-stone-400 dark:bg-stone-500" : "bg-stone-300 dark:bg-stone-700"
+              )}
+              style={{
+                left: `${12 + (depth - 1) * 20}px`,
+                top: '50%',
+                width: `${indent - (depth - 1) * 20}px`,
+                height: lineStyle.width,
+                opacity: lineStyle.opacity
+              }}
+            />
+          </>
+        )}
         
         {/* Tree item button */}
         <button
@@ -310,36 +330,24 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
             verticalSpacing,
             rowHeight
           )}
-          style={{ paddingLeft: `${textStart}px`, paddingRight: `${railPosition + 12}px` }}
+          style={{ paddingLeft: `${textStart}px` }}
         >
-          {/* Expand/collapse indicator on navigation rail */}
+          {/* Expand/collapse indicator */}
           {hasChildren && (
-            <div 
+            <span 
               className={cn(
-                "absolute top-1/2 -translate-y-1/2 transition-all duration-180",
-                "opacity-0 group-hover:opacity-100"
+                "mr-2 transition-all duration-180",
+                "text-stone-400 dark:text-stone-600",
+                "hover:text-stone-600 dark:hover:text-stone-400"
               )}
-              style={{ right: `${railPosition - 3}px` }}
             >
               {isExpanded ? (
-                <ChevronDown className="w-1.5 h-1.5 text-stone-400 dark:text-stone-600" />
+                <ChevronDown className="w-3 h-3" />
               ) : (
-                <ChevronRight className="w-1.5 h-1.5 text-stone-400 dark:text-stone-600" />
+                <ChevronRight className="w-3 h-3" />
               )}
-            </div>
+            </span>
           )}
-          
-          {/* Node indicator on navigation rail - subtle dot */}
-          <div 
-            className={cn(
-              "absolute top-1/2 -translate-y-1/2 w-0.5 h-0.5 rounded-full transition-all duration-180",
-              isActive ? "bg-stone-500 dark:bg-stone-400" : "bg-stone-300/25 dark:bg-stone-700/25"
-            )}
-            style={{ 
-              right: `${railPosition - 1}px`,
-              opacity: isActive ? 0.6 : 0.2
-            }}
-          />
           
           {/* Heading text */}
           <span className={getTypographyClass(item.level, isActive)}>
@@ -347,24 +355,34 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
           </span>
         </button>
         
-        {/* Vertical connector line on navigation rail for children */}
+        {/* Vertical line for children */}
         {hasChildren && isExpanded && (
           <div 
-            className="absolute transition-all duration-180"
+            className={cn(
+              "absolute transition-all duration-180",
+              isActive ? "bg-stone-400 dark:bg-stone-500" : "bg-stone-300 dark:bg-stone-700"
+            )}
             style={{
-              right: `${railPosition - 1}px`,
-              top: '28px',
+              left: `${textStart - 8}px`,
+              top: '24px',
               bottom: '0',
-              width: '0.5px',
-              background: 'linear-gradient(to bottom, rgba(115, 115, 115, 0.08) 0%, rgba(115, 115, 115, 0.02) 100%)'
-            }}
+              width: lineStyle.width,
+              opacity: lineStyle.opacity
+              }}
           />
         )}
         
         {/* Children */}
         {hasChildren && isExpanded && (
           <div className="relative">
-            {item.children!.map(child => renderTreeItem(child, depth + 1))}
+            {item.children!.map((child, index) => 
+              renderTreeItem(
+                child, 
+                depth + 1, 
+                true, 
+                index === item.children!.length - 1
+              )
+            )}
           </div>
         )}
       </div>
