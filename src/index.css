@@ -594,38 +594,59 @@
 
 /* Mobile Responsive Styles */
 @media (max-width: 768px) {
+  /* Ensure no horizontal scroll on body */
+  html, body {
+    overflow-x: hidden !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+  }
+
   .page-container-node {
     width: 100% !important;
     max-width: 100% !important;
-    padding-left: 24px !important;
-    padding-right: 24px !important;
-    padding-top: 32px !important;
-    padding-bottom: 32px !important;
-    --page-margin-x: 24px;
-    --page-margin-y: 32px;
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+    padding-top: 24px !important;
+    padding-bottom: 24px !important;
+    --page-margin-x: 20px;
+    --page-margin-y: 24px;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
   }
 
   .notebook-spiral .page-container-node {
-    padding-left: calc(24px + var(--spiral-binding-margin)) !important;
+    padding-left: calc(20px + var(--spiral-binding-margin)) !important;
   }
 
   .ProseMirror {
     font-size: 16px !important;
+    line-height: 1.7 !important;
   }
 
-  .ProseMirror h1 { font-size: 1.75rem !important; }
-  .ProseMirror h2 { font-size: 1.5rem !important; }
-  .ProseMirror h3 { font-size: 1.25rem !important; }
+  .ProseMirror p {
+    margin-bottom: 1rem !important;
+    line-height: 1.7 !important;
+  }
+
+  .ProseMirror h1 { font-size: 1.5rem !important; margin-bottom: 0.75rem !important; line-height: 1.3 !important; }
+  .ProseMirror h2 { font-size: 1.25rem !important; margin-bottom: 0.6rem !important; line-height: 1.3 !important; }
+  .ProseMirror h3 { font-size: 1.1rem !important; margin-bottom: 0.5rem !important; line-height: 1.3 !important; }
 
   /* Sticky notes on mobile */
   .sticky-note-element {
-    width: 240px !important;
-    min-height: 200px !important;
+    width: 200px !important;
+    min-height: 160px !important;
   }
 
   /* Hide sidebar on mobile */
   .sidebar {
     display: none !important;
+  }
+
+  /* Stationery bar adjustments */
+  .stationery-bar {
+    bottom: 1rem !important;
+    padding: 0.5rem !important;
   }
 }
 
@@ -633,10 +654,10 @@
   .page-container-node {
     padding-left: 16px !important;
     padding-right: 16px !important;
-    padding-top: 24px !important;
-    padding-bottom: 24px !important;
+    padding-top: 20px !important;
+    padding-bottom: 20px !important;
     --page-margin-x: 16px;
-    --page-margin-y: 24px;
+    --page-margin-y: 20px;
   }
 
   .notebook-spiral .page-container-node {
@@ -644,27 +665,58 @@
   }
 
   .ProseMirror {
-    font-size: 14px !important;
+    font-size: 15px !important;
+    line-height: 1.75 !important;
   }
 
-  .ProseMirror h1 { font-size: 1.5rem !important; }
-  .ProseMirror h2 { font-size: 1.25rem !important; }
-  .ProseMirror h3 { font-size: 1.1rem !important; }
+  .ProseMirror p {
+    margin-bottom: 1.1rem !important;
+    line-height: 1.75 !important;
+  }
+
+  .ProseMirror h1 { font-size: 1.4rem !important; margin-bottom: 0.7rem !important; }
+  .ProseMirror h2 { font-size: 1.2rem !important; margin-bottom: 0.6rem !important; }
+  .ProseMirror h3 { font-size: 1.05rem !important; margin-bottom: 0.5rem !important; }
+
+  /* Sticky notes smaller */
+  .sticky-note-element {
+    width: 180px !important;
+    min-height: 140px !important;
+  }
 }
 
 @media (max-width: 480px) {
   .page-container-node {
-    padding-left: 12px !important;
-    padding-right: 12px !important;
-    --page-margin-x: 12px;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+    padding-top: 16px !important;
+    padding-bottom: 16px !important;
+    --page-margin-x: 14px;
+    --page-margin-y: 16px;
   }
 
   .notebook-spiral .page-container-node {
-    padding-left: calc(12px + var(--spiral-binding-margin)) !important;
+    padding-left: calc(14px + var(--spiral-binding-margin)) !important;
   }
 
   .ProseMirror {
-    font-size: 13px !important;
+    font-size: 14px !important;
+    line-height: 1.8 !important;
+  }
+
+  .ProseMirror p {
+    margin-bottom: 1.2rem !important;
+    line-height: 1.8 !important;
+  }
+
+  .ProseMirror h1 { font-size: 1.3rem !important; margin-bottom: 0.65rem !important; }
+  .ProseMirror h2 { font-size: 1.15rem !important; margin-bottom: 0.55rem !important; }
+  .ProseMirror h3 { font-size: 1rem !important; margin-bottom: 0.45rem !important; }
+
+  /* Sticky notes even smaller */
+  .sticky-note-element {
+    width: 160px !important;
+    min-height: 120px !important;
   }
 }
 

@@ -115,7 +115,7 @@ export const StationeryBar = React.memo<StationeryBarProps>(({
 
   return (
     <TooltipProvider>
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-white/90 dark:bg-stone-900/90 dark:border-stone-800 backdrop-blur-md border border-stone-200 paper-shadow rounded-2xl px-5 py-2.5 flex items-center gap-1.5 z-50 animate-in fade-in slide-in-from-bottom-6 duration-700 text-stone-900 dark:text-stone-100 max-w-[95vw] overflow-x-auto">
+      <div className="fixed bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 bg-white/90 dark:bg-stone-900/90 dark:border-stone-800 backdrop-blur-md border border-stone-200 paper-shadow rounded-2xl px-3 md:px-5 py-2 md:py-2.5 flex items-center gap-1 md:gap-1.5 z-50 animate-in fade-in slide-in-from-bottom-6 duration-700 text-stone-900 dark:text-stone-100 max-w-[95vw] overflow-x-auto">
         <div className="flex items-center gap-0.5">
           <Tooltip>
             <TooltipTrigger asChild>

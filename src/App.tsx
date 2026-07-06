@@ -2713,120 +2713,89 @@ export default function App() {
       {/* Header */}
       <AnimatePresence>
         {!isCleanMode && (
-          <motion.header 
+          <motion.header
             initial={{ y: -100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -100, opacity: 0 }}
-            className="w-full max-w-4xl flex justify-between items-center mb-12 shrink-0"
+            className="w-full max-w-4xl flex justify-between items-center mb-6 md:mb-12 shrink-0 px-2 md:px-0"
           >
-            <div className="flex items-center gap-4">
-              {/* Logo */}
-              <div className="flex items-center gap-2 pr-4 border-r border-stone-200 dark:border-stone-800">
-                <img src="/papyruslogo.svg" alt="Papyrus Logo" className="w-9 h-11" />
+            <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
+              {/* Logo - smaller on mobile */}
+              <div className="flex items-center gap-2 pr-2 md:pr-4 border-r border-stone-200 dark:border-stone-800 shrink-0">
+                <img src="/papyruslogo.svg" alt="Papyrus Logo" className="w-6 h-8 md:w-9 md:h-11" />
               </div>
-              
-              <div className="flex flex-col relative group">
+
+              <div className="flex flex-col relative group min-w-0 flex-1">
                 <input
                   type="text"
-                  placeholder="Subject Name"
+                  placeholder="Subject"
                   value={getActiveContext()?.subject.name || ''}
                   onChange={(e) => {
                     const context = getActiveContext();
                     if (context) renameSubject(context.subject.id, e.target.value);
                   }}
-                  className="text-[10px] font-sans font-bold tracking-[0.2em] opacity-40 uppercase bg-transparent border-none p-0 m-0 focus:outline-none focus:opacity-100 transition-opacity w-full max-w-[300px] placeholder:text-stone-300 dark:placeholder:text-stone-700"
+                  className="text-[9px] md:text-[10px] font-sans font-bold tracking-[0.15em] md:tracking-[0.2em] opacity-40 uppercase bg-transparent border-none p-0 m-0 focus:outline-none focus:opacity-100 transition-opacity w-full max-w-[150px] md:max-w-[300px] placeholder:text-stone-300 dark:placeholder:text-stone-700 truncate"
                 />
                 <input
                   type="text"
-                  placeholder="Chapter Title"
+                  placeholder="Chapter"
                   value={getActiveContext()?.note.title || ''}
                   onChange={(e) => {
                     const context = getActiveContext();
                     if (context) renameNote(context.note.id, e.target.value);
                   }}
-                  className="text-2xl font-serif tracking-tighter opacity-80 uppercase bg-transparent border-none p-0 m-0 focus:outline-none focus:opacity-100 transition-opacity w-full max-w-[300px] placeholder:text-stone-300 dark:placeholder:text-stone-700"
+                  className="text-lg md:text-2xl font-serif tracking-tighter opacity-80 uppercase bg-transparent border-none p-0 m-0 focus:outline-none focus:opacity-100 transition-opacity w-full max-w-[150px] md:max-w-[300px] placeholder:text-stone-300 dark:placeholder:text-stone-700 truncate"
                 />
               </div>
             </div>
-            
-            <div className="flex items-center gap-2">
+
+            <div className="flex items-center gap-1 md:gap-2 shrink-0">
               {/* Flashcards Button */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        className={cn(
-                          "w-8 h-8 rounded-full relative transition-all duration-300",
-                          flashcards.filter(c => c.sourceNoteId === activeNoteId).length > 0 
-                            ? "bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 opacity-100 hover:scale-110" 
-                            : "opacity-60"
-                        )}
-                        onClick={() => handleStartStudy('note', activeNoteId)}
-                      >
-                        <Brain className="w-4 h-4" />
-                        {flashcards.filter(c => c.sourceNoteId === activeNoteId).length > 0 && (
-                          <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 rounded-full bg-amber-500 text-[#FFFCF5] text-[8px] font-mono font-bold flex items-center justify-center shadow-sm animate-bounce-slow">
-                            {flashcards.filter(c => c.sourceNoteId === activeNoteId).length}
-                          </span>
-                        )}
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {flashcards.filter(c => c.sourceNoteId === activeNoteId).length > 0 
-                      ? `Study Chapter Cards (${flashcards.filter(c => c.sourceNoteId === activeNoteId).length})` 
-                      : "No flashcards linked to this chapter"}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "w-7 h-7 md:w-8 md:h-8 rounded-full relative transition-all duration-300",
+                  flashcards.filter(c => c.sourceNoteId === activeNoteId).length > 0
+                    ? "bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 opacity-100 hover:scale-110"
+                    : "opacity-60"
+                )}
+                onClick={() => handleStartStudy('note', activeNoteId)}
+              >
+                <Brain className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                {flashcards.filter(c => c.sourceNoteId === activeNoteId).length > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-3 h-3 md:min-w-4 md:h-4 px-0.5 md:px-1 rounded-full bg-amber-500 text-[#FFFCF5] text-[7px] md:text-[8px] font-mono font-bold flex items-center justify-center shadow-sm animate-bounce-slow">
+                    {flashcards.filter(c => c.sourceNoteId === activeNoteId).length}
+                  </span>
+                )}
+              </Button>
 
               {/* Help Button */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        className="w-8 h-8 rounded-full opacity-60 hover:opacity-100 transition-all hover:scale-105"
-                        onClick={() => setIsHelpOpen(true)}
-                      >
-                        <HelpCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>Help Center</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-7 h-7 md:w-8 md:h-8 rounded-full opacity-60 hover:opacity-100 transition-all hover:scale-105"
+                onClick={() => setIsHelpOpen(true)}
+              >
+                <HelpCircle className="w-3.5 h-3.5 md:w-4 md:h-4 text-emerald-600 dark:text-emerald-400" />
+              </Button>
 
               {/* Settings Button */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        className="w-8 h-8 rounded-full opacity-60 hover:opacity-100 transition-all hover:scale-105"
-                        onClick={() => setIsSettingsOpen(true)}
-                      >
-                        <Settings className="w-4 h-4 text-stone-700 dark:text-stone-300" />
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>Settings</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-7 h-7 md:w-8 md:h-8 rounded-full opacity-60 hover:opacity-100 transition-all hover:scale-105"
+                onClick={() => setIsSettingsOpen(true)}
+              >
+                <Settings className="w-3.5 h-3.5 md:w-4 md:h-4 text-stone-700 dark:text-stone-300" />
+              </Button>
 
-              <div className="w-px h-4 bg-stone-200 dark:bg-stone-800 mx-1" />
-    
-              {/* Search Button */}
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <div className="hidden md:block w-px h-4 bg-stone-200 dark:bg-stone-800 mx-1" />
+
+              {/* Search Button - desktop only */}
+              <Button
+                variant="outline"
+                size="sm"
                 className="hidden md:flex items-center gap-2 px-3 py-1.5 h-auto text-xs font-medium border-stone-200 dark:border-stone-800 text-stone-500 hover:text-stone-900 dark:hover:text-stone-100 bg-white/50 dark:bg-stone-900/50 backdrop-blur-sm rounded-full transition-all"
                 onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', altKey: true }))}
               >
