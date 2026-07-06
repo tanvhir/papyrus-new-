@@ -14,13 +14,38 @@ interface HeadingItem {
 interface TableOfContentsProps {
   editor: any;
   scrollContainerRef?: React.RefObject<HTMLDivElement>;
+  paperRef?: React.RefObject<HTMLDivElement>;
 }
 
-export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scrollContainerRef }) => {
+export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scrollContainerRef, paperRef }) => {
   const [headings, setHeadings] = useState<HeadingItem[]>([]);
   const [activeHeading, setActiveHeading] = useState<string | null>(null);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const tocRef = useRef<HTMLDivElement>(null);
+  const [paperTopOffset, setPaperTopOffset] = useState(0);
+
+  // Calculate paper top position to align TOC "Contents" text
+  useEffect(() => {
+    if (!paperRef?.current) return;
+
+    const updatePaperOffset = () => {
+      const paperRect = paperRef.current?.getBoundingClientRect();
+      if (paperRect) {
+        setPaperTopOffset(paperRect.top);
+      }
+    };
+
+    updatePaperOffset();
+
+    // Update on scroll and resize
+    window.addEventListener('scroll', updatePaperOffset);
+    window.addEventListener('resize', updatePaperOffset);
+
+    return () => {
+      window.removeEventListener('scroll', updatePaperOffset);
+      window.removeEventListener('resize', updatePaperOffset);
+    };
+  }, [paperRef]);
 
   // Extract headings from editor and build tree structure
   useEffect(() => {
@@ -357,7 +382,7 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
       style={{
         scrollbarWidth: 'none',
         msOverflowStyle: 'none',
-        paddingTop: 'calc(6rem + 8px)', // Align Contents with notebook's first content area (header 6rem + pt-2 8px)
+        paddingTop: `${paperTopOffset + 8}px`, // Align Contents with paper top + 8px offset
         // Position TOC to hug the notebook with 7px before spiral binding
         // Canvas width is 820px (a4-portrait), half is 410px
         // Spiral binding is 36px wide at left edge of notebook

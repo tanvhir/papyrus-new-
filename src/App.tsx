@@ -2706,6 +2706,7 @@ export default function App() {
         <TableOfContents 
           editor={editor} 
           scrollContainerRef={containerRef}
+          paperRef={mainAreaRef}
         />
       )}
 
