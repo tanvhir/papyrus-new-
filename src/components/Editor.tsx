@@ -1079,7 +1079,7 @@ function Editor({
                 onClick={() => {
                   const nextLevel = headingLevel === 3 ? 2 : headingLevel === 2 ? 1 : 3;
                   setHeadingLevel(nextLevel);
-                  onFormat?.('heading', `h${nextLevel}`);
+                  onFormat?.(`h${nextLevel}`);
                 }}
                 className={cn(
                   "p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors",
@@ -1098,7 +1098,7 @@ function Editor({
                 onClick={() => {
                   const nextAlign = textAlign === 'left' ? 'center' : textAlign === 'center' ? 'right' : 'left';
                   setTextAlign(nextAlign);
-                  onFormat?.('textAlign', nextAlign);
+                  onFormat?.('align', nextAlign);
                 }}
                 className={cn(
                   "p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors",
@@ -1219,6 +1219,10 @@ function Editor({
                     style={{ backgroundColor: c.color }}
                     onClick={() => {
                       onFormat?.(activeSubMenu === 'highlight' ? 'highlight' : 'color', c.color);
+                      // Clear selection to make highlight visible
+                      if (activeSubMenu === 'highlight' && editor) {
+                        editor.commands.setTextSelection({ from: editor.state.selection.from, to: editor.state.selection.from });
+                      }
                       // Don't auto-close, let user pick multiple if needed or click back
                     }}
                     title={c.name}

@@ -10,7 +10,10 @@ import {
   Info,
   ChevronRight,
   Check,
-  FileText
+  FileText,
+  Download,
+  Printer,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { THEMES } from '@/src/types';
@@ -61,6 +64,10 @@ interface SettingsModalProps {
   onThemeChange: (theme: any) => void;
   onFontSizeChange: (size: number) => void;
   onHandwritingToggle: (enabled: boolean) => void;
+  // PDF export props
+  onExportPDF: () => void;
+  onExportPDFPrint: () => void;
+  isExportingPDF: boolean;
 }
 
 const TABS = [
@@ -173,6 +180,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onThemeChange,
   onFontSizeChange,
   onHandwritingToggle,
+  onExportPDF,
+  onExportPDFPrint,
+  isExportingPDF,
 }) => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');
   const [accentColor, setAccentColor] = useState('#1c1917');
@@ -590,6 +600,41 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <div className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800">
                       <span className="text-sm text-stone-700 dark:text-stone-300">Handwriting Mode</span>
                       <Toggle enabled={isHandwriting} onToggle={() => onHandwritingToggle(!isHandwriting)} />
+                    </div>
+
+                    <div className="pt-4 border-t border-stone-200 dark:border-stone-800">
+                      <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-3">Export</h3>
+                      <div className="space-y-2">
+                        <button
+                          onClick={onExportPDF}
+                          disabled={isExportingPDF}
+                          className={cn(
+                            "w-full p-3 rounded-lg border-2 text-left transition-all duration-200 flex items-center gap-3",
+                            "border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700 bg-white dark:bg-stone-950",
+                            isExportingPDF && "opacity-50 cursor-not-allowed"
+                          )}
+                        >
+                          {isExportingPDF ? (
+                            <Loader2 className="w-4 h-4 text-stone-500 animate-spin" />
+                          ) : (
+                            <Download className="w-4 h-4 text-stone-500" />
+                          )}
+                          <div>
+                            <span className="text-sm font-medium text-stone-900 dark:text-stone-100">Export as PDF</span>
+                            <p className="text-xs text-stone-500 dark:text-stone-400">High-quality client-side PDF generation</p>
+                          </div>
+                        </button>
+                        <button
+                          onClick={onExportPDFPrint}
+                          className="w-full p-3 rounded-lg border-2 text-left transition-all duration-200 flex items-center gap-3 border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700 bg-white dark:bg-stone-950"
+                        >
+                          <Printer className="w-4 h-4 text-stone-500" />
+                          <div>
+                            <span className="text-sm font-medium text-stone-900 dark:text-stone-100">Print / Save as PDF</span>
+                            <p className="text-xs text-stone-500 dark:text-stone-400">Use browser's native print dialog</p>
+                          </div>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
