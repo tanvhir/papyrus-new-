@@ -97,7 +97,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({ open, onOpenChange }) =>
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[1000px] h-[85vh] max-h-[90vh] p-0 bg-[#FCFBF7] dark:bg-[#0A0A0A] border border-stone-200/50 dark:border-stone-800/50 rounded-2xl shadow-2xl overflow-hidden">
+      <DialogContent className="w-full max-w-[1000px] h-[85vh] max-h-[90vh] p-0 bg-[#FCFBF7] dark:bg-[#0A0A0A] border border-stone-200/50 dark:border-stone-800/50 rounded-2xl shadow-2xl overflow-hidden md:max-w-[1000px] md:h-[85vh] max-w-[95vw] h-[80vh]">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}

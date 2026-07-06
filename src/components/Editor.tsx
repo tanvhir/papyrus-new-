@@ -385,20 +385,20 @@ function Editor({
           !isSimpleMode && texture === 'grid' && "texture-grid",
           !isSimpleMode && texture === 'linen' && "texture-linen"
         ),
-        style: isSimpleMode 
-          ? `font-size: ${fontSize}px;` 
+        style: isSimpleMode
+          ? `font-size: ${fontSize}px;`
           : `font-size: ${fontSize}px; --page-height: ${
               pageLayout === 'pageless' ? 'auto' : pageLayout === 'a4-landscape' ? '820px' : '1160px'
             }; --page-width: ${
-              pageLayout === 'pageless' ? '850px' : pageLayout === 'a4-landscape' ? '1160px' : '820px'
+              pageLayout === 'pageless' ? '100%' : pageLayout === 'a4-landscape' ? '100%' : '100%'
             }; --page-bg: ${
               theme?.paperColor || '#ffffff'
             }; --page-ink: ${
               theme?.inkColor || '#1a1a1a'
             }; --page-margin-x: ${
-              pageMargin === 'none' ? '0px' : pageMargin === 'narrow' ? '40px' : '96px'
+              pageMargin === 'none' ? '0px' : pageMargin === 'narrow' ? '24px' : '48px'
             }; --page-margin-y: ${
-              pageMargin === 'none' ? '0px' : pageMargin === 'narrow' ? '40px' : '96px'
+              pageMargin === 'none' ? '0px' : pageMargin === 'narrow' ? '24px' : '48px'
             };`,
       },
       transformPastedHTML: (html) => {

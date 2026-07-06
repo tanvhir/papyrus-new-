@@ -398,7 +398,7 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
   return (
     <div 
       ref={tocRef}
-      className="fixed top-0 z-10 max-h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden"
+      className="fixed top-0 z-10 max-h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden hidden md:block"
       style={{
         scrollbarWidth: 'none',
         msOverflowStyle: 'none',

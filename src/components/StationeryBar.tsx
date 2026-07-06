@@ -115,11 +115,11 @@ export const StationeryBar = React.memo<StationeryBarProps>(({
 
   return (
     <TooltipProvider>
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-white/90 dark:bg-stone-900/90 dark:border-stone-800 backdrop-blur-md border border-stone-200 paper-shadow rounded-2xl px-5 py-2.5 flex items-center gap-1.5 z-50 animate-in fade-in slide-in-from-bottom-6 duration-700 text-stone-900 dark:text-stone-100">
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-white/90 dark:bg-stone-900/90 dark:border-stone-800 backdrop-blur-md border border-stone-200 paper-shadow rounded-2xl px-5 py-2.5 flex items-center gap-1.5 z-50 animate-in fade-in slide-in-from-bottom-6 duration-700 text-stone-900 dark:text-stone-100 max-w-[95vw] overflow-x-auto">
         <div className="flex items-center gap-0.5">
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => onFormat('bold')} className="hover:bg-stone-100 dark:hover:bg-stone-800 w-8 h-8 transition-all duration-200 hover:scale-110 active:scale-95">
+              <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => onFormat('bold')} className="hover:bg-stone-100 dark:hover:bg-stone-800 w-7 h-7 md:w-8 md:h-8 transition-all duration-200 hover:scale-110 active:scale-95 shrink-0">
                 <Bold className="w-3.5 h-3.5" />
               </Button>
             </TooltipTrigger>
@@ -128,7 +128,7 @@ export const StationeryBar = React.memo<StationeryBarProps>(({
           
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => onFormat('italic')} className="hover:bg-stone-100 dark:hover:bg-stone-800 w-8 h-8 transition-all duration-200 hover:scale-110 active:scale-95">
+              <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => onFormat('italic')} className="hover:bg-stone-100 dark:hover:bg-stone-800 w-7 h-7 md:w-8 md:h-8 transition-all duration-200 hover:scale-110 active:scale-95 shrink-0">
                 <Italic className="w-3.5 h-3.5" />
               </Button>
             </TooltipTrigger>
@@ -137,7 +137,7 @@ export const StationeryBar = React.memo<StationeryBarProps>(({
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => onFormat('underline')} className="hover:bg-stone-100 dark:hover:bg-stone-800 w-8 h-8 transition-all duration-200 hover:scale-110 active:scale-95">
+              <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => onFormat('underline')} className="hover:bg-stone-100 dark:hover:bg-stone-800 w-7 h-7 md:w-8 md:h-8 transition-all duration-200 hover:scale-110 active:scale-95 shrink-0">
                 <Underline className="w-3.5 h-3.5" />
               </Button>
             </TooltipTrigger>
@@ -148,7 +148,7 @@ export const StationeryBar = React.memo<StationeryBarProps>(({
             <Tooltip>
               <TooltipTrigger asChild>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="hover:bg-stone-100 dark:hover:bg-stone-800 w-8 h-8 transition-all duration-200 hover:scale-110 active:scale-95">
+                  <Button variant="ghost" size="icon" className="hover:bg-stone-100 dark:hover:bg-stone-800 w-7 h-7 md:w-8 md:h-8 transition-all duration-200 hover:scale-110 active:scale-95 shrink-0">
                     <Type className="w-3.5 h-3.5" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -172,7 +172,7 @@ export const StationeryBar = React.memo<StationeryBarProps>(({
             <Tooltip>
               <TooltipTrigger asChild>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="hover:bg-stone-100 dark:hover:bg-stone-800 w-8 h-8 transition-all duration-200 hover:scale-110 active:scale-95">
+                  <Button variant="ghost" size="icon" className="hover:bg-stone-100 dark:hover:bg-stone-800 w-7 h-7 md:w-8 md:h-8 transition-all duration-200 hover:scale-110 active:scale-95 shrink-0">
                     <AlignLeft className="w-3.5 h-3.5" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -199,7 +199,7 @@ export const StationeryBar = React.memo<StationeryBarProps>(({
             <Tooltip>
               <TooltipTrigger asChild>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="hover:bg-stone-100 dark:hover:bg-stone-800 w-8 h-8 transition-all duration-200 hover:scale-110 active:scale-95">
+                  <Button variant="ghost" size="icon" className="hover:bg-stone-100 dark:hover:bg-stone-800 w-7 h-7 md:w-8 md:h-8 transition-all duration-200 hover:scale-110 active:scale-95 shrink-0">
                     <ColumnsIcon className="w-3.5 h-3.5" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -235,7 +235,7 @@ export const StationeryBar = React.memo<StationeryBarProps>(({
               <TooltipTrigger asChild>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className={cn(
-                    "w-8 h-8 transition-all relative overflow-hidden",
+                    "w-7 h-7 md:w-8 md:h-8 transition-all relative overflow-hidden shrink-0",
                     activeHighlighterColor ? "bg-yellow-100/50 dark:bg-yellow-900/30" : "hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
                   )}>
                     <Highlighter className={cn(
@@ -273,7 +273,7 @@ export const StationeryBar = React.memo<StationeryBarProps>(({
             <Tooltip>
               <TooltipTrigger asChild>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-700 dark:text-blue-400 w-8 h-8">
+                  <Button variant="ghost" size="icon" className="hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-700 dark:text-blue-400 w-7 h-7 md:w-8 md:h-8 shrink-0">
                     <Pipette className="w-3.5 h-3.5" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -297,7 +297,7 @@ export const StationeryBar = React.memo<StationeryBarProps>(({
             <Tooltip>
               <TooltipTrigger asChild>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="hover:bg-stone-100 dark:hover:bg-stone-800 w-8 h-8 text-stone-500 dark:text-stone-400">
+                  <Button variant="ghost" size="icon" className="hover:bg-stone-100 dark:hover:bg-stone-800 w-7 h-7 md:w-8 md:h-8 text-stone-500 dark:text-stone-400 shrink-0">
                     <Divide className="w-3.5 h-3.5" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -404,7 +404,7 @@ export const StationeryBar = React.memo<StationeryBarProps>(({
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={onMathToggle} className="hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 w-8 h-8 transition-all duration-200 hover:scale-110 active:scale-95">
+              <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={onMathToggle} className="hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 w-7 h-7 md:w-8 md:h-8 transition-all duration-200 hover:scale-110 active:scale-95 shrink-0">
                 <Sigma className="w-3.5 h-3.5" />
               </Button>
             </TooltipTrigger>
@@ -413,7 +413,7 @@ export const StationeryBar = React.memo<StationeryBarProps>(({
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={onStickyAdd} className="hover:bg-orange-50 dark:hover:bg-orange-900/20 text-orange-700 dark:text-orange-400 w-8 h-8 transition-all duration-200 hover:scale-110 active:scale-95">
+              <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={onStickyAdd} className="hover:bg-orange-50 dark:hover:bg-orange-900/20 text-orange-700 dark:text-orange-400 w-7 h-7 md:w-8 md:h-8 transition-all duration-200 hover:scale-110 active:scale-95 shrink-0">
                 <StickyIcon className="w-3.5 h-3.5" />
               </Button>
             </TooltipTrigger>
@@ -428,7 +428,7 @@ export const StationeryBar = React.memo<StationeryBarProps>(({
                 onMouseDown={(e) => e.preventDefault()} 
                 onClick={onToggleDrawingArrowMode} 
                 className={cn(
-                  "w-8 h-8 transition-all relative overflow-hidden",
+                  "w-7 h-7 md:w-8 md:h-8 transition-all relative overflow-hidden shrink-0",
                   isDrawingArrowMode 
                     ? "bg-cyan-500 text-white hover:bg-cyan-600 dark:bg-cyan-600 dark:text-stone-900 hover:text-white" 
                     : "hover:bg-cyan-50 dark:hover:bg-cyan-900/20 text-cyan-700 dark:text-cyan-400"
@@ -457,7 +457,7 @@ export const StationeryBar = React.memo<StationeryBarProps>(({
                   onClick={onAIFormat} 
                   disabled={isAILoading}
                   className={cn(
-                    "hover:bg-purple-50 dark:hover:bg-purple-900/20 text-purple-700 dark:text-purple-400 w-8 h-8 relative",
+                    "hover:bg-purple-50 dark:hover:bg-purple-900/20 text-purple-700 dark:text-purple-400 w-7 h-7 md:w-8 md:h-8 relative shrink-0",
                     isAILoading && "animate-pulse"
                   )}
                 >
@@ -474,7 +474,7 @@ export const StationeryBar = React.memo<StationeryBarProps>(({
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={onImageUpload} className="hover:bg-emerald-50 dark:hover:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 w-8 h-8 transition-all duration-200 hover:scale-110 active:scale-95">
+              <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={onImageUpload} className="hover:bg-emerald-50 dark:hover:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 w-7 h-7 md:w-8 md:h-8 transition-all duration-200 hover:scale-110 active:scale-95 shrink-0">
                 <ImageIcon className="w-3.5 h-3.5" />
               </Button>
             </TooltipTrigger>
@@ -485,7 +485,7 @@ export const StationeryBar = React.memo<StationeryBarProps>(({
             <Tooltip>
               <TooltipTrigger asChild>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="hover:bg-stone-100 dark:hover:bg-stone-800 w-8 h-8 transition-all duration-200 hover:scale-110 active:scale-95">
+                  <Button variant="ghost" size="icon" className="hover:bg-stone-100 dark:hover:bg-stone-800 w-7 h-7 md:w-8 md:h-8 transition-all duration-200 hover:scale-110 active:scale-95 shrink-0">
                     <Layers className="w-3.5 h-3.5" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -505,7 +505,7 @@ export const StationeryBar = React.memo<StationeryBarProps>(({
               <TooltipTrigger asChild>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className={cn(
-                    "hover:bg-stone-100 dark:hover:bg-stone-800 w-8 h-8 relative"
+                    "hover:bg-stone-100 dark:hover:bg-stone-800 w-7 h-7 md:w-8 md:h-8 relative shrink-0"
                   )}>
                     {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Settings2 className="w-3.5 h-3.5" />}
                   </Button>

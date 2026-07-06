@@ -592,6 +592,108 @@
     }
 }
 
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .page-container-node {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+    padding-top: 32px !important;
+    padding-bottom: 32px !important;
+    --page-margin-x: 24px;
+    --page-margin-y: 32px;
+  }
+
+  .notebook-spiral .page-container-node {
+    padding-left: calc(24px + var(--spiral-binding-margin)) !important;
+  }
+
+  .ProseMirror {
+    font-size: 16px !important;
+  }
+
+  .ProseMirror h1 { font-size: 1.75rem !important; }
+  .ProseMirror h2 { font-size: 1.5rem !important; }
+  .ProseMirror h3 { font-size: 1.25rem !important; }
+
+  /* Sticky notes on mobile */
+  .sticky-note-element {
+    width: 240px !important;
+    min-height: 200px !important;
+  }
+
+  /* Hide sidebar on mobile */
+  .sidebar {
+    display: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-container-node {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    padding-top: 24px !important;
+    padding-bottom: 24px !important;
+    --page-margin-x: 16px;
+    --page-margin-y: 24px;
+  }
+
+  .notebook-spiral .page-container-node {
+    padding-left: calc(16px + var(--spiral-binding-margin)) !important;
+  }
+
+  .ProseMirror {
+    font-size: 14px !important;
+  }
+
+  .ProseMirror h1 { font-size: 1.5rem !important; }
+  .ProseMirror h2 { font-size: 1.25rem !important; }
+  .ProseMirror h3 { font-size: 1.1rem !important; }
+}
+
+@media (max-width: 480px) {
+  .page-container-node {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    --page-margin-x: 12px;
+  }
+
+  .notebook-spiral .page-container-node {
+    padding-left: calc(12px + var(--spiral-binding-margin)) !important;
+  }
+
+  .ProseMirror {
+    font-size: 13px !important;
+  }
+}
+
+/* Prevent text overflow */
+.ProseMirror,
+.ProseMirror p,
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3,
+.ProseMirror li {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+
+/* Math nodes should not overflow */
+.math-node {
+  max-width: 100%;
+  overflow-x: auto;
+  display: inline-block;
+}
+
+/* Bengali text specific */
+.ProseMirror [lang="bn"],
+.font-bangla {
+  line-height: 1.6;
+  word-break: break-word;
+}
+
 /* Custom print styles to support printing A4 pages nicely */
 @media print {
   /* Hide all unnecessary UI elements */
