@@ -556,6 +556,58 @@ function Editor({
     }
   }, [editingMath, mathInputVal, editor]);
 
+  // Sync heading level with actual editor state
+  React.useEffect(() => {
+    if (!editor) return;
+    
+    const updateHeadingLevel = () => {
+      if (editor.isActive('heading', { level: 1 })) {
+        setHeadingLevel(1);
+      } else if (editor.isActive('heading', { level: 2 })) {
+        setHeadingLevel(2);
+      } else if (editor.isActive('heading', { level: 3 })) {
+        setHeadingLevel(3);
+      }
+    };
+
+    editor.on('selectionUpdate', updateHeadingLevel);
+    editor.on('transaction', updateHeadingLevel);
+    
+    // Initial check
+    updateHeadingLevel();
+
+    return () => {
+      editor.off('selectionUpdate', updateHeadingLevel);
+      editor.off('transaction', updateHeadingLevel);
+    };
+  }, [editor]);
+
+  // Sync text alignment with actual editor state
+  React.useEffect(() => {
+    if (!editor) return;
+    
+    const updateTextAlign = () => {
+      if (editor.isActive({ textAlign: 'center' })) {
+        setTextAlign('center');
+      } else if (editor.isActive({ textAlign: 'right' })) {
+        setTextAlign('right');
+      } else {
+        setTextAlign('left');
+      }
+    };
+
+    editor.on('selectionUpdate', updateTextAlign);
+    editor.on('transaction', updateTextAlign);
+    
+    // Initial check
+    updateTextAlign();
+
+    return () => {
+      editor.off('selectionUpdate', updateTextAlign);
+      editor.off('transaction', updateTextAlign);
+    };
+  }, [editor]);
+
   const reflowLayout = React.useCallback(() => {
     if (!editor || editor.isDestroyed) return;
 
@@ -1212,22 +1264,28 @@ function Editor({
               </button>
               
               <div className="flex items-center gap-1.5">
-                {(activeSubMenu === 'highlight' ? HIGHLIGHT_COLORS : TEXT_COLORS).map(c => (
-                  <button
-                    key={c.color}
-                    className="w-5 h-5 rounded-full border border-black/10 hover:scale-110 active:scale-95 transition-all shadow-sm"
-                    style={{ backgroundColor: c.color }}
-                    onClick={() => {
-                      onFormat?.(activeSubMenu === 'highlight' ? 'highlight' : 'color', c.color);
-                      // Clear selection to make highlight visible
-                      if (activeSubMenu === 'highlight' && editor) {
-                        editor.commands.setTextSelection({ from: editor.state.selection.from, to: editor.state.selection.from });
-                      }
-                      // Don't auto-close, let user pick multiple if needed or click back
-                    }}
-                    title={c.name}
-                  />
-                ))}
+                {(activeSubMenu === 'highlight' ? HIGHLIGHT_COLORS : TEXT_COLORS).map(c => {
+                  const isActive = editor?.getAttributes(activeSubMenu === 'highlight' ? 'highlight' : 'textStyle')?.color === c.color;
+                  return (
+                    <button
+                      key={c.color}
+                      className={cn(
+                        "w-5 h-5 rounded-full border hover:scale-110 active:scale-95 transition-all shadow-sm",
+                        isActive ? "border-stone-950 dark:border-white scale-110 ring-2 ring-stone-200 dark:ring-stone-700" : "border-black/10"
+                      )}
+                      style={{ backgroundColor: c.color }}
+                      onClick={() => {
+                        onFormat?.(activeSubMenu === 'highlight' ? 'highlight' : 'color', c.color);
+                        // Clear selection to make highlight visible
+                        if (activeSubMenu === 'highlight' && editor) {
+                          editor.commands.setTextSelection({ from: editor.state.selection.from, to: editor.state.selection.from });
+                        }
+                        // Don't auto-close, let user pick multiple if needed or click back
+                      }}
+                      title={c.name}
+                    />
+                  );
+                })}
               </div>
 
               <button 

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { List, X, ChevronRight, ChevronDown, Heading1, Heading2, Heading3 } from 'lucide-react';
+import { Heading1, Heading2, Heading3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface HeadingItem {
@@ -12,11 +11,9 @@ interface HeadingItem {
 
 interface TableOfContentsProps {
   editor: any;
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
 }
 
-export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, isOpen, onOpenChange }) => {
+export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor }) => {
   const [headings, setHeadings] = useState<HeadingItem[]>([]);
   const [activeHeading, setActiveHeading] = useState<string | null>(null);
 
@@ -114,18 +111,18 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, isOpen
 
   const getHeadingIcon = (level: number) => {
     switch (level) {
-      case 1: return <Heading1 className="w-3.5 h-3.5" />;
-      case 2: return <Heading2 className="w-3.5 h-3.5" />;
-      case 3: return <Heading3 className="w-3.5 h-3.5" />;
-      default: return <List className="w-3.5 h-3.5" />;
+      case 1: return <Heading1 className="w-3 h-3" />;
+      case 2: return <Heading2 className="w-3 h-3" />;
+      case 3: return <Heading3 className="w-3 h-3" />;
+      default: return null;
     }
   };
 
   const getIndentClass = (level: number) => {
     switch (level) {
       case 1: return 'ml-0';
-      case 2: return 'ml-4';
-      case 3: return 'ml-8';
+      case 2: return 'ml-2';
+      case 3: return 'ml-4';
       default: return 'ml-0';
     }
   };
@@ -135,76 +132,34 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, isOpen
   }
 
   return (
-    <>
-      {/* Toggle Button */}
-      <motion.button
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        onClick={() => onOpenChange(!isOpen)}
-        className={cn(
-          "fixed top-24 right-4 z-40 p-3 rounded-full shadow-lg transition-all duration-200",
-          "bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800",
-          "hover:bg-stone-50 dark:hover:bg-stone-800",
-          "text-stone-600 dark:text-stone-400"
-        )}
-        title="Table of Contents"
-      >
-        {isOpen ? <X className="w-5 h-5" /> : <List className="w-5 h-5" />}
-      </motion.button>
-
-      {/* Table of Contents Panel */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="fixed top-24 right-4 z-40 w-80 max-h-[calc(100vh-8rem)] overflow-hidden"
-          >
-            <div className="bg-white/95 dark:bg-stone-900/95 backdrop-blur-md border border-stone-200 dark:border-stone-800 rounded-2xl shadow-xl overflow-hidden">
-              {/* Header */}
-              <div className="px-4 py-3 border-b border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-950/50">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100">
-                    Table of Contents
-                  </h3>
-                  <span className="text-xs text-stone-500 dark:text-stone-400">
-                    {headings.length} sections
-                  </span>
-                </div>
-              </div>
-
-              {/* Content */}
-              <div className="overflow-y-auto max-h-[calc(100vh-10rem)] p-2">
-                <div className="space-y-1">
-                  {headings.map((heading) => (
-                    <button
-                      key={heading.id}
-                      onClick={() => scrollToHeading(heading.position)}
-                      className={cn(
-                        "w-full text-left px-3 py-2 rounded-lg transition-all duration-150",
-                        "flex items-center gap-2 group",
-                        "hover:bg-stone-100 dark:hover:bg-stone-800",
-                        activeHeading === heading.id
-                          ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
-                          : "text-stone-700 dark:text-stone-300",
-                        getIndentClass(heading.level)
-                      )}
-                    >
-                      {getHeadingIcon(heading.level)}
-                      <span className="flex-1 text-sm truncate">
-                        {heading.text}
-                      </span>
-                      <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+    <div className="fixed left-4 top-24 z-10 w-48 max-h-[calc(100vh-8rem)] overflow-hidden">
+      <div className="opacity-40 hover:opacity-60 transition-opacity duration-200">
+        <div className="text-xs font-medium text-stone-500 dark:text-stone-400 mb-2 px-1">
+          Contents
+        </div>
+        <div className="space-y-0.5">
+          {headings.map((heading) => (
+            <button
+              key={heading.id}
+              onClick={() => scrollToHeading(heading.position)}
+              className={cn(
+                "w-full text-left px-2 py-1 rounded transition-all duration-150",
+                "flex items-center gap-1.5",
+                "hover:bg-stone-200/50 dark:hover:bg-stone-700/50",
+                activeHeading === heading.id
+                  ? "bg-stone-300/50 dark:bg-stone-600/50 text-stone-900 dark:text-stone-100 font-medium"
+                  : "text-stone-600 dark:text-stone-400",
+                getIndentClass(heading.level)
+              )}
+            >
+              {getHeadingIcon(heading.level)}
+              <span className="text-xs truncate">
+                {heading.text}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 };

@@ -699,7 +699,6 @@ export default function App() {
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isTableOfContentsOpen, setIsTableOfContentsOpen] = useState(false);
   const [studyQueue, setStudyQueue] = useState<Flashcard[]>([]);
   const [isStudySessionActive, setIsStudySessionActive] = useState(false);
   const [creationCardData, setCreationCardData] = useState<{ front: string; back: string; type: FlashcardType } | null>(null);
@@ -2706,8 +2705,6 @@ export default function App() {
       {editor && (
         <TableOfContents 
           editor={editor} 
-          isOpen={isTableOfContentsOpen} 
-          onOpenChange={setIsTableOfContentsOpen} 
         />
       )}
 
@@ -2819,25 +2816,6 @@ export default function App() {
                     </span>
                   </TooltipTrigger>
                   <TooltipContent>Settings</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              {/* Table of Contents Button */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        className="w-8 h-8 rounded-full opacity-60 hover:opacity-100 transition-all hover:scale-105"
-                        onClick={() => setIsTableOfContentsOpen(!isTableOfContentsOpen)}
-                      >
-                        <List className="w-4 h-4 text-stone-700 dark:text-stone-300" />
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>Table of Contents</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
 
