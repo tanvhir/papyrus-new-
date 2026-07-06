@@ -186,8 +186,8 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
   const getIndentWidth = (level: number) => {
     switch (level) {
       case 1: return 0;
-      case 2: return 14;
-      case 3: return 28;
+      case 2: return 16;
+      case 3: return 32;
       default: return 0;
     }
   };
@@ -214,10 +214,19 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
 
   const getVerticalSpacing = (level: number) => {
     switch (level) {
-      case 1: return 'pt-3';
-      case 2: return 'pt-1';
-      case 3: return 'pt-0.5';
-      default: return 'pt-1';
+      case 1: return 'pt-4';
+      case 2: return 'pt-2';
+      case 3: return 'pt-1';
+      default: return 'pt-2';
+    }
+  };
+
+  const getRowHeight = (level: number) => {
+    switch (level) {
+      case 1: return 'py-2.5';
+      case 2: return 'py-2';
+      case 3: return 'py-1.5';
+      default: return 'py-2';
     }
   };
 
@@ -227,23 +236,24 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
     const isActive = activeHeading === item.id;
     const indent = getIndentWidth(item.level);
     const verticalSpacing = getVerticalSpacing(item.level);
+    const rowHeight = getRowHeight(item.level);
     
-    // Hierarchy rail position - fixed distance from right edge
-    const railPosition = 16; // px from right edge
+    // Hierarchy rail position - fixed distance from right edge, mechanically aligned to spiral
+    const railPosition = 12; // px from right edge
     
     return (
       <div key={item.id} className="relative">
-        {/* Connector line from text to hierarchy rail */}
+        {/* Connector line from text to hierarchy rail - extends fully to rail */}
         <div 
           className={cn(
-            "absolute top-1/2 -translate-y-1/2 transition-all duration-200",
-            isActive ? "bg-stone-400 dark:bg-stone-500" : "bg-stone-300/20 dark:bg-stone-700/20"
+            "absolute top-1/2 -translate-y-1/2 transition-all duration-180",
+            isActive ? "bg-stone-400 dark:bg-stone-500" : "bg-stone-300/15 dark:bg-stone-700/15"
           )}
           style={{
             right: `${railPosition}px`,
-            width: `${indent + 8}px`,
+            width: `${indent + 10}px`,
             height: '1px',
-            opacity: isActive ? 0.5 : 0.2
+            opacity: isActive ? 0.6 : 0.18
           }}
         />
         
@@ -256,40 +266,40 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
             }
           }}
           className={cn(
-            "relative w-full text-left transition-all duration-200",
-            "hover:bg-stone-50/40 dark:hover:bg-stone-900/20",
+            "relative w-full text-left transition-all duration-180",
+            "hover:bg-stone-50/30 dark:hover:bg-stone-900/15",
             "group flex items-center",
             verticalSpacing,
-            isActive ? "py-2" : "py-1"
+            rowHeight
           )}
-          style={{ paddingLeft: `${8 + indent}px`, paddingRight: `${railPosition + 12}px` }}
+          style={{ paddingLeft: `${10 + indent}px`, paddingRight: `${railPosition + 14}px` }}
         >
           {/* Expand/collapse indicator on hierarchy rail */}
           {hasChildren && (
             <div 
               className={cn(
-                "absolute top-1/2 -translate-y-1/2 transition-all duration-200",
+                "absolute top-1/2 -translate-y-1/2 transition-all duration-180",
                 "opacity-0 group-hover:opacity-100"
               )}
-              style={{ right: `${railPosition - 5}px` }}
+              style={{ right: `${railPosition - 4}px` }}
             >
               {isExpanded ? (
-                <ChevronDown className="w-2.5 h-2.5 text-stone-400 dark:text-stone-600" />
+                <ChevronDown className="w-2 h-2 text-stone-400 dark:text-stone-600" />
               ) : (
-                <ChevronRight className="w-2.5 h-2.5 text-stone-400 dark:text-stone-600" />
+                <ChevronRight className="w-2 h-2 text-stone-400 dark:text-stone-600" />
               )}
             </div>
           )}
           
-          {/* Node indicator on hierarchy rail */}
+          {/* Node indicator on hierarchy rail - subtle dot */}
           <div 
             className={cn(
-              "absolute top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full transition-all duration-200",
-              isActive ? "bg-stone-500 dark:bg-stone-400" : "bg-stone-300/40 dark:bg-stone-700/40"
+              "absolute top-1/2 -translate-y-1/2 w-1 h-1 rounded-full transition-all duration-180",
+              isActive ? "bg-stone-500 dark:bg-stone-400" : "bg-stone-300/30 dark:bg-stone-700/30"
             )}
             style={{ 
-              right: `${railPosition - 2}px`,
-              opacity: isActive ? 0.8 : 0.3
+              right: `${railPosition - 1.5}px`,
+              opacity: isActive ? 0.7 : 0.25
             }}
           />
           
@@ -302,13 +312,13 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
         {/* Vertical connector line on hierarchy rail for children */}
         {hasChildren && isExpanded && (
           <div 
-            className="absolute transition-all duration-200"
+            className="absolute transition-all duration-180"
             style={{
               right: `${railPosition - 1.5}px`,
-              top: '28px',
+              top: '32px',
               bottom: '0',
               width: '1px',
-              background: 'linear-gradient(to bottom, rgba(115, 115, 115, 0.12) 0%, rgba(115, 115, 115, 0.04) 100%)'
+              background: 'linear-gradient(to bottom, rgba(115, 115, 115, 0.1) 0%, rgba(115, 115, 115, 0.03) 100%)'
             }}
           />
         )}
@@ -335,13 +345,13 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
         scrollbarWidth: 'none',
         msOverflowStyle: 'none',
         paddingTop: 'calc(6rem + 24px)', // Align with notebook top edge
-        // Position TOC to hug the notebook with ~20px before spiral binding
+        // Position TOC to hug the notebook with 22px before spiral binding
         // Canvas width is 820px (a4-portrait), half is 410px
         // Spiral binding is 36px wide at left edge of notebook
-        // TOC right edge should be 20px before spiral: 50% - 410px - 20px = 50% - 430px
-        // TOC width is 200px, so left edge: 50% - 430px - 200px = 50% - 630px
-        left: 'calc(50% - 630px)',
-        width: '200px'
+        // TOC right edge should be 22px before spiral: 50% - 410px - 22px = 50% - 432px
+        // TOC width is 215px, so left edge: 50% - 432px - 215px = 50% - 647px
+        left: 'calc(50% - 647px)',
+        width: '215px'
       }}
     >
       {/* Custom scrollbar hiding */}
@@ -355,20 +365,20 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
         }
       `}</style>
       
-      {/* Fade effect at top */}
-      <div className="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-stone-50/60 dark:from-stone-950/60 to-transparent pointer-events-none" />
+      {/* Fade effect at top - very subtle */}
+      <div className="absolute top-0 left-0 right-0 h-5 bg-gradient-to-b from-stone-50/40 dark:from-stone-950/40 to-transparent pointer-events-none" />
       
-      {/* Fade effect at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-stone-50/60 dark:from-stone-950/60 to-transparent pointer-events-none" />
+      {/* Fade effect at bottom - very subtle */}
+      <div className="absolute bottom-0 left-0 right-0 h-5 bg-gradient-to-t from-stone-50/40 dark:from-stone-950/40 to-transparent pointer-events-none" />
       
-      {/* TOC Content - no padding to make it float naturally */}
-      <div className="px-3 pb-6">
-        {/* Contents heading - minimal and subtle */}
-        <div className="text-[9px] font-medium text-stone-400 dark:text-stone-500 mb-3 tracking-widest uppercase opacity-60 pl-2">
+      {/* TOC Content - minimal padding to feel like printed margin */}
+      <div className="px-2 pb-5">
+        {/* Contents heading - extremely subtle, like printed margin text */}
+        <div className="text-[8px] font-medium text-stone-400 dark:text-stone-500 mb-4 tracking-widest uppercase opacity-50 pl-3">
           Contents
         </div>
         
-        {/* Tree structure with dedicated hierarchy rail */}
+        {/* Tree structure with precise hierarchy rail */}
         <div className="space-y-0">
           {headings.map(heading => renderTreeItem(heading))}
         </div>
