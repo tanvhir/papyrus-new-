@@ -267,47 +267,47 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
     const verticalSpacing = getVerticalSpacing(item.level);
     const rowHeight = getRowHeight(item.level);
     
-    // Tree connector line styling
+    // Tree connector line styling - improved visibility
     const getLineStyle = (depth: number) => {
       switch (depth) {
-        case 0: return { width: '1.5px', opacity: isActive ? 0.5 : 0.3 };
-        case 1: return { width: '1px', opacity: isActive ? 0.4 : 0.25 };
-        default: return { width: '0.75px', opacity: isActive ? 0.3 : 0.2 };
+        case 0: return { width: '1.5px', opacity: isActive ? 0.6 : 0.35 };
+        case 1: return { width: '1.25px', opacity: isActive ? 0.5 : 0.3 };
+        default: return { width: '1px', opacity: isActive ? 0.4 : 0.25 };
       }
     };
     
     const lineStyle = getLineStyle(depth);
-    const textStart = 12 + indent; // Base padding + indent
+    const textStart = 16 + indent; // Base padding + indent
     
     return (
       <div key={item.id} className="relative">
         {/* Tree connector lines for nested items */}
         {depth > 0 && (
           <>
-            {/* Vertical line from parent */}
+            {/* Vertical line from parent - fixed positioning */}
             <div 
               className={cn(
                 "absolute transition-all duration-180",
-                isActive ? "bg-stone-400 dark:bg-stone-500" : "bg-stone-300 dark:bg-stone-700"
+                isActive ? "bg-stone-500 dark:bg-stone-400" : "bg-stone-400 dark:bg-stone-600"
               )}
               style={{
-                left: `${12 + (depth - 1) * 20}px`,
+                left: `${8 + (depth - 1) * 20}px`,
                 top: '0',
                 width: lineStyle.width,
                 height: isLastChild ? '50%' : '100%',
                 opacity: lineStyle.opacity
               }}
             />
-            {/* Horizontal branch line to this item */}
+            {/* Horizontal branch line to this item - clean L-shape */}
             <div 
               className={cn(
-                "absolute top-1/2 transition-all duration-180",
-                isActive ? "bg-stone-400 dark:bg-stone-500" : "bg-stone-300 dark:bg-stone-700"
+                "absolute transition-all duration-180",
+                isActive ? "bg-stone-500 dark:bg-stone-400" : "bg-stone-400 dark:bg-stone-600"
               )}
               style={{
-                left: `${12 + (depth - 1) * 20}px`,
+                left: `${8 + (depth - 1) * 20}px`,
                 top: '50%',
-                width: `${indent - (depth - 1) * 20}px`,
+                width: `${indent - (depth - 1) * 20 + 8}px`,
                 height: lineStyle.width,
                 opacity: lineStyle.opacity
               }}
@@ -355,16 +355,16 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
           </span>
         </button>
         
-        {/* Vertical line for children */}
+        {/* Vertical line for children - fixed positioning */}
         {hasChildren && isExpanded && (
           <div 
             className={cn(
               "absolute transition-all duration-180",
-              isActive ? "bg-stone-400 dark:bg-stone-500" : "bg-stone-300 dark:bg-stone-700"
+              isActive ? "bg-stone-500 dark:bg-stone-400" : "bg-stone-400 dark:bg-stone-600"
             )}
             style={{
-              left: `${textStart - 8}px`,
-              top: '24px',
+              left: `${8 + depth * 20}px`,
+              top: '28px',
               bottom: '0',
               width: lineStyle.width,
               opacity: lineStyle.opacity
@@ -401,12 +401,12 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
         scrollbarWidth: 'none',
         msOverflowStyle: 'none',
         paddingTop: `${paperTopOffset + 8}px`, // Align Contents with paper top + 8px offset
-        // Position TOC to hug the notebook with 7px before spiral binding
+        // Position TOC on right side of paper area
         // Canvas width is 820px (a4-portrait), half is 410px
-        // Spiral binding is 36px wide at left edge of notebook
-        // TOC right edge should be 7px before spiral: 50% - 410px - 7px = 50% - 417px
-        // TOC width is 215px, so left edge: 50% - 417px - 215px = 50% - 632px
-        left: 'calc(50% - 632px)',
+        // TOC width is 215px, with 16px gap from paper
+        // Right edge: 50% + 410px + 16px = 50% + 426px
+        // Left edge: 50% + 426px - 215px = 50% + 211px
+        left: 'calc(50% + 211px)',
         width: '215px'
       }}
     >
