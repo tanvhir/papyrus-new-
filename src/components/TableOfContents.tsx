@@ -307,7 +307,7 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
               style={{
                 left: `${8 + (depth - 1) * 20}px`,
                 top: '50%',
-                width: `${indent - (depth - 1) * 20 + 8}px`,
+                width: `${indent - (depth - 1) * 20}px`,
                 height: lineStyle.width,
                 opacity: lineStyle.opacity
               }}
@@ -319,9 +319,6 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
         <button
           onClick={() => {
             scrollToHeading(item.position);
-            if (hasChildren) {
-              toggleExpanded(item.id);
-            }
           }}
           className={cn(
             "relative w-full text-left transition-all duration-180",
@@ -334,11 +331,16 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
         >
           {/* Expand/collapse indicator */}
           {hasChildren && (
-            <span 
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleExpanded(item.id);
+              }}
               className={cn(
-                "mr-2 transition-all duration-180",
+                "mr-2 transition-all duration-180 flex items-center justify-center",
                 "text-stone-400 dark:text-stone-600",
-                "hover:text-stone-600 dark:hover:text-stone-400"
+                "hover:text-stone-600 dark:hover:text-stone-400",
+                "focus:outline-none"
               )}
             >
               {isExpanded ? (
@@ -346,7 +348,7 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
               ) : (
                 <ChevronRight className="w-3 h-3" />
               )}
-            </span>
+            </button>
           )}
           
           {/* Heading text */}
@@ -403,10 +405,9 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
         paddingTop: `${paperTopOffset + 8}px`, // Align Contents with paper top + 8px offset
         // Position TOC on right side of paper area
         // Canvas width is 820px (a4-portrait), half is 410px
-        // TOC width is 215px, with 16px gap from paper
-        // Right edge: 50% + 410px + 16px = 50% + 426px
-        // Left edge: 50% + 426px - 215px = 50% + 211px
-        left: 'calc(50% + 211px)',
+        // Paper right edge: 50% + 410px
+        // Add 16px gap: 50% + 410px + 16px = 50% + 426px
+        left: 'calc(50% + 426px)',
         width: '215px'
       }}
     >
