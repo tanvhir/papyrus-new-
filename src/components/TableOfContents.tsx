@@ -122,17 +122,10 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
   const getIndentClass = (level: number) => {
     switch (level) {
       case 1: return 'ml-0';
-      case 2: return 'ml-4';
-      case 3: return 'ml-8';
+      case 2: return 'ml-6';
+      case 3: return 'ml-12';
       default: return 'ml-0';
     }
-  };
-
-  const getTreeLineClass = (level: number, index: number, totalHeadings: number) => {
-    if (level === 1) return '';
-    if (level === 2) return 'border-l-2 border-stone-300/30 dark:border-stone-600/30 pl-3';
-    if (level === 3) return 'border-l-2 border-stone-300/30 dark:border-stone-600/30 pl-3 ml-4';
-    return '';
   };
 
   if (headings.length === 0) {
@@ -140,34 +133,29 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
   }
 
   return (
-    <div className="fixed left-0 top-24 z-10 w-56 max-h-[calc(100vh-8rem)] overflow-y-auto">
-      <div className="opacity-50 hover:opacity-70 transition-opacity duration-200 pr-2">
-        <div className="text-sm font-semibold text-stone-500 dark:text-stone-400 mb-4 px-3 tracking-wide uppercase">
+    <div className="fixed left-0 top-24 z-10 w-72 max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-hide">
+      <div className="opacity-60 hover:opacity-80 transition-opacity duration-200 pl-12 pr-6">
+        <div className="text-xs font-medium text-stone-500 dark:text-stone-400 mb-3 tracking-wide uppercase">
           Contents
         </div>
-        <div className="space-y-1">
-          {headings.map((heading, index) => (
-            <div
+        <div className="space-y-0.5">
+          {headings.map((heading) => (
+            <button
               key={heading.id}
+              onClick={() => scrollToHeading(heading.position)}
               className={cn(
-                getTreeLineClass(heading.level, index, headings.length)
+                "w-full text-left px-2 py-1.5 rounded transition-all duration-150",
+                "hover:bg-stone-200/50 dark:hover:bg-stone-700/50",
+                activeHeading === heading.id
+                  ? "bg-stone-300/60 dark:bg-stone-600/60 text-stone-900 dark:text-stone-100 font-medium"
+                  : "text-stone-600 dark:text-stone-400",
+                getIndentClass(heading.level)
               )}
             >
-              <button
-                onClick={() => scrollToHeading(heading.position)}
-                className={cn(
-                  "w-full text-left px-3 py-2 rounded-lg transition-all duration-200",
-                  "hover:bg-stone-200/70 dark:hover:bg-stone-700/70",
-                  activeHeading === heading.id
-                    ? "bg-stone-300/70 dark:bg-stone-600/70 text-stone-900 dark:text-stone-100 font-semibold"
-                    : "text-stone-600 dark:text-stone-400"
-                )}
-              >
-                <span className="text-sm truncate leading-tight">
-                  {heading.text}
-                </span>
-              </button>
-            </div>
+              <span className="text-sm truncate leading-normal">
+                {heading.text}
+              </span>
+            </button>
           ))}
         </div>
       </div>
