@@ -865,4 +865,19 @@
     background-color: var(--page-bg, #ffffff) !important;
     color: var(--page-ink, #000000) !important;
   }
+
+  /* Make spiral binding shadow more subtle during print */
+  .notebook-spiral .page-container-node::after {
+    background: linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.02) 0%,    /* Reduced from 0.06 */
+      rgba(0, 0, 0, 0.01) 60%,   /* Reduced from 0.02 */
+      transparent 100%
+    ) !important;
+  }
+
+  /* Also reduce red margin line opacity during print */
+  .notebook-spiral .page-container-node::before {
+    opacity: 0.1 !important;  /* Reduced from default 0.2 */
+  }
 }
