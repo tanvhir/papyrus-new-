@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Heading1, Heading2, Heading3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface HeadingItem {
@@ -11,9 +10,10 @@ interface HeadingItem {
 
 interface TableOfContentsProps {
   editor: any;
+  scrollContainerRef?: React.RefObject<HTMLDivElement>;
 }
 
-export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor }) => {
+export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scrollContainerRef }) => {
   const [headings, setHeadings] = useState<HeadingItem[]>([]);
   const [activeHeading, setActiveHeading] = useState<string | null>(null);
 
@@ -94,37 +94,45 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor }) => {
   const scrollToHeading = (position: number) => {
     if (!editor) return;
     
-    const coords = editor.view.coordsAtPos(position);
-    if (coords) {
-      const editorView = editor.view.dom;
-      const scrollTop = coords.top - editorView.getBoundingClientRect().top + editorView.scrollTop - 100;
+    // Set cursor to heading position first
+    editor.chain().focus().setTextSelection({ from: position, to: position }).run();
+    
+    // Use a more reliable scroll method
+    setTimeout(() => {
+      const { view } = editor;
+      const coords = view.coordsAtPos(position);
+      if (!coords) return;
       
-      editorView.scrollTo({
-        top: scrollTop,
-        behavior: 'smooth'
-      });
-
-      // Set cursor to heading position
-      editor.chain().focus().setTextSelection({ from: position, to: position }).run();
-    }
-  };
-
-  const getHeadingIcon = (level: number) => {
-    switch (level) {
-      case 1: return <Heading1 className="w-3 h-3" />;
-      case 2: return <Heading2 className="w-3 h-3" />;
-      case 3: return <Heading3 className="w-3 h-3" />;
-      default: return null;
-    }
+      // Use the provided scroll container ref if available
+      const scrollContainer = scrollContainerRef?.current || view.dom.closest('[style*="overflow"]') || view.dom.parentElement || view.dom;
+      
+      if (scrollContainer) {
+        // Calculate the scroll position relative to the scroll container
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const targetScrollTop = coords.top - containerRect.top + scrollContainer.scrollTop - 80;
+        
+        scrollContainer.scrollTo({
+          top: targetScrollTop,
+          behavior: 'smooth'
+        });
+      }
+    }, 100);
   };
 
   const getIndentClass = (level: number) => {
     switch (level) {
       case 1: return 'ml-0';
-      case 2: return 'ml-2';
-      case 3: return 'ml-4';
+      case 2: return 'ml-4';
+      case 3: return 'ml-8';
       default: return 'ml-0';
     }
+  };
+
+  const getTreeLineClass = (level: number, index: number, totalHeadings: number) => {
+    if (level === 1) return '';
+    if (level === 2) return 'border-l-2 border-stone-300/30 dark:border-stone-600/30 pl-3';
+    if (level === 3) return 'border-l-2 border-stone-300/30 dark:border-stone-600/30 pl-3 ml-4';
+    return '';
   };
 
   if (headings.length === 0) {
@@ -132,31 +140,34 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor }) => {
   }
 
   return (
-    <div className="fixed left-4 top-24 z-10 w-48 max-h-[calc(100vh-8rem)] overflow-hidden">
-      <div className="opacity-40 hover:opacity-60 transition-opacity duration-200">
-        <div className="text-xs font-medium text-stone-500 dark:text-stone-400 mb-2 px-1">
+    <div className="fixed left-0 top-24 z-10 w-56 max-h-[calc(100vh-8rem)] overflow-y-auto">
+      <div className="opacity-50 hover:opacity-70 transition-opacity duration-200 pr-2">
+        <div className="text-sm font-semibold text-stone-500 dark:text-stone-400 mb-4 px-3 tracking-wide uppercase">
           Contents
         </div>
-        <div className="space-y-0.5">
-          {headings.map((heading) => (
-            <button
+        <div className="space-y-1">
+          {headings.map((heading, index) => (
+            <div
               key={heading.id}
-              onClick={() => scrollToHeading(heading.position)}
               className={cn(
-                "w-full text-left px-2 py-1 rounded transition-all duration-150",
-                "flex items-center gap-1.5",
-                "hover:bg-stone-200/50 dark:hover:bg-stone-700/50",
-                activeHeading === heading.id
-                  ? "bg-stone-300/50 dark:bg-stone-600/50 text-stone-900 dark:text-stone-100 font-medium"
-                  : "text-stone-600 dark:text-stone-400",
-                getIndentClass(heading.level)
+                getTreeLineClass(heading.level, index, headings.length)
               )}
             >
-              {getHeadingIcon(heading.level)}
-              <span className="text-xs truncate">
-                {heading.text}
-              </span>
-            </button>
+              <button
+                onClick={() => scrollToHeading(heading.position)}
+                className={cn(
+                  "w-full text-left px-3 py-2 rounded-lg transition-all duration-200",
+                  "hover:bg-stone-200/70 dark:hover:bg-stone-700/70",
+                  activeHeading === heading.id
+                    ? "bg-stone-300/70 dark:bg-stone-600/70 text-stone-900 dark:text-stone-100 font-semibold"
+                    : "text-stone-600 dark:text-stone-400"
+                )}
+              >
+                <span className="text-sm truncate leading-tight">
+                  {heading.text}
+                </span>
+              </button>
+            </div>
           ))}
         </div>
       </div>
