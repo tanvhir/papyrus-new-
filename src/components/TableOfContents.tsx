@@ -279,35 +279,39 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
     const lineStyle = getLineStyle(depth);
     const textStart = 16 + indent; // Base padding + indent
     
+    // Calculate parent indent for connector lines
+    const parentIndent = depth > 0 ? getIndentWidth(item.level - 1) : 0;
+    const connectorLeft = 8 + parentIndent; // Align connector with parent's text start
+    
     return (
       <div key={item.id} className="relative">
         {/* Tree connector lines for nested items */}
         {depth > 0 && (
           <>
-            {/* Vertical line from parent - fixed positioning */}
+            {/* Vertical line from parent - aligned with parent's text position */}
             <div 
               className={cn(
                 "absolute transition-all duration-180",
                 isActive ? "bg-stone-500 dark:bg-stone-400" : "bg-stone-400 dark:bg-stone-600"
               )}
               style={{
-                left: `${8 + (depth - 1) * 20}px`,
+                left: `${connectorLeft}px`,
                 top: '0',
                 width: lineStyle.width,
                 height: isLastChild ? '50%' : '100%',
                 opacity: lineStyle.opacity
               }}
             />
-            {/* Horizontal branch line to this item - clean L-shape */}
+            {/* Horizontal branch line to this item - connects from parent to current text */}
             <div 
               className={cn(
                 "absolute transition-all duration-180",
                 isActive ? "bg-stone-500 dark:bg-stone-400" : "bg-stone-400 dark:bg-stone-600"
               )}
               style={{
-                left: `${8 + (depth - 1) * 20}px`,
+                left: `${connectorLeft}px`,
                 top: '50%',
-                width: `${indent - (depth - 1) * 20}px`,
+                width: `${indent - parentIndent}px`,
                 height: lineStyle.width,
                 opacity: lineStyle.opacity
               }}
@@ -357,7 +361,7 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
           </span>
         </button>
         
-        {/* Vertical line for children - fixed positioning */}
+        {/* Vertical line for children - aligned with current item's text position */}
         {hasChildren && isExpanded && (
           <div 
             className={cn(
@@ -365,7 +369,7 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ editor, scroll
               isActive ? "bg-stone-500 dark:bg-stone-400" : "bg-stone-400 dark:bg-stone-600"
             )}
             style={{
-              left: `${8 + depth * 20}px`,
+              left: `${textStart - 8}px`,
               top: '28px',
               bottom: '0',
               width: lineStyle.width,

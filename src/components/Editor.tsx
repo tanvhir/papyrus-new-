@@ -732,8 +732,8 @@ function Editor({
     if (flatBlocks.length === 0) return;
 
     const pageHeight = pageLayout === 'a4-landscape' ? 820 : 1160;
-    const marginY = pageMargin === 'none' ? 0 : pageMargin === 'narrow' ? 40 : 96;
-    const maxContentHeight = pageHeight - marginY * 2 - 4; // Ultra tight safety buffer to maximize content space
+    const marginY = pageMargin === 'none' ? 0 : pageMargin === 'narrow' ? 32 : 64;
+    const maxContentHeight = pageHeight - marginY * 2 - 20; // Increased safety buffer to prevent content cutoff
 
     // Partition flat blocks into virtual page models
     const pages: any[][] = [[]];
