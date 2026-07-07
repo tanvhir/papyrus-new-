@@ -15,6 +15,10 @@ import { Color } from '@tiptap/extension-color';
 import { TextAlign } from '@tiptap/extension-text-align';
 import { HorizontalRule } from '@tiptap/extension-horizontal-rule';
 import BubbleMenuExtension from '@tiptap/extension-bubble-menu';
+import Table from '@tiptap/extension-table';
+import TableCell from '@tiptap/extension-table-cell';
+import TableHeader from '@tiptap/extension-table-header';
+import TableRow from '@tiptap/extension-table-row';
 import { MathExtension } from '@/src/lib/MathExtension';
 import { ResizableImage } from '@/src/lib/ResizableImage';
 import { DecorativeDivider } from '@/src/lib/DecorativeDivider';
@@ -339,6 +343,12 @@ function Editor({
         placeholder: 'Begin your legacy on Papyrus...',
       }),
       BubbleMenuExtension,
+      Table.configure({
+        resizable: true,
+      }),
+      TableRow,
+      TableHeader,
+      TableCell,
       MathExtension,
       DecorativeDivider,
       Columns,
