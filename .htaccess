@@ -1,0 +1,48 @@
+# ----------------------------------------------------------------------
+# Papyrus - Apache/cPanel / Shared Hosting Configuration
+# ----------------------------------------------------------------------
+
+# Disable Directory Browsing
+Options -Indexes
+
+# Apache Mod_Rewrite configuration
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # If the request is for the api/ or install/ directories, let them execute directly
+    RewriteCond %{REQUEST_URI} ^/api/ [OR]
+    RewriteCond %{REQUEST_URI} ^/install/
+    RewriteRule ^ - [L]
+
+    # If the requested filename exists as a real file or folder on disk, serve it
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Otherwise route everything to our single-page React app entry
+    RewriteRule ^ index.html [L]
+</IfModule>
+
+# Security Headers Configuration
+<IfModule mod_headers.c>
+    # Prevent Content Sniffing (X-Content-Type-Options)
+    Header set X-Content-Type-Options "nosniff"
+
+    # Clickjacking Prevention (X-Frame-Options)
+    Header always append X-Frame-Options "SAMEORIGIN"
+
+    # Cross Site Scripting Protection (X-XSS-Protection)
+    Header set X-XSS-Protection "1; mode=block"
+
+    # Strict Transport Security (HSTS) - Uncomment if you have SSL deployed
+    # Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+</IfModule>
+
+# Handle custom PHP Session Security configs on hosting
+<IfModule mod_php8.c>
+    php_flag session.cookie_httponly on
+    php_flag session.cookie_secure on
+    php_value session.cookie_samesite "Lax"
+    php_flag session.use_strict_mode on
+</IfModule>

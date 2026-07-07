@@ -1,0 +1,78 @@
+{
+  "user": {
+    "id": 1,
+    "email": "admin@domain.com",
+    "username": "Administrator",
+    "role": "admin"
+  },
+  "loggedIn": false,
+  "subjects": [
+    {
+      "id": "math-101",
+      "name": "Mathematics",
+      "notes": [
+        {
+          "id": "note-math-intro",
+          "title": "Welcome to Linear Algebra",
+          "content": "<h1>Linear Algebra Fundamentals</h1><p>Let's study matrix operations and quadratic equations...</p>",
+          "stickies": [
+            {
+              "id": "st-1",
+              "text": "Review vector operations before Friday test!",
+              "color": "yellow",
+              "position": {
+                "x": 50,
+                "y": 150
+              },
+              "isPinned": true
+            }
+          ],
+          "arrows": [],
+          "dividers": [],
+          "texture": "linen",
+          "themeId": "classic",
+          "isHandwriting": false,
+          "fontSize": 16,
+          "pageLayout": "pageless",
+          "pageMargin": "normal",
+          "pageLayoutMode": "single",
+          "flashcardIds": [
+            "fc-math-1"
+          ]
+        }
+      ]
+    }
+  ],
+  "activeNoteId": "note-math-intro",
+  "studyStats": {
+    "totalStudied": 1,
+    "streak": 1,
+    "lastStudyDate": "2026-07-07",
+    "weakConceptIds": []
+  },
+  "flashcards": [
+    {
+      "id": "fc-math-1",
+      "type": "basic",
+      "front": "What is an Identity Matrix?",
+      "back": "A square matrix in which all the elements of the principal diagonal are ones and all other elements are zeros.",
+      "clozeData": "",
+      "points": [],
+      "subjectId": "math-101",
+      "chapterId": "1",
+      "sourceNoteId": "note-math-intro",
+      "sourceBlockId": "",
+      "tags": [
+        "linear-algebra",
+        "matrices"
+      ],
+      "createdAt": "2026-07-07T06:01:05.116Z",
+      "interval": 1,
+      "easeFactor": 2.5,
+      "reviewCount": 1,
+      "difficulty": 0,
+      "nextReviewDate": "2026-07-07T06:01:05.116Z",
+      "lastStudiedAt": null
+    }
+  ]
+}
