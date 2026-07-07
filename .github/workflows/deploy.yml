@@ -1,4 +1,4 @@
-name: Build and Deploy React App for InfinityFree
+name: Build and Deploy Papyrus v2 for InfinityFree
 
 on:
   push:
