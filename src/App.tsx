@@ -1331,26 +1331,59 @@ export default function App() {
 
       const paperColorHex = theme.paperColor || '#ffffff';
 
+      // Enhanced html2canvas options for better SVG and CSS rendering
+      const html2canvasOptions = {
+        scale: 3,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        backgroundColor: (theme.id === 'dark' || theme.id === 'charcoal' || theme.id === 'premium-dark') ? '#0A0A0A' : paperColorHex,
+        scrollY: 0,
+        scrollX: 0,
+        onclone: (clonedDoc: Document) => {
+          const header = clonedDoc.querySelector('.no-print');
+          if (header) (header as HTMLElement).style.display = 'none';
+          
+          // Ensure spiral binding is visible during export
+          const spiralBinding = clonedDoc.querySelector('[class*="SpiralBinding"]');
+          if (spiralBinding) {
+            (spiralBinding as HTMLElement).style.visibility = 'visible';
+            (spiralBinding as HTMLElement).style.pointerEvents = 'auto';
+          }
+          
+          // Ensure CSS variables are properly set for spiral notebook
+          if (notebookStyle === 'spiral') {
+            const pageNodes = clonedDoc.querySelectorAll('.page-container-node');
+            pageNodes.forEach((node) => {
+              const el = node as HTMLElement;
+              el.style.setProperty('--spiral-paper-color', paperColorHex);
+              el.style.setProperty('--spiral-line-color', 'rgba(180, 180, 180, 0.4)');
+              el.style.setProperty('--spiral-margin-color', 'rgba(239, 68, 68, 0.35)');
+            });
+          }
+        }
+      };
+
       if (pageLayout === 'pageless') {
         // High fidelity pageless export: Sliced canvas layout
-        const element = mainAreaRef.current;
+        let element: HTMLElement;
+        
+        if (notebookStyle === 'spiral') {
+          // For spiral notebook, capture the spiral wrapper to include binding
+          const spiralWrapper = mainAreaRef.current.querySelector('.notebook-spiral') as HTMLElement;
+          element = spiralWrapper || mainAreaRef.current;
+        } else {
+          element = mainAreaRef.current;
+        }
+        
         const fullHeight = element.scrollHeight;
         const fullWidth = element.offsetWidth;
 
         const canvas = await html2canvas(element, {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: (theme.id === 'dark' || theme.id === 'charcoal' || theme.id === 'premium-dark') ? '#0A0A0A' : paperColorHex,
-          scrollY: 0,
-          scrollX: 0,
+          ...html2canvasOptions,
           windowWidth: fullWidth,
           width: fullWidth,
           height: fullHeight,
-          onclone: (clonedDoc: Document) => {
-            const header = clonedDoc.querySelector('.no-print');
-            if (header) (header as HTMLElement).style.display = 'none';
-          }
         });
         
         const imgData = canvas.toDataURL('image/jpeg', 0.98);
@@ -1372,12 +1405,17 @@ export default function App() {
         const pageDoms = Array.from(editorEl.querySelectorAll('.page-container-node')) as HTMLElement[];
         if (pageDoms.length === 0) {
           // Fallback to container canvas in case no page Doms were found
-          const element = mainAreaRef.current;
+          let element: HTMLElement;
+          
+          if (notebookStyle === 'spiral') {
+            const spiralWrapper = mainAreaRef.current.querySelector('.notebook-spiral') as HTMLElement;
+            element = spiralWrapper || mainAreaRef.current;
+          } else {
+            element = mainAreaRef.current;
+          }
+          
           const canvas = await html2canvas(element, {
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            backgroundColor: (theme.id === 'dark' || theme.id === 'charcoal' || theme.id === 'premium-dark') ? '#0A0A0A' : paperColorHex,
+            ...html2canvasOptions,
             width: element.offsetWidth,
             height: element.offsetHeight,
           });
@@ -1390,18 +1428,55 @@ export default function App() {
             }
             const pageEl = pageDoms[i];
             
+            // For spiral notebook, we need to capture the parent wrapper to include binding
+            let captureElement: HTMLElement;
+            if (notebookStyle === 'spiral') {
+              // Find the spiral wrapper that contains this page
+              const spiralWrapper = mainAreaRef.current.querySelector('.notebook-spiral') as HTMLElement;
+              if (spiralWrapper) {
+                // Create a temporary wrapper with just this page and the binding
+                const tempWrapper = document.createElement('div');
+                tempWrapper.className = 'notebook-spiral';
+                tempWrapper.style.position = 'relative';
+                tempWrapper.style.width = `${pageEl.offsetWidth + 40}px`; // Add spiral binding margin
+                tempWrapper.style.height = `${pageEl.offsetHeight}px`;
+                tempWrapper.style.backgroundColor = paperColorHex;
+                
+                // Clone the spiral binding if it exists
+                const spiralBinding = mainAreaRef.current.querySelector('[class*="SpiralBinding"]');
+                if (spiralBinding) {
+                  const clonedBinding = spiralBinding.cloneNode(true);
+                  tempWrapper.appendChild(clonedBinding);
+                }
+                
+                // Clone the page element
+                const clonedPage = pageEl.cloneNode(true);
+                tempWrapper.appendChild(clonedPage);
+                
+                document.body.appendChild(tempWrapper);
+                captureElement = tempWrapper;
+              } else {
+                captureElement = pageEl;
+              }
+            } else {
+              captureElement = pageEl;
+            }
+            
             // To ensure the background texture displays correctly during export,
             // we configure html2canvas specifically for this single page DOM piece.
-            const canvas = await html2canvas(pageEl, {
-              scale: 2,
-              useCORS: true,
-              logging: false,
+            const canvas = await html2canvas(captureElement, {
+              ...html2canvasOptions,
               backgroundColor: (theme.id === 'dark' || theme.id === 'charcoal' || theme.id === 'premium-dark') ? '#121212' : paperColorHex,
-              width: pageEl.clientWidth,
-              height: pageEl.clientHeight,
-              scrollY: 0,
-              scrollX: 0,
+              width: captureElement.clientWidth,
+              height: captureElement.clientHeight,
+              scrollY: -captureElement.getBoundingClientRect().top,
+              scrollX: -captureElement.getBoundingClientRect().left,
             });
+            
+            // Clean up temporary wrapper if created
+            if (notebookStyle === 'spiral' && captureElement !== pageEl) {
+              document.body.removeChild(captureElement);
+            }
             
             const imgData = canvas.toDataURL('image/jpeg', 0.98);
             pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');

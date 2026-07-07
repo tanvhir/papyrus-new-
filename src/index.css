@@ -866,18 +866,90 @@
     color: var(--page-ink, #000000) !important;
   }
 
-  /* Make spiral binding shadow more subtle during print */
+  /* Spiral notebook print styles - preserve all visual elements */
+  .notebook-spiral .page-container-node {
+    /* Preserve spiral notebook specific styling in print */
+    padding-left: calc(var(--page-margin-x, 64px) + var(--spiral-binding-margin)) !important;
+    background-color: var(--spiral-paper-color, #ffffff) !important;
+    background-image:
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paperNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paperNoise)' opacity='0.03'/%3E%3C/svg%3E"),
+      repeating-linear-gradient(
+        transparent,
+        transparent calc(var(--spiral-line-spacing, 28px) - 1px),
+        var(--spiral-line-color, rgba(180, 180, 180, 0.4)) calc(var(--spiral-line-spacing, 28px) - 1px),
+        var(--spiral-line-color, rgba(180, 180, 180, 0.4)) var(--spiral-line-spacing, 28px)
+      ) !important;
+    background-size: 100% 100%, 100% var(--spiral-line-spacing, 28px) !important;
+    border-radius: var(--spiral-paper-radius, 10px) !important;
+    box-shadow: none !important;
+  }
+
+  /* Ensure red margin line is visible in print */
+  .notebook-spiral .page-container-node::before {
+    content: "" !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: calc(var(--page-margin-x, 64px) + var(--spiral-margin-offset, 36px)) !important;
+    width: 1px !important;
+    height: 100% !important;
+    background-color: var(--spiral-margin-color, rgba(239, 68, 68, 0.35)) !important;
+    pointer-events: none !important;
+    z-index: 10 !important;
+  }
+
+  /* Ensure binding edge shadow is visible in print */
   .notebook-spiral .page-container-node::after {
+    content: "" !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: var(--spiral-binding-width, 36px) !important;
     background: linear-gradient(
       to right,
-      rgba(0, 0, 0, 0.02) 0%,    /* Reduced from 0.06 */
-      rgba(0, 0, 0, 0.01) 60%,   /* Reduced from 0.02 */
+      rgba(0, 0, 0, 0.06) 0%,
+      rgba(0, 0, 0, 0.02) 60%,
+      transparent 100%
+    ) !important;
+    pointer-events: none !important;
+    z-index: 5 !important;
+    border-radius: var(--spiral-paper-radius, 10px) 0 0 var(--spiral-paper-radius, 10px) !important;
+  }
+
+  /* Ensure spiral binding SVG is visible in print */
+  [class*="SpiralBinding"] {
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+
+  /* Dark mode spiral notebook print styles */
+  .dark .notebook-spiral .page-container-node {
+    --spiral-paper-color: #1a1a1a !important;
+    --spiral-line-color: rgba(120, 120, 140, 0.25) !important;
+    --spiral-margin-color: rgba(248, 113, 113, 0.3) !important;
+    background-image:
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paperNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paperNoise)' opacity='0.04'/%3E%3C/svg%3E"),
+      repeating-linear-gradient(
+        transparent,
+        transparent calc(var(--spiral-line-spacing, 28px) - 1px),
+        var(--spiral-line-color, rgba(120, 120, 140, 0.25)) calc(var(--spiral-line-spacing, 28px) - 1px),
+        var(--spiral-line-color, rgba(120, 120, 140, 0.25)) var(--spiral-line-spacing, 28px)
+      ) !important;
+  }
+
+  .dark .notebook-spiral .page-container-node::after {
+    background: linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.3) 0%,
+      rgba(0, 0, 0, 0.1) 60%,
       transparent 100%
     ) !important;
   }
 
-  /* Also reduce red margin line opacity during print */
-  .notebook-spiral .page-container-node::before {
-    opacity: 0.1 !important;  /* Reduced from default 0.2 */
+  /* Premium dark theme spiral notebook print styles */
+  [data-theme="premium-dark"] .notebook-spiral .page-container-node {
+    --spiral-paper-color: #121212 !important;
+    --spiral-line-color: rgba(30, 58, 42, 0.3) !important;
+    --spiral-margin-color: rgba(30, 58, 42, 0.5) !important;
   }
 }
