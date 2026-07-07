@@ -3,7 +3,6 @@ name: Build and Deploy Papyrus v2 for InfinityFree
 on:
   push:
     branches:
-      - main
       - master
 
 jobs:
